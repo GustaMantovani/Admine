@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func VerificarStatusContainer(client *docker.Client, containerName string) string {
+func SeeContainerStatus(client *docker.Client, containerName string) string {
 	var containerStatus string
 
 	containers, err := client.ListContainers(docker.ListContainersOptions{All: true})
