@@ -22,7 +22,10 @@ var rootCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		minecraftServerContainerByCompose := internal.NewMinecraftServerContainerByCompose(client, "mine_server", "/home/andre/pgm/pessoal/minecraft-server-on-docker/")
+		serverName := os.Getenv("MINECRAFT_SERVER_SERVICE")
+		directory := os.Getenv("MINECRAFT_SERVER_DIRECTORY")
+
+		minecraftServerContainerByCompose := internal.NewMinecraftServerContainerByCompose(client, serverName, directory)
 		minecraftServerContainerByCompose.UpMinecraftServerContainerByCompose()
 
 		for {
