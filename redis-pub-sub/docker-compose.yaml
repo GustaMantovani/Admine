@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis_pubsub
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+  publisher:
+    image: redis:latest
+    depends_on:
+      - redis
+    environment:
+      - CHANNEL1=${CHANNEL1}
+      - CHANNEL2=${CHANNEL2}
+    entrypoint: >
+      sh -c "
+      sleep 5;
+      redis-cli -h redis PUBLISH ${CHANNEL1} 'Hello from ${CHANNEL1}';
+      redis-cli -h redis PUBLISH ${CHANNEL2} 'Hello from ${CHANNEL2}';
+      "
+
+  subscriber:
+    image: redis:latest
+    depends_on:
+      - redis
+    environment:
+      - CHANNEL1=${CHANNEL1}
+      - CHANNEL2=${CHANNEL2}
+    entrypoint: >
+      sh -c "
+      sleep 5;
+      redis-cli -h redis SUBSCRIBE ${CHANNEL1} ${CHANNEL2}
+      "
