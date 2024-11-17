@@ -38,11 +38,11 @@ var rootCmd = &cobra.Command{
 	Long:  runLongDescription,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
-			configureWithArgs(args)
+			minecraftServer.ConfigureWithArgs(args)
 		} else if verifyEnvVars() {
-			configureWithEnv()
+			minecraftServer.ConfigureWithEnv()
 		} else if verifyConfigFile() {
-			configWithFile()
+			minecraftServer.ConfigureWithFile()
 		} else {
 			fmt.Println("Não foi possível obter as configurações do servidor")
 			os.Exit(0)
@@ -54,11 +54,11 @@ var rootCmd = &cobra.Command{
 		}
 
 		if env {
-			configureWithEnv()
+			minecraftServer.ConfigureWithEnv()
 		}
 
 		if file {
-			configureWithEnv()
+			minecraftServer.ConfigureWithFile()
 		}
 
 		fmt.Println("a: ", minecraftServer)
@@ -93,20 +93,6 @@ func init() {
 	rootCmd.Flags().BoolVarP(&file, "file", "f", false, "use file to read server info")
 }
 
-func configureWithArgs(args []string) {
-	minecraftServer.SetContainerNameByServiceAndDirectory(args[0], getLocalDirectory())
-}
-
-func configureWithEnv() {
-	serverName := os.Getenv("MINECRAFT_SERVER_SERVICE")
-	directory := os.Getenv("MINECRAFT_SERVER_DIRECTORY")
-
-	minecraftServer.SetContainerNameByServiceAndDirectory(serverName, directory)
-	minecraftServer.UpMinecraftServerContainerByCompose()
-}
-
-func configureWithCfgFile() {}
-
 func verifyEnvVars() bool {
 	_, serverNameExists := os.LookupEnv("MINECRAFT_SERVER_SERVICE")
 	_, directoryExists := os.LookupEnv("MINECRAFT_SERVER_DIRECTORY")
@@ -118,27 +104,4 @@ func verifyConfigFile() bool {
 	return internal.VerifyIfConfigFileExists()
 }
 
-func configWithFile() {
-	configFileData, err := internal.GetConfigFileData()
-	if err != nil {
-		fmt.Println("Erro: ", err)
-		os.Exit(1)
-	}
-
-	serverName := configFileData.ServerName
-	directory := configFileData.ComposeDirectory
-
-	minecraftServer.SetContainerNameByServiceAndDirectory(serverName, directory)
-	minecraftServer.UpMinecraftServerContainerByCompose()
-}
-
 // FUNÇÕES A SEREM MOVIDAS PRA SEUS DEVIDOS DIRETÓRIOS
-func getLocalDirectory() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Printf("Erro ao obter o diretório de trabalho: %v\n", err)
-		return ""
-	}
-
-	return wd
-}

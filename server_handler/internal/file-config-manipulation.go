@@ -60,3 +60,14 @@ func GetConfigFileData() (ConfigFile, error) {
 
 	return configFileData, nil
 }
+
+// Retorna o path da área de trabalho
+func getLocalDirectory() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Printf("Erro ao obter o diretório de trabalho: %v\n", err)
+		return ""
+	}
+
+	return wd
+}

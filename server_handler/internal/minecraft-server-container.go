@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -59,4 +61,33 @@ func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() {
 	} else {
 		log.Println("Servidor de pé. Status: ", ms.containerStatus)
 	}
+}
+
+// Pega as informações do servidor de argumentos
+func (ms *MinecraftServerContainerByCompose) ConfigureWithArgs(args []string) {
+	ms.SetContainerNameByServiceAndDirectory(args[0], getLocalDirectory())
+}
+
+// Pega as informações do servidor de variáveis de ambiente
+func (ms *MinecraftServerContainerByCompose) ConfigureWithEnv() {
+	serverName := os.Getenv("MINECRAFT_SERVER_SERVICE")
+	directory := os.Getenv("MINECRAFT_SERVER_DIRECTORY")
+
+	ms.SetContainerNameByServiceAndDirectory(serverName, directory)
+	ms.UpMinecraftServerContainerByCompose()
+}
+
+// Pega as informações do servidor do arquivo de configuração
+func (ms *MinecraftServerContainerByCompose) ConfigureWithFile() {
+	configFileData, err := GetConfigFileData()
+	if err != nil {
+		fmt.Println("Erro: ", err)
+		os.Exit(1)
+	}
+
+	serverName := configFileData.ServerName
+	directory := configFileData.ComposeDirectory
+
+	ms.SetContainerNameByServiceAndDirectory(serverName, directory)
+	ms.UpMinecraftServerContainerByCompose()
 }
