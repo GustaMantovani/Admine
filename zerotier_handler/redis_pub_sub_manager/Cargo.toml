@@ -1,0 +1,8 @@
+[package]
+name = "redis_pub_sub_manager"
+version = "1.0.0"
+authors = ["Gustavo Mantovani"]
+edition = "2021"
+
+[dependencies]
+zerotier_api_client = { path = "../zerotier_api_client" }
