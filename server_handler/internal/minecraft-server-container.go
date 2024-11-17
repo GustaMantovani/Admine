@@ -11,7 +11,7 @@ type MinecraftServerContainerByCompose struct {
 	containerName            string
 	composeDirectoryFullName string
 	containerStatus          string
-	dockerClient             *docker.Client
+	DockerClient             *docker.Client
 }
 
 func NewMinecraftServerContainerByCompose(client *docker.Client, serviceName, fullNameDirectory string) MinecraftServerContainerByCompose {
@@ -21,10 +21,26 @@ func NewMinecraftServerContainerByCompose(client *docker.Client, serviceName, fu
 	minecraftServer := MinecraftServerContainerByCompose{
 		containerName:            containerName,
 		composeDirectoryFullName: fullNameDirectory,
-		dockerClient:             client,
+		DockerClient:             client,
 	}
 
 	return minecraftServer
+}
+
+func (ms *MinecraftServerContainerByCompose) SetContainerNameByServiceAndDirectory(serviceName, fullNameDirectory string) {
+	partsDirectory := strings.Split(fullNameDirectory, "/")
+
+	var result []string
+	for _, str := range partsDirectory {
+		if str != "" {
+			result = append(result, str)
+		}
+	}
+
+	containerName := result[len(result)-1] + "-" + serviceName + "-1"
+
+	ms.containerName = containerName
+	ms.composeDirectoryFullName = fullNameDirectory
 }
 
 func (ms MinecraftServerContainerByCompose) UpMinecraftServerContainerByCompose() ([]byte, error) {
@@ -32,7 +48,7 @@ func (ms MinecraftServerContainerByCompose) UpMinecraftServerContainerByCompose(
 }
 
 func (ms *MinecraftServerContainerByCompose) updateMinecraftServerContainerStatus() {
-	ms.containerStatus = SeeContainerStatus(ms.dockerClient, ms.containerName)
+	ms.containerStatus = SeeContainerStatus(ms.DockerClient, ms.containerName)
 }
 
 func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() {
