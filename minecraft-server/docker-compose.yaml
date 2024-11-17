@@ -1,0 +1,18 @@
+version: '3.9'
+services:
+  mine_server:
+    build: .
+    ports:
+      - 25565:25565
+      - 9993:9993
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./mods:/srv/minecraft/mods
+      - ./world:/srv/minecraft/world
+    stdin_open: true  # Mantém o STDIN aberto para interação, útil para debugging
+    tty: true  # Aloca um terminal pseudo-TTY, útil para interação
+
