@@ -6,3 +6,5 @@ edition = "2021"
 
 [dependencies]
 zerotier_api_client = { path = "../zerotier_api_client" }
+dotenvy = "0.15"
+tokio = { version = "1", features = ["full"] }

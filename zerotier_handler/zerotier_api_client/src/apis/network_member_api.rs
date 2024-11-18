@@ -66,6 +66,8 @@ pub async fn delete_network_member(configuration: &configuration::Configuration,
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("token {}", local_var_configuration.api_key.key));
+
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -93,6 +95,8 @@ pub async fn get_network_member(configuration: &configuration::Configuration, ne
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("token {}", local_var_configuration.api_key.key));
+
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -120,6 +124,7 @@ pub async fn get_network_member_list(configuration: &configuration::Configuratio
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("token {}", local_var_configuration.api_key.key));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -147,6 +152,7 @@ pub async fn update_network_member(configuration: &configuration::Configuration,
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("token {}", local_var_configuration.api_key.key));
     }
     local_var_req_builder = local_var_req_builder.json(&member);
 
