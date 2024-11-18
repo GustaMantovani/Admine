@@ -10,6 +10,8 @@
 
 use crate::models;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Member {
@@ -78,3 +80,82 @@ impl Member {
     }
 }
 
+impl fmt::Display for Member {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Member {{
+    ID: {},
+    Clock: {},
+    Network ID: {},
+    Node ID: {},
+    Controller ID: {},
+    Hidden: {},
+    Name: {},
+    Description: {},
+    Last Online: {},
+    Last Seen: {},
+    Physical Address: {},
+    Client Version: {},
+    Protocol Version: {},
+    Supports Rules Engine: {}
+}}",
+            self.id
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.clock
+                .as_ref()
+                .and_then(|x| x.map(|v| v.to_string()))
+                .unwrap_or_else(|| String::from("None")),
+            self.network_id
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.node_id
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.controller_id
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.hidden
+                .as_ref()
+                .and_then(|x| x.map(|v| v.to_string()))
+                .unwrap_or_else(|| String::from("None")),
+            self.name
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.description
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.last_online
+                .as_ref()
+                .and_then(|x| x.map(|v| v.to_string()))
+                .unwrap_or_else(|| String::from("None")),
+            self.last_seen
+                .as_ref()
+                .and_then(|x| x.map(|v| v.to_string()))
+                .unwrap_or_else(|| String::from("None")),
+            self.physical_address
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.client_version
+                .as_ref()
+                .and_then(|x| x.clone())
+                .unwrap_or_else(|| String::from("None")),
+            self.protocol_version
+                .as_ref()
+                .and_then(|x| x.map(|v| v.to_string()))
+                .unwrap_or_else(|| String::from("None")),
+            self.supports_rules_engine
+                .as_ref()
+                .and_then(|x| x.map(|v| v.to_string()))
+                .unwrap_or_else(|| String::from("None")),
+        )
+    }
+}
