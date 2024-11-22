@@ -5,7 +5,11 @@
 
 version: 2
 updates:
-  - package-ecosystem: "cargo" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "cargo"
+    directory: "/zerotier_handler "
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod"
+    directory: "/server_handler "
     schedule:
       interval: "weekly"
