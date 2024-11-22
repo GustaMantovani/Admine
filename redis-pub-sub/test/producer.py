@@ -11,11 +11,12 @@ def main():
     client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
     while True:
-        # Publica mensagens nos canais
-        client.publish(channel1, f'Mensagem para {channel1}')
-        client.publish(channel2, f'Mensagem para {channel2}')
+
+        msg = input("Digite a mensagem: ")
+
+        client.publish(channel1, f'Mensagem {msg} para {channel1}')
+        client.publish(channel2, f'Mensagem {msg} para {channel2}')
         print(f"Mensagens enviadas para {channel1} e {channel2}")
-        time.sleep(5)  # Envia mensagens a cada 5 segundos
 
 if __name__ == "__main__":
     main()
