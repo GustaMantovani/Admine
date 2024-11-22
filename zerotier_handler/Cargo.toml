@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "redis_pub_sub_manager",
+    "zerotier_api_client",
+]
+
+[workspace.metadata]
+name = "zerotier_handler"
+description = "Workspace para projetos Rust relacionados com o módulo de gerenciamento do zerotier do Admine"
