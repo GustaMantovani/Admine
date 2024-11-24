@@ -2,16 +2,15 @@ import os
 import redis
 
 def main():
-    # Obtém os nomes dos canais das variáveis de ambiente
-    channel1 = os.getenv('CHANNEL1', 'default_channel1')
-    channel2 = os.getenv('CHANNEL2', 'default_channel2')
+
+    channel = input("Digite o nome do canal: ")
 
     # Conecta ao Redis
     client = redis.StrictRedis(host='localhost', port=6379, db=0)
     pubsub = client.pubsub()
-    pubsub.subscribe([channel1, channel2])
+    pubsub.subscribe([channel])
 
-    print(f"Inscrito nos canais {channel1} e {channel2}")
+    print(f"Inscrito no canl {channel}")
 
     for message in pubsub.listen():
         if message['type'] == 'message':
