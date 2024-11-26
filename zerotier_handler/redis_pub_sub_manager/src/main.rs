@@ -1,13 +1,12 @@
-use std::{env, thread::sleep, time::Duration};
+use std::{env};
 use tokio;
 use zerotier_api_client::{
     apis::configuration::Configuration,
-    apis::network_member_api::{delete_network_member, get_network_member, update_network_member},
-    models::member::Member,
 };
 
 mod models;
 mod utils;
+mod handle;
 
 #[tokio::main]
 async fn main() {
@@ -23,8 +22,9 @@ async fn main() {
 
     // Conecta-se ao Redis
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut connection = client.get_connection().unwrap();
-    let mut pubsub = connection.as_pubsub();
+    let mut sub_connection = client.get_connection().unwrap();
+    let mut pub_connection = client.get_connection().unwrap();
+    let mut pubsub = sub_connection.as_pubsub();
 
     pubsub.subscribe("server_channel").unwrap();
 
@@ -46,8 +46,7 @@ async fn main() {
         };
 
         // Parse AdmineMessage
-        let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload)
-        {
+        let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload) {
             Ok(msg) => msg,
             Err(e) => {
                 println!("Erro ao parsear mensagem: {}", e);
@@ -67,138 +66,13 @@ async fn main() {
             println!("ID: {}", id);
 
             // Read old member
-            match utils::read_file(record_file_path.clone()) {
-                Ok(old_member_string) => {
-                    if !old_member_string.is_empty() {
-                        match serde_json::from_str::<Member>(&old_member_string) {
-                            Ok(old_member) => {
-                                if let Some(Some(node_id)) = old_member.node_id {
-                                    if let Err(e) =
-                                        delete_network_member(&config, &network_id, &node_id).await
-                                    {
-                                        println!("Erro ao remover membro antigo: {}", e);
-                                    }
-                                } else {
-                                    println!("Node ID não encontrado no membro antigo");
-                                }
-                            }
-                            Err(e) => println!("Erro ao desserializar membro antigo: {}", e),
-                        }
-                    }
-                }
-                Err(e) => println!("Erro ao ler arquivo de registro: {}", e),
+            if let Err(e) = handle::remove_old_server_member(&config, &network_id, &record_file_path).await {
+                println!("Erro ao lidar com membro antigo: {}", e);
             }
 
             // Get and update new member
-            match get_network_member(&config, &network_id, id).await {
-                Ok(mut new_member) => {
-                    match new_member.config {
-                        Some(ref mut config) => {
-                            if let Some(Some(true)) = config.authorized {
-                                println!("Membro já autorizado");
-                                continue;
-                            }
-                        }
-                        None => {
-                            println!("Configuração não encontrada no novo membro");
-                            continue;
-                        }
-                    }
-
-                    if let Some(mut member_config) = new_member.config {
-                        member_config.authorized = Some(Some(true));
-                        new_member.config = Some(member_config);
-
-                        if let Some(Some(node_id)) = new_member.node_id.clone() {
-                            println!("Novo node ID: {}", node_id);
-
-                            match update_network_member(
-                                &config,
-                                &network_id,
-                                &node_id,
-                                new_member.clone(),
-                            )
-                            .await
-                            {
-                                Ok(updated_member) => {
-                                    println!("Membro atualizado com sucesso");
-
-                                    // Serializa o membro atualizado para JSON
-                                    match serde_json::to_string(&updated_member) {
-                                        Ok(json) => {
-                                            // Salva no arquivo
-                                            if let Err(e) =
-                                                utils::write_to_file(record_file_path.clone(), json)
-                                            {
-                                                println!("Erro ao salvar membro atualizado: {}", e);
-                                            } else {
-                                                println!("Membro atualizado salvo com sucesso");
-                                            }
-
-                                            match updated_member.config {
-                                                Some(ref member_config) => {
-                                                    
-                                                    loop {
-                                                        
-                                                        match get_network_member(&config.clone(), network_id.as_str(), node_id.as_str()).await {
-                                                            Ok(member) => {
-                                                                match member.config {
-                                                                    Some(ref config) => {
-                                                                        match config.ip_assignments {
-                                                                            Some(ref ip_assignments) => {
-                                                                                if !ip_assignments.is_none() {
-                                                                                    println!("IP Assignments encontrado");
-                                                                                    // Publicar o novo ip no canal do bot
-                                                                                    break;
-                                                                                } else {
-                                                                                    println!("IP Assignments não encontrado");
-                                                                                    sleep(Duration::from_secs(5));
-                                                                                    continue;
-                                                                                }
-                                                                            }
-                                                                            None => {
-                                                                                println!("IP Assignments não encontrado");
-                                                                            }
-                                                                            
-                                                                        }
-                                                                    }
-                                                                    None => {
-                                                                        println!("Configuração não encontrada no membro atualizado");
-                                                                        continue;
-                                                                    }
-                                                                }
-                                                            }
-                                                            Err(e) => {
-                                                                println!("Erro ao obter membro atualizado: {}", e);
-                                                                continue;
-                                                            }
-                                                            
-                                                        }
-                                                    }
-
-                                                }
-                                                None => {
-                                                    println!("Configuração não encontrada no membro atualizado");
-                                                    continue;
-                                                }
-                                            }
-                                            
-                                        }
-                                        Err(e) => {
-                                            println!("Erro ao serializar membro atualizado: {}", e)
-                                        }
-                                    }
-                                }
-                                Err(e) => println!("Erro ao atualizar novo membro: {}", e),
-                            }
-                        } else {
-                            println!("Node ID não encontrado no novo membro");
-                        }
-                    } else {
-                        println!("Configuração não encontrada no novo membro");
-                    }
-                }
-                Err(e) => println!("Erro ao obter novo membro: {}", e),
+            if let Err(e) = handle::authorize_new_server_member(&config, &network_id, id, &record_file_path, &mut pub_connection).await {
+                println!("Erro ao lidar com novo membro: {}", e);
             }
         }
     }
