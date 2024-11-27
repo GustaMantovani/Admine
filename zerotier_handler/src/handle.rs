@@ -1,4 +1,4 @@
-use std::{thread::sleep, time::Duration, env};
+use std::{thread::sleep, time::Duration};
 use redis::Commands;
 
 use crate::zerotier::{
