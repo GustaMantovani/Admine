@@ -22,6 +22,7 @@ jobs:
             -v ${{ github.workspace }}/redis.conf:/usr/local/etc/redis/redis.conf \
             --name redis-test redis:latest \
             redis-server /usr/local/etc/redis/redis.conf
+        working-directory: redis-pub-sub
           
       - name: Check Redis status
         run: docker exec redis-test redis-cli PING

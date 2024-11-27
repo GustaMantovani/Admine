@@ -24,6 +24,8 @@ jobs:
 
       - name: Run tests
         run: cargo test --verbose
+        working-directory: zerotier_handler
 
       - name: Build binary
         run: cargo build --release
+        working-directory: zerotier_handler
