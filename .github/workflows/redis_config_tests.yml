@@ -1,0 +1,27 @@
+name: Redis Configuration CI
+
+on:
+  push:
+    paths:
+      - "redis.conf"
+  pull_request:
+    paths:
+      - "redis.conf"
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Redis with configuration
+        run: |
+          docker run --rm -d \
+            -v ${{ github.workspace }}/redis.conf:/usr/local/etc/redis/redis.conf \
+            --name redis-test redis:latest \
+            redis-server /usr/local/etc/redis/redis.conf
+          
+      - name: Check Redis status
+        run: docker exec redis-test redis-cli PING

@@ -1,0 +1,29 @@
+name: Rust ZeroTier Handler CI
+
+on:
+  push:
+    paths:
+      - "zerotier_handler/**"
+  pull_request:
+    paths:
+      - "zerotier_handler/**"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Build binary
+        run: cargo build --release
