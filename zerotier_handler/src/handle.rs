@@ -1,4 +1,4 @@
-use std::{thread::sleep, time::Duration};
+use std::{thread::sleep, time::Duration, env};
 use redis::Commands;
 
 use crate::zerotier::{
@@ -8,7 +8,11 @@ use crate::zerotier::{
 };
 use crate::utils;
 
-pub async fn remove_old_server_member(config: &Configuration, network_id: &str, record_file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn remove_old_server_member(
+    config: &Configuration, 
+    network_id: &str, 
+    record_file_path: &str
+) -> Result<(), Box<dyn std::error::Error>> {
     let old_member_string = utils::read_file(record_file_path.to_string())?;
     if !old_member_string.is_empty() {
         let old_member: Member = serde_json::from_str(&old_member_string)?;
@@ -27,8 +31,11 @@ pub async fn authorize_new_server_member(
     id: &str,
     record_file_path: &str,
     pub_connection: &mut redis::Connection,
+    vpn_channel: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut new_member = get_network_member(config, network_id, id).await?;
+    
+    // Verifica se já está autorizado
     if let Some(ref mut config) = new_member.config {
         if let Some(Some(true)) = config.authorized {
             println!("Membro já autorizado");
@@ -37,6 +44,7 @@ pub async fn authorize_new_server_member(
         }
     }
 
+    // Autoriza o membro
     if let Some(mut member_config) = new_member.config {
         member_config.authorized = Some(Some(true));
         new_member.config = Some(member_config);
@@ -57,9 +65,17 @@ pub async fn authorize_new_server_member(
                             if let Some(Some(ip_assignments)) = member.config.as_ref().and_then(|config| config.ip_assignments.as_ref()) {
                                 if !ip_assignments.is_empty() {
                                     println!("IP Assignments encontrado");
-                                    pub_connection.publish::<&str, &String, ()>("bot_channel", &ip_assignments[0])?;
-                                    println!("IP publicado com sucesso no canal");
-                                    break;
+                                    match pub_connection.publish::<&str, &String, ()>(vpn_channel, &ip_assignments[0]) {
+                                        Ok(_) => {
+                                            println!("IP publicado com sucesso no canal {}", vpn_channel);
+                                            break;
+                                        }
+                                        Err(e) => {
+                                            println!("Erro ao publicar IP no canal {}: {}", vpn_channel, e);
+                                            sleep(Duration::from_secs(5));
+                                            continue;
+                                        }
+                                    }
                                 }
                             }
                             println!("IP Assignments não encontrado");

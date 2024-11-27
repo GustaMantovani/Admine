@@ -15,17 +15,22 @@ async fn main() {
     let api_key = env::var("ZEROTIER_API_TOKEN").expect("ZEROTIER_API_TOKEN not set");
     let network_id = env::var("ZEROTIER_NETWORK_ID").expect("ZEROTIER_NETWORK_ID not set");
     let record_file_path = env::var("RECORD_FILE_PATH").expect("RECORD_FILE_PATH not set");
+    let redis_url = env::var("REDIS_URL").expect("REDIS_URL not set");
+    let server_channel = env::var("REDIS_SERVER_CHANNEL").expect("REDIS_SERVER_CHANNEL not set");
+    let command_channel = env::var("REDIS_COMMAND_CHANNEL").expect("REDIS_COMMAND_CHANNEL not set");
+    let vpn_channel = env::var("REDIS_VPN_CHANNEL").expect("REDIS_VPN_CHANNEL not set");
 
     // Gera a configuração para o cliente da API
     let config = Configuration::new(base_path.clone(), api_key.clone());
 
     // Conecta-se ao Redis
-    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let client = redis::Client::open(redis_url.clone()).unwrap();
     let mut sub_connection = client.get_connection().unwrap();
     let mut pub_connection = client.get_connection().unwrap();
     let mut pubsub = sub_connection.as_pubsub();
 
-    pubsub.subscribe("server_channel").unwrap();
+    pubsub.subscribe(&server_channel).unwrap();
+    pubsub.subscribe(&command_channel).unwrap();
 
     loop {
         let msg = match pubsub.get_message() {
@@ -70,7 +75,7 @@ async fn main() {
             }
 
             // Get and update new member
-            if let Err(e) = handle::authorize_new_server_member(&config, &network_id, id, &record_file_path, &mut pub_connection).await {
+            if let Err(e) = handle::authorize_new_server_member(&config, &network_id, id, &record_file_path, &mut pub_connection, &vpn_channel).await {
                 println!("Erro ao lidar com novo membro: {}", e);
             }
         }
