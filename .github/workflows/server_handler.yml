@@ -1,0 +1,31 @@
+name: Go Server Handler CI
+
+on:
+  push:
+    paths:
+      - "server_handler/**"
+  pull_request:
+    paths:
+      - "server_handler/**"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run tests
+        run: go test ./... -v
+
+      - name: Build binary
+        run: go build -o server_handler main.go
