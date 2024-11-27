@@ -1,1 +1,3 @@
-/target
+target
+record.json
+.env
