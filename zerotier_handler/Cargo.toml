@@ -10,7 +10,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
-redis = { version = "0.25", features = ["tokio-comp"] }
+redis = { version = "0.27", features = ["tokio-comp"] }
 serde_with = { version = "3.8", default-features = false, features = ["base64", "std", "macros"] }
 serde_repr = "0.1"
 url = "2.5"
