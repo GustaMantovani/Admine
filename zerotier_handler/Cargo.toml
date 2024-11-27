@@ -1,11 +1,18 @@
-[workspace]
-resolver = "2"
+[package]
+name = "zero_tier_handler"
+version = "1.0.0"
+authors = ["Gustavo Mantovani"]
+edition = "2021"
 
-members = [
-    "redis_pub_sub_manager",
-    "zerotier_api_client",
-]
-
-[workspace.metadata]
-name = "zerotier_handler"
-description = "Workspace para projetos Rust relacionados com o módulo de gerenciamento do zerotier do Admine"
+[dependencies]
+dotenvy = "0.15"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+redis = { version = "0.25", features = ["tokio-comp"] }
+serde_with = { version = "3.8", default-features = false, features = ["base64", "std", "macros"] }
+serde_repr = "0.1"
+url = "2.5"
+uuid = { version = "1.8", features = ["serde", "v4"] }
+reqwest = { version = "0.12", features = ["json", "multipart"] }
