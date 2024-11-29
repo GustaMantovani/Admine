@@ -32,43 +32,45 @@ The directory is the working directory in the shell`
 var env bool
 var file bool
 
+func runRootCmd(cmd *cobra.Command, args []string) {
+	if len(args) > 0 {
+		minecraftServer.ConfigureWithArgs(args)
+	} else if verifyEnvVars() {
+		minecraftServer.ConfigureWithEnv()
+	} else if verifyConfigFile() {
+		minecraftServer.ConfigureWithFile()
+	} else {
+		fmt.Println("Não foi possível obter as configurações do servidor")
+		os.Exit(0)
+	}
+
+	if env && file {
+		fmt.Println("Flag excludentes foram chamadas.")
+		os.Exit(1)
+	}
+
+	if env {
+		minecraftServer.ConfigureWithEnv()
+	}
+
+	if file {
+		minecraftServer.ConfigureWithFile()
+	}
+
+	fmt.Println("a: ", minecraftServer)
+
+	for {
+		minecraftServer.VerifyContainerAndUpIfDown()
+		time.Sleep(1 * time.Second)
+	}
+
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "Run",
 	Short: "Up the server container and continuosly monitors its status to ensure it stays up and running",
 	Long:  runLongDescription,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			minecraftServer.ConfigureWithArgs(args)
-		} else if verifyEnvVars() {
-			minecraftServer.ConfigureWithEnv()
-		} else if verifyConfigFile() {
-			minecraftServer.ConfigureWithFile()
-		} else {
-			fmt.Println("Não foi possível obter as configurações do servidor")
-			os.Exit(0)
-		}
-
-		if env && file {
-			fmt.Println("Flag excludentes foram chamadas.")
-			os.Exit(1)
-		}
-
-		if env {
-			minecraftServer.ConfigureWithEnv()
-		}
-
-		if file {
-			minecraftServer.ConfigureWithFile()
-		}
-
-		fmt.Println("a: ", minecraftServer)
-
-		for {
-			minecraftServer.VerifyContainerAndUpIfDown()
-			time.Sleep(1 * time.Second)
-		}
-
-	},
+	Run:   runRootCmd,
 }
 
 func Execute() {
@@ -103,5 +105,3 @@ func verifyEnvVars() bool {
 func verifyConfigFile() bool {
 	return internal.VerifyIfConfigFileExists()
 }
-
-// FUNÇÕES A SEREM MOVIDAS PRA SEUS DEVIDOS DIRETÓRIOS
