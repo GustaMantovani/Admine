@@ -103,34 +103,6 @@ pub async fn get_network_member(configuration: &configuration::Configuration, ne
     }
 }
 
-pub async fn get_network_member_list(configuration: &configuration::Configuration, network_id: &str) -> Result<Vec<models::Member>, Error<GetNetworkMemberListError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/network/{networkID}/member", local_var_configuration.base_path, networkID=crate::zerotier::apis::urlencode(network_id));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("token {}", local_var_configuration.api_key.key));
-    }
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetNetworkMemberListError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
 pub async fn update_network_member(configuration: &configuration::Configuration, network_id: &str, member_id: &str, member: models::Member) -> Result<models::Member, Error<UpdateNetworkMemberError>> {
     let local_var_configuration = configuration;
 

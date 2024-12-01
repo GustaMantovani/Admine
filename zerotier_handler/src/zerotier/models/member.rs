@@ -48,28 +48,6 @@ pub struct Member {
     pub supports_rules_engine: Option<Option<bool>>,
 }
 
-impl Member {
-    pub fn new() -> Member {
-        Member {
-            id: None,
-            clock: None,
-            network_id: None,
-            node_id: None,
-            controller_id: None,
-            hidden: None,
-            name: None,
-            description: None,
-            config: None,
-            last_online: None,
-            last_seen: None,
-            physical_address: None,
-            client_version: None,
-            protocol_version: None,
-            supports_rules_engine: None,
-        }
-    }
-}
-
 impl fmt::Display for Member {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
