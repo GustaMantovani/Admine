@@ -54,28 +54,3 @@ pub struct MemberConfig {
     #[serde(rename = "vProto", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub v_proto: Option<Option<i32>>,
 }
-
-impl MemberConfig {
-    pub fn new() -> MemberConfig {
-        MemberConfig {
-            active_bridge: None,
-            authorized: None,
-            capabilities: None,
-            creation_time: None,
-            id: None,
-            identity: None,
-            ip_assignments: None,
-            last_authorized_time: None,
-            last_deauthorized_time: None,
-            no_auto_assign_ips: None,
-            revision: None,
-            sso_exempt: None,
-            tags: None,
-            v_major: None,
-            v_minor: None,
-            v_rev: None,
-            v_proto: None,
-        }
-    }
-}
-

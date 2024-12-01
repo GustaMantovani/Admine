@@ -1,4 +1,4 @@
-use std::{env};
+use std::env;
 use tokio;
 use zerotier::apis::configuration::Configuration;
 

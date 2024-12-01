@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Configuration {
     pub base_path: String,
@@ -11,6 +12,7 @@ pub struct Configuration {
 
 pub type BasicAuth = (String, Option<String>);
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ApiKey {
     pub prefix: Option<String>,
