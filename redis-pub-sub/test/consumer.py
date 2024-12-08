@@ -1,4 +1,3 @@
-import os
 import redis
 
 def main():
@@ -10,7 +9,7 @@ def main():
     pubsub = client.pubsub()
     pubsub.subscribe([channel])
 
-    print(f"Inscrito no canl {channel}")
+    print(f"Inscrito no canal {channel}")
 
     for message in pubsub.listen():
         if message['type'] == 'message':
