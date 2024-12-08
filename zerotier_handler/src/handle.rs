@@ -104,3 +104,42 @@ pub fn save_member_to_file(member: &Member, record_file_path: &str) -> Result<()
     println!("Membro salvo com sucesso");
     Ok(())
 }
+
+pub async fn authorize_member_by_id(
+    config: &Configuration,
+    network_id: &str,
+    member_id: &str,
+) -> Result<Member, Box<dyn std::error::Error>> {
+    // Get current member state
+    let mut member = get_network_member(config, network_id, member_id).await?;
+    
+    // Check if already authorized
+    if let Some(ref config) = member.config {
+        if let Some(Some(true)) = config.authorized {
+            println!("Member already authorized");
+            return Ok(member);
+        }
+    }
+
+    // Set authorization
+    if let Some(mut member_config) = member.config {
+        member_config.authorized = Some(Some(true));
+        member.config = Some(member_config);
+
+        if let Some(Some(node_id)) = member.node_id.clone() {
+            println!("Authorizing member with ID: {}", node_id);
+            
+            let updated_member = update_network_member(
+                config,
+                network_id, 
+                &node_id,
+                member.clone()
+            ).await?;
+            
+            println!("Member authorized successfully");
+            return Ok(updated_member);
+        }
+    }
+
+    Err("Failed to authorize member - invalid configuration".into())
+}
