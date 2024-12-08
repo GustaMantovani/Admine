@@ -79,5 +79,16 @@ async fn main() {
                 println!("Erro ao lidar com novo membro: {}", e);
             }
         }
+
+        // New Member
+        if admine_message.tags.contains(&"new_member".to_string()) {
+            let id= admine_message.message.as_str();
+            println!("ID: {}", id);
+
+            // Authorize new member by ID
+            if let Err(e) = handle::authorize_member_by_id(&config, &network_id, id).await {
+                println!("Erro ao autorizar novo membro: {}", e);
+            }
+        }
     }
 }
