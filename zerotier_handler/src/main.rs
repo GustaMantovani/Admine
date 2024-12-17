@@ -2,6 +2,8 @@ use redis::Commands;
 use std::env;
 use tokio;
 use zerotier::apis::configuration::Configuration;
+use log::{info, error};
+use env_logger;
 mod handle;
 mod models;
 mod utils;
@@ -10,6 +12,7 @@ mod zerotier;
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
+    env_logger::init();
 
     let base_path = env::var("ZEROTIER_API_BASE_URL").expect("ZEROTIER_API_BASE_URL not set");
     let api_key = env::var("ZEROTIER_API_TOKEN").expect("ZEROTIER_API_TOKEN not set");
@@ -19,6 +22,16 @@ async fn main() {
     let server_channel = env::var("REDIS_SERVER_CHANNEL").expect("REDIS_SERVER_CHANNEL not set");
     let command_channel = env::var("REDIS_COMMAND_CHANNEL").expect("REDIS_COMMAND_CHANNEL not set");
     let vpn_channel = env::var("REDIS_VPN_CHANNEL").expect("REDIS_VPN_CHANNEL not set");
+
+    info!("Iniciando aplicação com as seguintes variáveis de ambiente:");
+    info!("ZEROTIER_API_BASE_URL: {}", base_path);
+    info!("ZEROTIER_API_TOKEN: {}", api_key);
+    info!("ZEROTIER_NETWORK_ID: {}", network_id);
+    info!("RECORD_FILE_PATH: {}", record_file_path);
+    info!("REDIS_URL: {}", redis_url);
+    info!("REDIS_SERVER_CHANNEL: {}", server_channel);
+    info!("REDIS_COMMAND_CHANNEL: {}", command_channel);
+    info!("REDIS_VPN_CHANNEL: {}", vpn_channel);
 
     // Gera a configuração para o cliente da API
     let config = Configuration::new(base_path.clone(), api_key.clone());
@@ -36,7 +49,7 @@ async fn main() {
         let msg = match pubsub.get_message() {
             Ok(msg) => msg,
             Err(e) => {
-                println!("Erro ao receber mensagem: {}", e);
+                error!("Erro ao receber mensagem: {}", e);
                 continue;
             }
         };
@@ -44,17 +57,16 @@ async fn main() {
         let payload: String = match msg.get_payload() {
             Ok(payload) => payload,
             Err(e) => {
-                println!("Erro ao obter payload: {}", e);
+                error!("Erro ao obter payload: {}", e);
                 continue;
             }
         };
 
         // Parse AdmineMessage
-        let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload)
-        {
+        let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload) {
             Ok(msg) => msg,
             Err(e) => {
-                println!("Erro ao parsear mensagem: {}", e);
+                error!("Erro ao parsear mensagem: {}", e);
                 continue;
             }
         };
@@ -62,64 +74,49 @@ async fn main() {
         // Server Up
         if admine_message.tags.contains(&"server_up".to_string()) {
             let id = admine_message.message.as_str();
-            println!("ID: {}", id);
+            info!("Servidor subindo com ID: {}", id);
 
-            if let Err(e) =
-                handle::remove_old_server_member(&config, &network_id, &record_file_path).await
-            {
-                println!("Erro ao lidar com membro antigo: {}", e);
+            if let Err(e) = handle::remove_old_server_member(&config, &network_id, &record_file_path).await {
+                error!("Erro ao lidar com membro antigo: {}", e);
             }
 
-            match handle::authorize_new_server_member(&config, &network_id, id, &record_file_path)
-                .await
-            {
+            match handle::authorize_new_server_member(&config, &network_id, id, &record_file_path).await {
                 Ok(ips) => {
                     if !ips.is_empty() {
-                        let ip_string = ips
-                            .iter()
-                            .map(|ip| ip.to_string())
-                            .collect::<Vec<String>>()
-                            .join(", ");
+                        let ip_string = ips.iter().map(|ip| ip.to_string()).collect::<Vec<String>>().join(", ");
+                        info!("IPs autorizados: {}", ip_string);
 
-                        match pub_connection
-                            .publish::<&str, &String, ()>(vpn_channel.as_str(), &ip_string)
-                        {
-                            Ok(_) => println!("IP publicado com sucesso no canal {}", vpn_channel),
-                            Err(e) => {
-                                println!("Erro ao publicar IP no canal {}: {}", vpn_channel, e)
-                            }
+                        match pub_connection.publish::<&str, &String, ()>(vpn_channel.as_str(), &ip_string) {
+                            Ok(_) => info!("IP publicado com sucesso no canal {}", vpn_channel),
+                            Err(e) => error!("Erro ao publicar IP no canal {}: {}", vpn_channel, e),
                         }
                     }
                 }
-                Err(e) => println!("Erro ao lidar com novo membro: {}", e),
+                Err(e) => error!("Erro ao lidar com novo membro: {}", e),
             }
         }
 
         // New Member
         if admine_message.tags.contains(&"new_member".to_string()) {
             let id = admine_message.message.as_str();
-            println!("ID: {}", id);
+            info!("Novo membro com ID: {}", id);
 
             match handle::authorize_member_by_id(&config, &network_id, id).await {
                 Ok(member) => {
                     let member_json = match serde_json::to_string(&member) {
                         Ok(json) => json,
                         Err(e) => {
-                            println!("Erro ao serializar membro: {}", e);
+                            error!("Erro ao serializar membro: {}", e);
                             continue;
                         }
                     };
 
-                    match pub_connection
-                        .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
-                    {
-                        Ok(_) => println!("Membro publicado com sucesso no canal {}", vpn_channel),
-                        Err(e) => {
-                            println!("Erro ao publicar membro no canal {}: {}", vpn_channel, e)
-                        }
+                    match pub_connection.publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json) {
+                        Ok(_) => info!("Membro publicado com sucesso no canal {}", vpn_channel),
+                        Err(e) => error!("Erro ao publicar membro no canal {}: {}", vpn_channel, e),
                     }
                 }
-                Err(e) => println!("Erro ao autorizar novo membro: {}", e),
+                Err(e) => error!("Erro ao autorizar novo membro: {}", e),
             }
         }
     }
