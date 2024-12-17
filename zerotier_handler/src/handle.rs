@@ -5,6 +5,7 @@ use crate::zerotier::{
     models::member::Member,
 };
 use crate::utils;
+use log::{info, warn, error};
 
 pub async fn remove_old_server_member(
     config: &Configuration, 
@@ -16,8 +17,9 @@ pub async fn remove_old_server_member(
         let old_member: Member = serde_json::from_str(&old_member_string)?;
         if let Some(Some(node_id)) = old_member.node_id {
             delete_network_member(config, network_id, &node_id).await?;
+            info!("Membro antigo com Node ID {} removido", node_id);
         } else {
-            println!("Node ID não encontrado no membro antigo");
+            warn!("Node ID não encontrado no membro antigo");
         }
     }
     Ok(())
@@ -33,7 +35,7 @@ pub async fn authorize_new_server_member(
     
     if let Some(ref mut config) = new_member.config {
         if let Some(Some(true)) = config.authorized {
-            println!("Membro já autorizado");
+            info!("Membro já autorizado com Node ID: {}", id);
             save_member_to_file(&new_member, record_file_path)?;
             return Ok(new_member.get_member_ips());
         }
@@ -44,10 +46,10 @@ pub async fn authorize_new_server_member(
         new_member.config = Some(member_config);
 
         if let Some(Some(node_id)) = new_member.node_id.clone() {
-            println!("Novo node ID: {}", node_id);
+            info!("Novo node ID: {}", node_id);
 
             let updated_member = update_network_member(config, network_id, &node_id, new_member.clone()).await?;
-            println!("Membro atualizado com sucesso");
+            info!("Membro atualizado com sucesso com Node ID: {}", node_id);
 
             save_member_to_file(&updated_member, record_file_path)?;
 
@@ -58,15 +60,15 @@ pub async fn authorize_new_server_member(
                         Ok(member) => {
                             if let Some(Some(ip_assignments)) = member.config.as_ref().and_then(|config| config.ip_assignments.as_ref()) {
                                 if !ip_assignments.is_empty() {
-                                    println!("IP Assignments encontrado");
+                                    info!("IP Assignments encontrado para Node ID: {}", node_id);
                                     return Ok(member.get_member_ips());
                                 }
                             }
-                            println!("IP Assignments não encontrado");
+                            warn!("IP Assignments não encontrado para Node ID: {}", node_id);
                             sleep(Duration::from_secs(5));
                         }
                         Err(e) => {
-                            println!("Erro ao obter membro atualizado: {}", e);
+                            error!("Erro ao obter membro atualizado com Node ID {}: {}", node_id, e);
                             sleep(Duration::from_secs(5));
                         }
                     }
@@ -80,7 +82,7 @@ pub async fn authorize_new_server_member(
 pub fn save_member_to_file(member: &Member, record_file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let member_json_string = serde_json::to_string_pretty(member)?;
     utils::write_to_file(record_file_path.to_string(), member_json_string)?;
-    println!("Membro salvo com sucesso");
+    info!("Membro salvo com sucesso no arquivo {}", record_file_path);
     Ok(())
 }
 
@@ -95,7 +97,7 @@ pub async fn authorize_member_by_id(
     // Check if already authorized
     if let Some(ref config) = member.config {
         if let Some(Some(true)) = config.authorized {
-            println!("Member already authorized");
+            info!("Membro já autorizado com ID: {}", member_id);
             return Ok(member);
         }
     }
@@ -106,7 +108,7 @@ pub async fn authorize_member_by_id(
         member.config = Some(member_config);
 
         if let Some(Some(node_id)) = member.node_id.clone() {
-            println!("Authorizing member with ID: {}", node_id);
+            info!("Autorizando membro com Node ID: {}", node_id);
             
             let updated_member = update_network_member(
                 config,
@@ -115,10 +117,10 @@ pub async fn authorize_member_by_id(
                 member.clone()
             ).await?;
             
-            println!("Member authorized successfully");
+            info!("Membro autorizado com sucesso com Node ID: {}", node_id);
             return Ok(updated_member);
         }
     }
 
-    Err("Failed to authorize member - invalid configuration".into())
+    Err("Falha ao autorizar membro - configuração inválida".into())
 }
