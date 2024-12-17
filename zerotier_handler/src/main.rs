@@ -23,7 +23,7 @@ async fn main() {
     let command_channel = env::var("REDIS_COMMAND_CHANNEL").expect("REDIS_COMMAND_CHANNEL not set");
     let vpn_channel = env::var("REDIS_VPN_CHANNEL").expect("REDIS_VPN_CHANNEL not set");
 
-    info!("Iniciando aplicação com as seguintes variáveis de ambiente:");
+    info!("Starting application with the following environment variables:");
     info!("ZEROTIER_API_BASE_URL: {}", base_path);
     info!("ZEROTIER_API_TOKEN: {}", api_key);
     info!("ZEROTIER_NETWORK_ID: {}", network_id);
@@ -33,10 +33,10 @@ async fn main() {
     info!("REDIS_COMMAND_CHANNEL: {}", command_channel);
     info!("REDIS_VPN_CHANNEL: {}", vpn_channel);
 
-    // Gera a configuração para o cliente da API
+    // Generate configuration for the API client
     let config = Configuration::new(base_path.clone(), api_key.clone());
 
-    // Conecta-se ao Redis
+    // Connect to Redis
     let client = redis::Client::open(redis_url.clone()).unwrap();
     let mut sub_connection = client.get_connection().unwrap();
     let mut pub_connection = client.get_connection().unwrap();
@@ -49,7 +49,7 @@ async fn main() {
         let msg = match pubsub.get_message() {
             Ok(msg) => msg,
             Err(e) => {
-                error!("Erro ao receber mensagem: {}", e);
+                error!("Error receiving message: {}", e);
                 continue;
             }
         };
@@ -57,7 +57,7 @@ async fn main() {
         let payload: String = match msg.get_payload() {
             Ok(payload) => payload,
             Err(e) => {
-                error!("Erro ao obter payload: {}", e);
+                error!("Error getting payload: {}", e);
                 continue;
             }
         };
@@ -66,7 +66,7 @@ async fn main() {
         let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload) {
             Ok(msg) => msg,
             Err(e) => {
-                error!("Erro ao parsear mensagem: {}", e);
+                error!("Error parsing message: {}", e);
                 continue;
             }
         };
@@ -74,49 +74,49 @@ async fn main() {
         // Server Up
         if admine_message.tags.contains(&"server_up".to_string()) {
             let id = admine_message.message.as_str();
-            info!("Servidor subindo com ID: {}", id);
+            info!("Server starting with ID: {}", id);
 
             if let Err(e) = handle::remove_old_server_member(&config, &network_id, &record_file_path).await {
-                error!("Erro ao lidar com membro antigo: {}", e);
+                error!("Error handling old member: {}", e);
             }
 
             match handle::authorize_new_server_member(&config, &network_id, id, &record_file_path).await {
                 Ok(ips) => {
                     if !ips.is_empty() {
                         let ip_string = ips.iter().map(|ip| ip.to_string()).collect::<Vec<String>>().join(", ");
-                        info!("IPs autorizados: {}", ip_string);
+                        info!("Authorized IPs: {}", ip_string);
 
                         match pub_connection.publish::<&str, &String, ()>(vpn_channel.as_str(), &ip_string) {
-                            Ok(_) => info!("IP publicado com sucesso no canal {}", vpn_channel),
-                            Err(e) => error!("Erro ao publicar IP no canal {}: {}", vpn_channel, e),
+                            Ok(_) => info!("IP successfully published to channel {}", vpn_channel),
+                            Err(e) => error!("Error publishing IP to channel {}: {}", vpn_channel, e),
                         }
                     }
                 }
-                Err(e) => error!("Erro ao lidar com novo membro: {}", e),
+                Err(e) => error!("Error handling new member: {}", e),
             }
         }
 
         // New Member
         if admine_message.tags.contains(&"new_member".to_string()) {
             let id = admine_message.message.as_str();
-            info!("Novo membro com ID: {}", id);
+            info!("New member with ID: {}", id);
 
             match handle::authorize_member_by_id(&config, &network_id, id).await {
                 Ok(member) => {
                     let member_json = match serde_json::to_string(&member) {
                         Ok(json) => json,
                         Err(e) => {
-                            error!("Erro ao serializar membro: {}", e);
+                            error!("Error serializing member: {}", e);
                             continue;
                         }
                     };
 
                     match pub_connection.publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json) {
-                        Ok(_) => info!("Membro publicado com sucesso no canal {}", vpn_channel),
-                        Err(e) => error!("Erro ao publicar membro no canal {}: {}", vpn_channel, e),
+                        Ok(_) => info!("Member successfully published to channel {}", vpn_channel),
+                        Err(e) => error!("Error publishing member to channel {}: {}", vpn_channel, e),
                     }
                 }
-                Err(e) => error!("Erro ao autorizar novo membro: {}", e),
+                Err(e) => error!("Error authorizing new member: {}", e),
             }
         }
     }
