@@ -2,13 +2,13 @@ use std::io::{prelude::*, self, Write};
 use std::fs::{File, OpenOptions};
 
 pub fn write_to_file(file_path: String, content: String) -> io::Result<()> {
-    // Abre o arquivo no modo append ou cria o arquivo se ele não existir
+    // Open the file in append mode or create it if it doesn't exist
     let mut file = OpenOptions::new()
-        .write(true) // Permite escrita
-        .create(true) // Cria o arquivo se ele não existir
+        .write(true) // Allow writing
+        .create(true) // Create the file if it doesn't exist
         .open(file_path)?;
 
-    // Escreve o conteúdo no arquivo
+    // Write the content to the file
     file.write_all(content.as_bytes())?;
     Ok(())
 }
