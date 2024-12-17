@@ -1,10 +1,10 @@
+use redis::Commands;
 use std::env;
 use tokio;
 use zerotier::apis::configuration::Configuration;
-
+mod handle;
 mod models;
 mod utils;
-mod handle;
 mod zerotier;
 
 #[tokio::main]
@@ -50,7 +50,8 @@ async fn main() {
         };
 
         // Parse AdmineMessage
-        let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload) {
+        let admine_message = match serde_json::from_str::<models::message::AdmineMessage>(&payload)
+        {
             Ok(msg) => msg,
             Err(e) => {
                 println!("Erro ao parsear mensagem: {}", e);
@@ -60,34 +61,65 @@ async fn main() {
 
         // Server Up
         if admine_message.tags.contains(&"server_up".to_string()) {
-            let parts: Vec<&str> = admine_message.message.split_whitespace().collect();
-            if parts.len() <= 2 {
-                println!("Formato da mensagem inválido");
-                continue;
-            }
-
-            let id = parts[2];
+            let id = admine_message.message.as_str();
             println!("ID: {}", id);
 
-            // Read old member
-            if let Err(e) = handle::remove_old_server_member(&config, &network_id, &record_file_path).await {
+            if let Err(e) =
+                handle::remove_old_server_member(&config, &network_id, &record_file_path).await
+            {
                 println!("Erro ao lidar com membro antigo: {}", e);
             }
 
-            // Get and update new member
-            if let Err(e) = handle::authorize_new_server_member(&config, &network_id, id, &record_file_path, &mut pub_connection, &vpn_channel).await {
-                println!("Erro ao lidar com novo membro: {}", e);
+            match handle::authorize_new_server_member(&config, &network_id, id, &record_file_path)
+                .await
+            {
+                Ok(ips) => {
+                    if !ips.is_empty() {
+                        let ip_string = ips
+                            .iter()
+                            .map(|ip| ip.to_string())
+                            .collect::<Vec<String>>()
+                            .join(", ");
+
+                        match pub_connection
+                            .publish::<&str, &String, ()>(vpn_channel.as_str(), &ip_string)
+                        {
+                            Ok(_) => println!("IP publicado com sucesso no canal {}", vpn_channel),
+                            Err(e) => {
+                                println!("Erro ao publicar IP no canal {}: {}", vpn_channel, e)
+                            }
+                        }
+                    }
+                }
+                Err(e) => println!("Erro ao lidar com novo membro: {}", e),
             }
         }
 
         // New Member
         if admine_message.tags.contains(&"new_member".to_string()) {
-            let id= admine_message.message.as_str();
+            let id = admine_message.message.as_str();
             println!("ID: {}", id);
 
-            // Authorize new member by ID
-            if let Err(e) = handle::authorize_member_by_id(&config, &network_id, id).await {
-                println!("Erro ao autorizar novo membro: {}", e);
+            match handle::authorize_member_by_id(&config, &network_id, id).await {
+                Ok(member) => {
+                    let member_json = match serde_json::to_string(&member) {
+                        Ok(json) => json,
+                        Err(e) => {
+                            println!("Erro ao serializar membro: {}", e);
+                            continue;
+                        }
+                    };
+
+                    match pub_connection
+                        .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
+                    {
+                        Ok(_) => println!("Membro publicado com sucesso no canal {}", vpn_channel),
+                        Err(e) => {
+                            println!("Erro ao publicar membro no canal {}: {}", vpn_channel, e)
+                        }
+                    }
+                }
+                Err(e) => println!("Erro ao autorizar novo membro: {}", e),
             }
         }
     }
