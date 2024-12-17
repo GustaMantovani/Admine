@@ -1,6 +1,4 @@
-use std::{thread::sleep, time::Duration};
-use redis::Commands;
-
+use std::{net::IpAddr, thread::sleep, time::Duration};
 use crate::zerotier::{
     apis::configuration::Configuration,
     apis::network_member_api::{delete_network_member, get_network_member, update_network_member},
@@ -30,21 +28,17 @@ pub async fn authorize_new_server_member(
     network_id: &str,
     id: &str,
     record_file_path: &str,
-    pub_connection: &mut redis::Connection,
-    vpn_channel: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<Vec<IpAddr>, Box<dyn std::error::Error>> {
     let mut new_member = get_network_member(config, network_id, id).await?;
     
-    // Verifica se já está autorizado
     if let Some(ref mut config) = new_member.config {
         if let Some(Some(true)) = config.authorized {
             println!("Membro já autorizado");
             save_member_to_file(&new_member, record_file_path)?;
-            return Ok(());
+            return Ok(new_member.get_member_ips());
         }
     }
 
-    // Autoriza o membro
     if let Some(mut member_config) = new_member.config {
         member_config.authorized = Some(Some(true));
         new_member.config = Some(member_config);
@@ -57,7 +51,7 @@ pub async fn authorize_new_server_member(
 
             save_member_to_file(&updated_member, record_file_path)?;
 
-            if let Some(_) = updated_member.config {
+            if updated_member.config.is_some() {
                 sleep(Duration::from_secs(5));
                 loop {
                     match get_network_member(config, network_id, &node_id).await {
@@ -65,17 +59,7 @@ pub async fn authorize_new_server_member(
                             if let Some(Some(ip_assignments)) = member.config.as_ref().and_then(|config| config.ip_assignments.as_ref()) {
                                 if !ip_assignments.is_empty() {
                                     println!("IP Assignments encontrado");
-                                    match pub_connection.publish::<&str, &String, ()>(vpn_channel, &ip_assignments[0]) {
-                                        Ok(_) => {
-                                            println!("IP publicado com sucesso no canal {}", vpn_channel);
-                                            break;
-                                        }
-                                        Err(e) => {
-                                            println!("Erro ao publicar IP no canal {}: {}", vpn_channel, e);
-                                            sleep(Duration::from_secs(5));
-                                            continue;
-                                        }
-                                    }
+                                    return Ok(member.get_member_ips());
                                 }
                             }
                             println!("IP Assignments não encontrado");
@@ -83,19 +67,14 @@ pub async fn authorize_new_server_member(
                         }
                         Err(e) => {
                             println!("Erro ao obter membro atualizado: {}", e);
+                            sleep(Duration::from_secs(5));
                         }
                     }
                 }
-            } else {
-                println!("Configuração não encontrada no membro atualizado");
             }
-        } else {
-            println!("Node ID não encontrado no novo membro");
         }
-    } else {
-        println!("Configuração não encontrada no novo membro");
     }
-    Ok(())
+    Err("Falha ao obter IPs do membro".into())
 }
 
 pub fn save_member_to_file(member: &Member, record_file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
