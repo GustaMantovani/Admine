@@ -54,18 +54,18 @@ func (ms *MinecraftServerContainerByCompose) updateMinecraftServerContainerStatu
 }
 
 // Verifica se o container do servidor está de pé e se não estiver sobe ele
-func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() string {
+func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() (string, bool) {
 	ms.updateMinecraftServerContainerStatus()
 	var msg string
 	if !strings.Contains(ms.containerStatus, "Up") {
 		msg = "Servidor não está de pé. Status do seu container: " + ms.containerStatus
 		log.Println(msg)
 		ms.UpMinecraftServerContainerByCompose()
-		return msg
+		return msg, true
 	} else {
 		msg = "Servidor de pé. Status: " + ms.containerStatus
 		log.Println(msg)
-		return msg
+		return msg, false
 	}
 }
 

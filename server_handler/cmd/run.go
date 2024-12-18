@@ -36,6 +36,7 @@ var file bool
 
 // Roda a aplicação
 func runRootCmd(cmd *cobra.Command, args []string) {
+	iniciado := false
 	subscriber := pubsub.CreateSubscriber("fa", "localhost:6379")
 	if len(args) > 0 {
 		minecraftServer.ConfigureWithArgs(args)
@@ -63,10 +64,19 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 
 	fmt.Println("a: ", minecraftServer)
 
-	var msgStatus string
+	var isUp bool
 	for {
-		msgStatus = minecraftServer.VerifyContainerAndUpIfDown()
-		subscriber.SendMessage(msgStatus)
+		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
+		if isUp == true && iniciado == false {
+			subscriber.SendMessage("Servidor de pé")
+		} else if isUp == false && iniciado == true {
+			subscriber.SendMessage("Servidor deitado")
+		}
+
+		iniciado = isUp
+
+		fmt.Println(isUp, iniciado)
+
 		time.Sleep(1 * time.Second)
 	}
 
