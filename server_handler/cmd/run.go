@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"server/handler/internal"
+	"server/handler/pubsub"
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -12,6 +13,7 @@ import (
 )
 
 var minecraftServer = internal.MinecraftServerContainerByCompose{}
+var subscriber = pubsub.RedisPubSubSubscriber{}
 
 var runLongDescription = `Up the server container by compose and continuosly monitors its status to ensure it stays up and running.
 If the docker container is down, the program will up him again.
