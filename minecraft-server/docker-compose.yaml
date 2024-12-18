@@ -1,7 +1,13 @@
 version: '3.9'
 services:
   mine_server:
-    build: .
+    build:
+      context: .
+      args:
+        JAVA_VERSION: ${JAVA_VERSION}
+        NETWORK_ID: ${NETWORK_ID}
+    env_file:
+      - .env
     ports:
       - 25565:25565
       - 9993:9993
@@ -13,6 +19,8 @@ services:
     volumes:
       - ./mods:/srv/minecraft/mods
       - ./world:/srv/minecraft/world
-    stdin_open: true  # Mantém o STDIN aberto para interação, útil para debugging
-    tty: true  # Aloca um terminal pseudo-TTY, útil para interação
-
+      - ./config/eula.txt:/srv/minecraft/eula.txt
+      - ./config/server.properties:/srv/minecraft/server.properties
+      - ./config/user_jvm_args.txt:/srv/minecraft/user_jvm_args.txt
+    stdin_open: true
+    tty: true
