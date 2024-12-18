@@ -11,15 +11,16 @@ type RedisPubSubMetadata struct {
 	addr    string
 }
 
+// Faz a conexão com o pubsub e envia mensagens para um canal associado ao tipo
 type RedisPubSubSubscriber struct {
 	channel string
 	client  redis.Client
 	context context.Context
 }
 
-func createRedisClient(data RedisPubSubMetadata) redis.Client {
+func createRedisClient(addr string) redis.Client {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: data.addr,
+		Addr: addr,
 	})
 
 	return *rdb
@@ -29,11 +30,11 @@ func createPubSub(data RedisPubSubMetadata, ctx context.Context, client redis.Cl
 	return *client.Subscribe(ctx, data.channel)
 }
 
-func createSubscriber(data RedisPubSubMetadata) RedisPubSubSubscriber {
-	client := createRedisClient(data)
+func CreateSubscriber(channel, addr string) RedisPubSubSubscriber {
+	client := createRedisClient(addr)
 
 	return RedisPubSubSubscriber{
-		channel: data.channel,
+		channel: channel,
 		client:  client,
 		context: context.Background(),
 	}
