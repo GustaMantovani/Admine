@@ -1,3 +1,4 @@
 mods/*.jar
 world
 .env
+server.properties

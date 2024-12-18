@@ -34,7 +34,11 @@ The directory is the working directory in the shell`
 var env bool
 var file bool
 
+// Roda a aplicação
 func runRootCmd(cmd *cobra.Command, args []string) {
+	iniciado := false
+	subscriber := pubsub.CreateSubscriber("localhost:6379")
+
 	if len(args) > 0 {
 		minecraftServer.ConfigureWithArgs(args)
 	} else if verifyEnvVars() {
@@ -61,8 +65,17 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 
 	fmt.Println("a: ", minecraftServer)
 
+	var isUp bool
 	for {
-		minecraftServer.VerifyContainerAndUpIfDown()
+		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
+		if isUp == true && iniciado == false {
+			subscriber.SendMessage("Server up")
+		} else if isUp == false && iniciado == true {
+			subscriber.SendMessage("Server down")
+		}
+
+		iniciado = isUp
+
 		time.Sleep(1 * time.Second)
 	}
 

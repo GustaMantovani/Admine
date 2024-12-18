@@ -53,13 +53,19 @@ func (ms *MinecraftServerContainerByCompose) updateMinecraftServerContainerStatu
 	ms.containerStatus = SeeContainerStatus(ms.DockerClient, ms.containerName)
 }
 
-func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() {
+// Verifica se o container do servidor está de pé e se não estiver sobe ele
+func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() (string, bool) {
 	ms.updateMinecraftServerContainerStatus()
+	var msg string
 	if !strings.Contains(ms.containerStatus, "Up") {
-		log.Println("Servidor não está de pé. Status do seu container: ", ms.containerStatus)
+		msg = "Servidor não está de pé. Status do seu container: " + ms.containerStatus
+		log.Println(msg)
 		ms.UpMinecraftServerContainerByCompose()
+		return msg, false
 	} else {
-		log.Println("Servidor de pé. Status: ", ms.containerStatus)
+		msg = "Servidor de pé. Status: " + ms.containerStatus
+		log.Println(msg)
+		return msg, true
 	}
 }
 
