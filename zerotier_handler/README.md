@@ -4,13 +4,6 @@
 
 The ZeroTier Handler is a Rust-based component of the Admine infrastructure management solution. It is responsible for managing network configurations and member authorizations within a ZeroTier network. This handler automates the process of adding and removing network members.
 
-## Features
-
-- **ZeroTier API Integration**: Manages network members using the ZeroTier API.
-- **IP Management**: Automates IP address assignments for the Minecraft server.
-- **State Persistence**: Stores network server states.
-- **Redis Integration**: Communicates with other components via Redis Pub/Sub channels.
-
 ## Environment variables:
 
 ```bash
