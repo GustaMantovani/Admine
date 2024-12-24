@@ -16,8 +16,15 @@ async fn main() {
     let base_path = env::var("ZEROTIER_API_BASE_URL").expect("ZEROTIER_API_BASE_URL not set");
     let api_key = env::var("ZEROTIER_API_TOKEN").expect("ZEROTIER_API_TOKEN not set");
     let network_id = env::var("ZEROTIER_NETWORK_ID").expect("ZEROTIER_NETWORK_ID not set");
-    let retry_count = env::var("ZEROTIER_HANDLER_RETRY_COUNT").expect("ZEROTIER_HANDLER_RETRY_COUNT not set");
-    let retry_interval = env::var("ZEROTIER_HANDLER_RETRY_INTERVAL").expect("ZEROTIER_HANDLER_RETRY_INTERVAL not set");
+    let retry_count: u64 = env::var("ZEROTIER_HANDLER_RETRY_COUNT")
+        .expect("ZEROTIER_HANDLER_RETRY_COUNT not set")
+        .parse()
+        .expect("Failed to parse ZEROTIER_HANDLER_RETRY_COUNT as u64");
+
+    let retry_interval: u64 = env::var("ZEROTIER_HANDLER_RETRY_INTERVAL")
+        .expect("ZEROTIER_HANDLER_RETRY_INTERVAL not set")
+        .parse()
+        .expect("Failed to parse ZEROTIER_HANDLER_RETRY_INTERVAL as u64");
     let record_file_path = env::var("RECORD_FILE_PATH").expect("RECORD_FILE_PATH not set");
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL not set");
     let server_channel = env::var("REDIS_SERVER_CHANNEL").expect("REDIS_SERVER_CHANNEL not set");
@@ -97,8 +104,15 @@ async fn main() {
                 error!("Error handling old member: {}", e);
             }
 
-            match handle::authorize_new_server_member(&config, &network_id, id, &record_file_path)
-                .await
+            match handle::authorize_new_server_member(
+                &config,
+                &network_id,
+                id,
+                &record_file_path,
+                retry_interval,
+                retry_count,
+            )
+            .await
             {
                 Ok(ips) => {
                     if !ips.is_empty() {

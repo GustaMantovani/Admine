@@ -30,6 +30,8 @@ pub async fn authorize_new_server_member(
     network_id: &str,
     id: &str,
     record_file_path: &str,
+    retry_interval: u64,
+    retry_count: u64,
 ) -> Result<Vec<IpAddr>, Box<dyn std::error::Error>> {
     let mut new_member = get_network_member(config, network_id, id).await?;
 
@@ -55,8 +57,10 @@ pub async fn authorize_new_server_member(
             save_member_to_file(&updated_member, record_file_path)?;
 
             if updated_member.config.is_some() {
-                sleep(Duration::from_secs(5));
-                loop {
+                sleep(Duration::from_secs(retry_interval));
+                let mut retry_counter = 0;
+                while retry_counter < retry_count {
+                    retry_counter += 1;
                     match get_network_member(config, network_id, &node_id).await {
                         Ok(member) => {
                             if let Some(Some(ip_assignments)) = member
@@ -70,14 +74,14 @@ pub async fn authorize_new_server_member(
                                 }
                             }
                             warn!("IP Assignments not found for Node ID: {}", node_id);
-                            sleep(Duration::from_secs(5));
+                            sleep(Duration::from_secs(retry_interval));
                         }
                         Err(e) => {
                             error!(
                                 "Error getting updated member with Node ID {}: {}",
                                 node_id, e
                             );
-                            sleep(Duration::from_secs(5));
+                            sleep(Duration::from_secs(retry_interval));
                         }
                     }
                 }
