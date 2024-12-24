@@ -1,5 +1,5 @@
-use std::io::{prelude::*, self, Write};
 use std::fs::{File, OpenOptions};
+use std::io::{self, prelude::*, Write};
 
 pub fn write_to_file(file_path: String, content: String) -> io::Result<()> {
     // Open the file in append mode or create it if it doesn't exist

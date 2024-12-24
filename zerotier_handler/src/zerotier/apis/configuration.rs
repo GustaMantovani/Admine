@@ -19,9 +19,12 @@ pub struct ApiKey {
     pub key: String,
 }
 
-impl ApiKey{
+impl ApiKey {
     pub fn new(api_key: String) -> ApiKey {
-        ApiKey { prefix: None, key: api_key }
+        ApiKey {
+            prefix: None,
+            key: api_key,
+        }
     }
 }
 
