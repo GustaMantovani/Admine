@@ -1,10 +1,11 @@
 use log::{error, info};
+use models::message::AdmineMessage;
 use redis::Commands;
 use std::env;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::spawn;
+use tokio::sync::mpsc;
 use zerotier::apis::configuration::Configuration;
 mod handle;
 mod models;
@@ -65,7 +66,7 @@ async fn main() {
         Ok(client) => {
             info!("Connected to Redis at {}", redis_url);
             client
-        },
+        }
         Err(e) => {
             error!("Failed to connect to Redis at {}: {}", redis_url, e);
             return;
@@ -76,7 +77,7 @@ async fn main() {
         Ok(conn) => {
             info!("Subscription connection established");
             conn
-        },
+        }
         Err(e) => {
             error!("Failed to establish subscription connection: {}", e);
             return;
@@ -87,7 +88,7 @@ async fn main() {
         Ok(conn) => {
             info!("Publish connection established");
             Arc::new(Mutex::new(conn))
-        },
+        }
         Err(e) => {
             error!("Failed to establish publish connection: {}", e);
             return;
@@ -97,18 +98,133 @@ async fn main() {
     let mut pubsub = sub_connection.as_pubsub();
 
     if let Err(e) = pubsub.subscribe(&server_channel) {
-        error!("Failed to subscribe to server channel {}: {}", server_channel, e);
+        error!(
+            "Failed to subscribe to server channel {}: {}",
+            server_channel, e
+        );
         return;
     } else {
         info!("Subscribed to server channel: {}", server_channel);
     }
 
     if let Err(e) = pubsub.subscribe(&command_channel) {
-        error!("Failed to subscribe to command channel {}: {}", command_channel, e);
+        error!(
+            "Failed to subscribe to command channel {}: {}",
+            command_channel, e
+        );
         return;
     } else {
         info!("Subscribed to command channel: {}", command_channel);
     }
+
+    let (tx, mut rx) = mpsc::channel::<AdmineMessage>(32);
+
+    // Spawn a task to process messages from the queue
+    let config_clone = config.clone();
+    let network_id_clone = network_id.clone();
+    let record_file_path_clone = record_file_path.clone();
+    let pub_connection_clone = pub_connection.clone();
+    let vpn_channel_clone = vpn_channel.clone();
+    spawn(async move {
+        while let Some(admine_message) = rx.recv().await {
+            if admine_message.tags.contains(&"server_up".to_string()) {
+                let id = admine_message.message.as_str();
+                info!("Server starting with ID: {}", id);
+
+                if let Err(e) = handle::remove_old_server_member(
+                    &config_clone,
+                    &network_id_clone,
+                    &record_file_path_clone,
+                )
+                .await
+                {
+                    error!("Error handling old member: {}", e);
+                }
+
+                match handle::authorize_new_server_member(
+                    &config_clone,
+                    &network_id_clone,
+                    id,
+                    &record_file_path_clone,
+                    retry_interval,
+                    retry_count,
+                )
+                .await
+                {
+                    Ok(ips) => {
+                        if !ips.is_empty() {
+                            let ip_string = ips
+                                .iter()
+                                .map(|ip| ip.to_string())
+                                .collect::<Vec<String>>()
+                                .join(", ");
+                            info!("Authorized IPs: {}", ip_string);
+
+                            match pub_connection_clone
+                                .lock()
+                                .unwrap()
+                                .publish::<&str, &String, ()>(
+                                    vpn_channel_clone.as_str(),
+                                    &ip_string,
+                                ) {
+                                Ok(_) => info!(
+                                    "IP successfully published to channel {}",
+                                    vpn_channel_clone
+                                ),
+                                Err(e) => {
+                                    error!(
+                                        "Error publishing IP to channel {}: {}",
+                                        vpn_channel_clone, e
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => error!("Error handling new member: {}", e),
+                }
+            }
+
+            if admine_message.tags.contains(&"new_member".to_string()) {
+                let id = admine_message.message.clone();
+                let config = config_clone.clone();
+                let network_id = network_id_clone.clone();
+                let vpn_channel = vpn_channel_clone.clone();
+                let pub_connection_clone = pub_connection_clone.clone();
+
+                spawn(async move {
+                    match handle::authorize_member_by_id(&config, &network_id, &id).await {
+                        Ok(member) => {
+                            let member_json = match serde_json::to_string(&member) {
+                                Ok(json) => json,
+                                Err(e) => {
+                                    error!("Error serializing member: {}", e);
+                                    return;
+                                }
+                            };
+
+                            match pub_connection_clone
+                                .lock()
+                                .unwrap()
+                                .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
+                            {
+                                Ok(_) => info!(
+                                    "Member successfully published to channel {}",
+                                    vpn_channel
+                                ),
+                                Err(e) => {
+                                    error!(
+                                        "Error publishing member to channel {}: {}",
+                                        vpn_channel, e
+                                    )
+                                }
+                            }
+                        }
+                        Err(e) => error!("Error authorizing new member: {}", e),
+                    }
+                });
+            }
+        }
+    });
 
     loop {
         let msg = match pubsub.get_message() {
@@ -137,81 +253,9 @@ async fn main() {
             }
         };
 
-        // Server Up
-        if admine_message.tags.contains(&"server_up".to_string()) {
-            let id = admine_message.message.as_str();
-            info!("Server starting with ID: {}", id);
-
-            if let Err(e) =
-                handle::remove_old_server_member(&config, &network_id, &record_file_path).await
-            {
-                error!("Error handling old member: {}", e);
-            }
-
-            match handle::authorize_new_server_member(
-                &config,
-                &network_id,
-                id,
-                &record_file_path,
-                retry_interval,
-                retry_count,
-            )
-            .await
-            {
-                Ok(ips) => {
-                    if !ips.is_empty() {
-                        let ip_string = ips
-                            .iter()
-                            .map(|ip| ip.to_string())
-                            .collect::<Vec<String>>()
-                            .join(", ");
-                        info!("Authorized IPs: {}", ip_string);
-
-                        match pub_connection.lock().unwrap()
-                            .publish::<&str, &String, ()>(vpn_channel.as_str(), &ip_string)
-                        {
-                            Ok(_) => info!("IP successfully published to channel {}", vpn_channel),
-                            Err(e) => {
-                                error!("Error publishing IP to channel {}: {}", vpn_channel, e)
-                            }
-                        }
-                    }
-                }
-                Err(e) => error!("Error handling new member: {}", e),
-            }
-        }
-
-        // New Member
-        if admine_message.tags.contains(&"new_member".to_string()) {
-            let id = admine_message.message.clone();
-            let config = config.clone();
-            let network_id = network_id.clone();
-            let vpn_channel = vpn_channel.clone();
-            let pub_connection_clone = pub_connection.clone();
-
-            spawn(async move {
-                match handle::authorize_member_by_id(&config, &network_id, &id).await {
-                    Ok(member) => {
-                        let member_json = match serde_json::to_string(&member) {
-                            Ok(json) => json,
-                            Err(e) => {
-                                error!("Error serializing member: {}", e);
-                                return;
-                            }
-                        };
-
-                        match pub_connection_clone.lock().unwrap()
-                            .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
-                        {
-                            Ok(_) => info!("Member successfully published to channel {}", vpn_channel),
-                            Err(e) => {
-                                error!("Error publishing member to channel {}: {}", vpn_channel, e)
-                            }
-                        }
-                    }
-                    Err(e) => error!("Error authorizing new member: {}", e),
-                }
-            });
+        // Enqueue the message for processing
+        if let Err(e) = tx.send(admine_message).await {
+            error!("Error sending message to queue: {}", e);
         }
     }
 }
