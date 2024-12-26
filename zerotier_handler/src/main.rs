@@ -1,7 +1,10 @@
 use log::{error, info};
 use redis::Commands;
 use std::env;
+use std::sync::Arc;
+use std::sync::Mutex;
 use tokio;
+use tokio::spawn;
 use zerotier::apis::configuration::Configuration;
 mod handle;
 mod models;
@@ -33,16 +36,16 @@ async fn main() {
 
     info!(
         "Starting application with the following environment variables:\n\
-           ZEROTIER_API_BASE_URL: {}\n\
-           ZEROTIER_API_TOKEN: [REDACTED]\n\
-           ZEROTIER_NETWORK_ID: {}\n\
-           ZEROTIER_HANDLER_RETRY_COUNT: {}\n\
-           ZEROTIER_HANDLER_RETRY_INTERVAL: {}\n\
-           RECORD_FILE_PATH: {}\n\
-           REDIS_URL: {}\n\
-           REDIS_SERVER_CHANNEL: {}\n\
-           REDIS_COMMAND_CHANNEL: {}\n\
-           REDIS_VPN_CHANNEL: {}",
+           \tZEROTIER_API_BASE_URL: {}\n\
+           \tZEROTIER_API_TOKEN: [REDACTED]\n\
+           \tZEROTIER_NETWORK_ID: {}\n\
+           \tZEROTIER_HANDLER_RETRY_COUNT: {}\n\
+           \tZEROTIER_HANDLER_RETRY_INTERVAL: {}\n\
+           \tRECORD_FILE_PATH: {}\n\
+           \tREDIS_URL: {}\n\
+           \tREDIS_SERVER_CHANNEL: {}\n\
+           \tREDIS_COMMAND_CHANNEL: {}\n\
+           \tREDIS_VPN_CHANNEL: {}",
         base_path,
         network_id,
         retry_count,
@@ -58,13 +61,54 @@ async fn main() {
     let config = Configuration::new(base_path.clone(), api_key.clone());
 
     // Connect to Redis
-    let client = redis::Client::open(redis_url.clone()).unwrap();
-    let mut sub_connection = client.get_connection().unwrap();
-    let mut pub_connection = client.get_connection().unwrap();
+    let client = match redis::Client::open(redis_url.clone()) {
+        Ok(client) => {
+            info!("Connected to Redis at {}", redis_url);
+            client
+        },
+        Err(e) => {
+            error!("Failed to connect to Redis at {}: {}", redis_url, e);
+            return;
+        }
+    };
+
+    let mut sub_connection = match client.get_connection() {
+        Ok(conn) => {
+            info!("Subscription connection established");
+            conn
+        },
+        Err(e) => {
+            error!("Failed to establish subscription connection: {}", e);
+            return;
+        }
+    };
+
+    let pub_connection = match client.get_connection() {
+        Ok(conn) => {
+            info!("Publish connection established");
+            Arc::new(Mutex::new(conn))
+        },
+        Err(e) => {
+            error!("Failed to establish publish connection: {}", e);
+            return;
+        }
+    };
+
     let mut pubsub = sub_connection.as_pubsub();
 
-    pubsub.subscribe(&server_channel).unwrap();
-    pubsub.subscribe(&command_channel).unwrap();
+    if let Err(e) = pubsub.subscribe(&server_channel) {
+        error!("Failed to subscribe to server channel {}: {}", server_channel, e);
+        return;
+    } else {
+        info!("Subscribed to server channel: {}", server_channel);
+    }
+
+    if let Err(e) = pubsub.subscribe(&command_channel) {
+        error!("Failed to subscribe to command channel {}: {}", command_channel, e);
+        return;
+    } else {
+        info!("Subscribed to command channel: {}", command_channel);
+    }
 
     loop {
         let msg = match pubsub.get_message() {
@@ -123,7 +167,7 @@ async fn main() {
                             .join(", ");
                         info!("Authorized IPs: {}", ip_string);
 
-                        match pub_connection
+                        match pub_connection.lock().unwrap()
                             .publish::<&str, &String, ()>(vpn_channel.as_str(), &ip_string)
                         {
                             Ok(_) => info!("IP successfully published to channel {}", vpn_channel),
@@ -139,30 +183,35 @@ async fn main() {
 
         // New Member
         if admine_message.tags.contains(&"new_member".to_string()) {
-            let id = admine_message.message.as_str();
-            info!("New member with ID: {}", id);
+            let id = admine_message.message.clone();
+            let config = config.clone();
+            let network_id = network_id.clone();
+            let vpn_channel = vpn_channel.clone();
+            let pub_connection_clone = pub_connection.clone();
 
-            match handle::authorize_member_by_id(&config, &network_id, id).await {
-                Ok(member) => {
-                    let member_json = match serde_json::to_string(&member) {
-                        Ok(json) => json,
-                        Err(e) => {
-                            error!("Error serializing member: {}", e);
-                            continue;
-                        }
-                    };
+            spawn(async move {
+                match handle::authorize_member_by_id(&config, &network_id, &id).await {
+                    Ok(member) => {
+                        let member_json = match serde_json::to_string(&member) {
+                            Ok(json) => json,
+                            Err(e) => {
+                                error!("Error serializing member: {}", e);
+                                return;
+                            }
+                        };
 
-                    match pub_connection
-                        .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
-                    {
-                        Ok(_) => info!("Member successfully published to channel {}", vpn_channel),
-                        Err(e) => {
-                            error!("Error publishing member to channel {}: {}", vpn_channel, e)
+                        match pub_connection_clone.lock().unwrap()
+                            .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
+                        {
+                            Ok(_) => info!("Member successfully published to channel {}", vpn_channel),
+                            Err(e) => {
+                                error!("Error publishing member to channel {}: {}", vpn_channel, e)
+                            }
                         }
                     }
+                    Err(e) => error!("Error authorizing new member: {}", e),
                 }
-                Err(e) => error!("Error authorizing new member: {}", e),
-            }
+            });
         }
     }
 }
