@@ -54,8 +54,6 @@ pub async fn authorize_new_server_member(
                 update_network_member(config, network_id, &node_id, new_member.clone()).await?;
             info!("Member successfully updated with Node ID: {}", node_id);
 
-            save_member_to_file(&updated_member, record_file_path)?;
-
             if updated_member.config.is_some() {
                 sleep(Duration::from_secs(retry_interval));
                 let mut retry_counter = 0;
@@ -70,6 +68,19 @@ pub async fn authorize_new_server_member(
                             {
                                 if !ip_assignments.is_empty() {
                                     info!("IP Assignments found for Node ID: {}", node_id);
+
+                                    if let Err(e) = remove_old_server_member(
+                                        &config,
+                                        &network_id,
+                                        &record_file_path,
+                                    )
+                                    .await
+                                    {
+                                        error!("Error handling old member: {}", e);
+                                    }
+
+                                    save_member_to_file(&updated_member, record_file_path)?;
+
                                     return Ok(member.get_member_ips());
                                 }
                             }

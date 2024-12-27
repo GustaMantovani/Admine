@@ -129,17 +129,7 @@ async fn main() {
         while let Some(admine_message) = rx.recv().await {
             let id = admine_message.message.as_str();
             info!("Server starting with ID: {}", id);
-
-            if let Err(e) = handle::remove_old_server_member(
-                &config_clone,
-                &network_id_clone,
-                &record_file_path_clone,
-            )
-            .await
-            {
-                error!("Error handling old member: {}", e);
-            }
-
+            
             match handle::authorize_new_server_member(
                 &config_clone,
                 &network_id_clone,
