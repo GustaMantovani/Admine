@@ -129,7 +129,7 @@ async fn main() {
         while let Some(admine_message) = rx.recv().await {
             let id = admine_message.message.as_str();
             info!("Server starting with ID: {}", id);
-            
+
             match handle::authorize_new_server_member(
                 &config_clone,
                 &network_id_clone,
@@ -198,8 +198,6 @@ async fn main() {
             }
         };
 
-
-
         // Enqueue the message for processing
         if admine_message.tags.contains(&"server_up".to_string()) {
             let admine_message = admine_message.clone();
@@ -231,15 +229,11 @@ async fn main() {
                             .unwrap()
                             .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
                         {
-                            Ok(_) => info!(
-                                "Member successfully published to channel {}",
-                                vpn_channel
-                            ),
+                            Ok(_) => {
+                                info!("Member successfully published to channel {}", vpn_channel)
+                            }
                             Err(e) => {
-                                error!(
-                                    "Error publishing member to channel {}: {}",
-                                    vpn_channel, e
-                                )
+                                error!("Error publishing member to channel {}: {}", vpn_channel, e)
                             }
                         }
                     }
