@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,11 +11,6 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/spf13/cobra"
 )
-
-type Message struct {
-	Tags []string `json:"tags"`
-	Msg  string   `json:"message"`
-}
 
 func convertMessageToJson(status string) string {
 	var m Message
@@ -56,7 +50,7 @@ var env bool
 var file bool
 
 // Roda a aplicação
-func runRootCmd(cmd *cobra.Command, args []string) {
+func runServerHandler(cmd *cobra.Command, args []string) {
 	iniciado := false
 	subscriber := pubsub.CreateSubscriber("localhost:6379")
 
@@ -97,7 +91,14 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 
 		time.Sleep(1 * time.Second)
 	}
+}
 
+func runRootCmd(cmd *cobra.Command, args []string) {
+	go runServerHandler(cmd, args)
+	go internal.RunCommandHandler()
+
+	for {
+	}
 }
 
 var rootCmd = &cobra.Command{
