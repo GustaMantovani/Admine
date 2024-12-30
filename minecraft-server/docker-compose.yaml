@@ -24,3 +24,4 @@ services:
       - ./config/user_jvm_args.txt:/srv/minecraft/user_jvm_args.txt
     stdin_open: true
     tty: true
+    restart: unless-stopped
