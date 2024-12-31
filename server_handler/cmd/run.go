@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,26 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/spf13/cobra"
 )
+
+type Message struct {
+	Tags []string `json:"tags"`
+	Msg  string   `json:"message"`
+}
+
+func convertMessageToJson(status string) string {
+	var m Message
+	m.Tags = append(m.Tags, status)
+	m.Msg = internal.GetZeroTierNodeID()
+
+	jsonBytes, err := json.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+
+	jsonString := string(jsonBytes)
+
+	return jsonString
+}
 
 var minecraftServer = internal.MinecraftServerContainerByCompose{}
 var subscriber = pubsub.RedisPubSubSubscriber{}
@@ -63,15 +84,13 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		minecraftServer.ConfigureWithFile()
 	}
 
-	fmt.Println("a: ", minecraftServer)
-
 	var isUp bool
 	for {
 		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
 		if isUp == true && iniciado == false {
-			subscriber.SendMessage("Server up")
+			subscriber.SendMessage(convertMessageToJson("server up"))
 		} else if isUp == false && iniciado == true {
-			subscriber.SendMessage("Server down")
+			subscriber.SendMessage(convertMessageToJson("server down"))
 		}
 
 		iniciado = isUp
