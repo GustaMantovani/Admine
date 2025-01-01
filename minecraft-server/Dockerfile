@@ -10,14 +10,14 @@ ENV PATH $JAVA_HOME/bin:$PATH
 ENV NETWORK_ID=${NETWORK_ID}
 
 # Atualiza e instala dependências essenciais
-RUN apt-get update && \
-    apt-get install -y software-properties-common curl && \
+RUN apt update && \
+    apt install -y software-properties-common curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Adiciona o repositório do OpenJDK e instala a versão escolhida
 RUN add-apt-repository ppa:openjdk-r/ppa && \
-    apt-get update && \
-    apt-get install -y openjdk-${JAVA_VERSION}-jdk && \
+    apt update && \
+    apt install -y openjdk-${JAVA_VERSION}-jdk && \
     rm -rf /var/lib/apt/lists/*
 
 # Instalação do ZeroTier
@@ -39,4 +39,4 @@ RUN curl -O https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.
 RUN java -jar forge-1.20.1-47.3.0-installer.jar --installServer
 
 # Comando para iniciar o serviço ZeroTier e o servidor Minecraft
-CMD zerotier-one & sleep 1 && ./run.sh
+CMD zerotier-one & ./run.sh
