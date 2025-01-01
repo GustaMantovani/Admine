@@ -12,21 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func convertMessageToJson(status string) string {
-	var m Message
-	m.Tags = append(m.Tags, status)
-	m.Msg = internal.GetZeroTierNodeID()
-
-	jsonBytes, err := json.Marshal(m)
-	if err != nil {
-		panic(err)
-	}
-
-	jsonString := string(jsonBytes)
-
-	return jsonString
-}
-
 var minecraftServer = internal.MinecraftServerContainerByCompose{}
 var subscriber = pubsub.RedisPubSubSubscriber{}
 
@@ -50,7 +35,7 @@ var env bool
 var file bool
 
 // Roda a aplicação
-func runServerHandler(cmd *cobra.Command, args []string) {
+func runServerHandler(args []string) {
 	iniciado := false
 	subscriber := pubsub.CreateSubscriber("localhost:6379")
 
@@ -82,9 +67,9 @@ func runServerHandler(cmd *cobra.Command, args []string) {
 	for {
 		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
 		if isUp == true && iniciado == false {
-			subscriber.SendMessage(convertMessageToJson("server up"))
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_up"))
 		} else if isUp == false && iniciado == true {
-			subscriber.SendMessage(convertMessageToJson("server down"))
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_down"))
 		}
 
 		iniciado = isUp
@@ -94,7 +79,7 @@ func runServerHandler(cmd *cobra.Command, args []string) {
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {
-	go runServerHandler(cmd, args)
+	go runServerHandler(args)
 	go internal.RunCommandHandler()
 
 	for {
