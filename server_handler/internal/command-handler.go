@@ -3,12 +3,14 @@ package internal
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"server/handler/pubsub"
 )
 
-func RunCommandHandler() {
-	receiver := pubsub.CreatePubSub("command", context.Background(), pubsub.CreateRedisClient("localhost:6379"))
+func RunCommandHandler(containerName string) {
+	pubsubAddr := pubsub.GetConfigServerChannelFromDotEnv("REDIS_COMMAND_CHANNEL")
+	fmt.Println(pubsubAddr.Addr)
+	receiver := pubsub.CreatePubSub(pubsubAddr.Channel, context.Background(), pubsub.CreateRedisClient(pubsubAddr.Addr))
 	for {
 		msg, err := receiver.ReceiveMessage(context.Background())
 
@@ -26,7 +28,8 @@ func RunCommandHandler() {
 
 		commmand := m.Msg + "\n"
 
-		WriteToContainerByName("minecraft-server-mine_server-1", commmand)
-		log.Println("Commando recebindo: ", commmand)
+		fmt.Println(containerName)
+
+		WriteToContainerByName(containerName, commmand)
 	}
 }

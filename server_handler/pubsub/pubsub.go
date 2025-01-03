@@ -12,8 +12,8 @@ import (
 var serverChannel string
 
 type RedisPubSubMetadata struct {
-	channel string
-	addr    string
+	Channel string
+	Addr    string
 }
 
 // Faz a conexão com o pubsub e envia mensagens para um canal associado ao tipo
@@ -23,14 +23,17 @@ type RedisPubSubSubscriber struct {
 	context context.Context
 }
 
-func getChannelFromDotEnv() string {
+func GetConfigServerChannelFromDotEnv(envVarName string) RedisPubSubMetadata {
 	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
 
-	return os.Getenv("REDIS_SERVER_CHANNEL")
+	return RedisPubSubMetadata{
+		Channel: os.Getenv(envVarName),
+		Addr:    os.Getenv("REDIS_URL") + ":" + os.Getenv("REDIS_PORT"),
+	}
 }
 
 func CreateRedisClient(addr string) redis.Client {
@@ -45,11 +48,11 @@ func CreatePubSub(channel string, ctx context.Context, client redis.Client) redi
 	return *client.Subscribe(ctx, channel)
 }
 
-func CreateSubscriber(addr string) RedisPubSubSubscriber {
+func CreateSubscriber(addr, channel string) RedisPubSubSubscriber {
 	client := CreateRedisClient(addr)
 
 	return RedisPubSubSubscriber{
-		channel: getChannelFromDotEnv(),
+		channel: channel,
 		Client:  client,
 		context: context.Background(),
 	}

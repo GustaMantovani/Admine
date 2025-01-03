@@ -19,13 +19,12 @@ func WriteToContainerByName(containerName, input string) error {
 	}
 	defer cli.Close()
 
-	// Obtém o ID do container pelo nome
-
 	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
 		return err
 	}
 
+	// Obtém o ID do container pelo nome
 	var containerID string
 	for _, container := range containers {
 		for _, name := range container.Names {

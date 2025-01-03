@@ -35,10 +35,27 @@ var env bool
 var file bool
 
 // Roda a aplicação
-func runServerHandler(args []string) {
+func runServerHandler() {
 	iniciado := false
-	subscriber := pubsub.CreateSubscriber("localhost:6379")
+	config := pubsub.GetConfigServerChannelFromDotEnv("REDIS_SERVER_CHANNEL")
+	subscriber := pubsub.CreateSubscriber(config.Addr, config.Channel)
 
+	var isUp bool
+	for {
+		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
+		if isUp == true && iniciado == false {
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_up"))
+		} else if isUp == false && iniciado == true {
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_down"))
+		}
+
+		iniciado = isUp
+
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func configureMinecraftServer(args []string) {
 	if len(args) > 0 {
 		minecraftServer.ConfigureWithArgs(args)
 	} else if verifyEnvVars() {
@@ -63,24 +80,12 @@ func runServerHandler(args []string) {
 		minecraftServer.ConfigureWithFile()
 	}
 
-	var isUp bool
-	for {
-		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
-		if isUp == true && iniciado == false {
-			subscriber.SendMessage(internal.ConvertMessageToJson("server_up"))
-		} else if isUp == false && iniciado == true {
-			subscriber.SendMessage(internal.ConvertMessageToJson("server_down"))
-		}
-
-		iniciado = isUp
-
-		time.Sleep(1 * time.Second)
-	}
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {
-	go runServerHandler(args)
-	go internal.RunCommandHandler()
+	configureMinecraftServer(args)
+	go runServerHandler()
+	go internal.RunCommandHandler(minecraftServer.ContainerName)
 
 	for {
 	}
