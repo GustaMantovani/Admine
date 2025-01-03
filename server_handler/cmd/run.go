@@ -23,7 +23,7 @@ The program use env and a yaml config file to get the server info.
 The env vars are MINECRAFT_SERVER_SERVICE which refers to the service service name 
 in the compose file and MINECRAFT_SERVER_DIRECTORY which refers to compose directory.
 
-The config file is a yaml in ~/.config/admine/adhandler.yaml with the fields 'serviceName' and 'composeDirectory'.
+The config file is a yaml in ~/.config/admine/server.yaml with the fields 'serviceName' and 'composeDirectory'.
 The directory must be full name.
 
 The program will first look for the env, if not defined will then look for the config file.
@@ -46,7 +46,7 @@ func runServerHandler(args []string) {
 	} else if verifyConfigFile() {
 		minecraftServer.ConfigureWithFile()
 	} else {
-		fmt.Println("Não foi possível obter as configurações do servidor")
+		fmt.Println("Não foi possível obter as configurações do servidor. Elas não estão definidas.")
 		os.Exit(0)
 	}
 
