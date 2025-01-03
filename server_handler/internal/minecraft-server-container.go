@@ -10,7 +10,7 @@ import (
 )
 
 type MinecraftServerContainerByCompose struct {
-	containerName            string
+	ContainerName            string
 	composeDirectoryFullName string
 	containerStatus          string
 	DockerClient             *docker.Client
@@ -21,7 +21,7 @@ func NewMinecraftServerContainerByCompose(client *docker.Client, serviceName, fu
 	containerName := partsDirectory[len(partsDirectory)-2] + "-" + serviceName + "-1"
 
 	minecraftServer := MinecraftServerContainerByCompose{
-		containerName:            containerName,
+		ContainerName:            containerName,
 		composeDirectoryFullName: fullNameDirectory,
 		DockerClient:             client,
 	}
@@ -41,7 +41,7 @@ func (ms *MinecraftServerContainerByCompose) SetContainerNameByServiceAndDirecto
 
 	containerName := result[len(result)-1] + "-" + serviceName + "-1"
 
-	ms.containerName = containerName
+	ms.ContainerName = containerName
 	ms.composeDirectoryFullName = fullNameDirectory
 }
 
@@ -50,7 +50,7 @@ func (ms MinecraftServerContainerByCompose) UpMinecraftServerContainerByCompose(
 }
 
 func (ms *MinecraftServerContainerByCompose) updateMinecraftServerContainerStatus() {
-	ms.containerStatus = SeeContainerStatus(ms.DockerClient, ms.containerName)
+	ms.containerStatus = SeeContainerStatus(ms.DockerClient, ms.ContainerName)
 }
 
 // Verifica se o container do servidor está de pé e se não estiver sobe ele
