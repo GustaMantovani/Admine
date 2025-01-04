@@ -18,3 +18,10 @@ export COMMAND_CHANNEL=command_channel
 export NETWORK_ID=xxxxxxxxxxxx
 export REDIS_URL=redis://127.0.0.1/
 ```
+
+# Server Handler config
+
+```yaml
+serverName: "name_server_service_in_the_compose"
+composeDirectory: "compose_directory_full_name"
+```
