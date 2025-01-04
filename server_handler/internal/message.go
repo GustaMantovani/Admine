@@ -7,10 +7,10 @@ type Message struct {
 	Msg  string   `json:"message"`
 }
 
-func ConvertMessageToJson(status string) string {
+func ConvertMessageToJson(status, containerName string) string {
 	var m Message
 	m.Tags = append(m.Tags, status)
-	m.Msg = GetZeroTierNodeID()
+	m.Msg = GetZeroTierNodeID(containerName)
 
 	jsonBytes, err := json.Marshal(m)
 	if err != nil {

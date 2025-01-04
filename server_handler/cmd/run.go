@@ -34,7 +34,7 @@ The directory is the working directory in the shell`
 var env bool
 var file bool
 
-// Roda a aplicação
+// Roda o server handler
 func runServerHandler() {
 	iniciado := false
 	config := pubsub.GetConfigServerChannelFromDotEnv("REDIS_SERVER_CHANNEL")
@@ -44,9 +44,9 @@ func runServerHandler() {
 	for {
 		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
 		if isUp == true && iniciado == false {
-			subscriber.SendMessage(internal.ConvertMessageToJson("server_up"))
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_up", minecraftServer.ContainerName))
 		} else if isUp == false && iniciado == true {
-			subscriber.SendMessage(internal.ConvertMessageToJson("server_down"))
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_down", minecraftServer.ContainerName))
 		}
 
 		iniciado = isUp
