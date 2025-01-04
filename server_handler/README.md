@@ -21,6 +21,8 @@ export REDIS_URL=redis://127.0.0.1/
 
 # Server Handler config
 
+This config file should be placed in `$HOME/.config/admine/server.yaml`
+
 ```yaml
 serverName: "name_server_service_in_the_compose"
 composeDirectory: "compose_directory_full_name"
