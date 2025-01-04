@@ -13,8 +13,8 @@ func StartServerDockerCompose(composeDirectory string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-func GetZeroTierNodeID() string {
-	cmd := exec.Command("docker", "exec", "-i", "minecraft-server-mine_server-1", "/bin/bash", "-c", "zerotier-cli info")
+func GetZeroTierNodeID(containerName string) string {
+	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {

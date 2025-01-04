@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,26 +11,6 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/spf13/cobra"
 )
-
-type Message struct {
-	Tags []string `json:"tags"`
-	Msg  string   `json:"message"`
-}
-
-func convertMessageToJson(status string) string {
-	var m Message
-	m.Tags = append(m.Tags, status)
-	m.Msg = internal.GetZeroTierNodeID()
-
-	jsonBytes, err := json.Marshal(m)
-	if err != nil {
-		panic(err)
-	}
-
-	jsonString := string(jsonBytes)
-
-	return jsonString
-}
 
 var minecraftServer = internal.MinecraftServerContainerByCompose{}
 var subscriber = pubsub.RedisPubSubSubscriber{}
@@ -44,7 +23,7 @@ The program use env and a yaml config file to get the server info.
 The env vars are MINECRAFT_SERVER_SERVICE which refers to the service service name 
 in the compose file and MINECRAFT_SERVER_DIRECTORY which refers to compose directory.
 
-The config file is a yaml in ~/.config/admine/adhandler.yaml with the fields 'serviceName' and 'composeDirectory'.
+The config file is a yaml in ~/.config/admine/server.yaml with the fields 'serviceName' and 'composeDirectory'.
 The directory must be full name.
 
 The program will first look for the env, if not defined will then look for the config file.
@@ -55,11 +34,28 @@ The directory is the working directory in the shell`
 var env bool
 var file bool
 
-// Roda a aplicação
-func runRootCmd(cmd *cobra.Command, args []string) {
+// Roda o server handler
+func runServerHandler() {
 	iniciado := false
-	subscriber := pubsub.CreateSubscriber("localhost:6379")
+	config := pubsub.GetConfigServerChannelFromDotEnv("REDIS_SERVER_CHANNEL")
+	subscriber := pubsub.CreateSubscriber(config.Addr, config.Channel)
 
+	var isUp bool
+	for {
+		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
+		if isUp == true && iniciado == false {
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_up", minecraftServer.ContainerName))
+		} else if isUp == false && iniciado == true {
+			subscriber.SendMessage(internal.ConvertMessageToJson("server_down", minecraftServer.ContainerName))
+		}
+
+		iniciado = isUp
+
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func configureMinecraftServer(args []string) {
 	if len(args) > 0 {
 		minecraftServer.ConfigureWithArgs(args)
 	} else if verifyEnvVars() {
@@ -67,7 +63,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 	} else if verifyConfigFile() {
 		minecraftServer.ConfigureWithFile()
 	} else {
-		fmt.Println("Não foi possível obter as configurações do servidor")
+		fmt.Println("Não foi possível obter as configurações do servidor. Elas não estão definidas.")
 		os.Exit(0)
 	}
 
@@ -84,20 +80,15 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		minecraftServer.ConfigureWithFile()
 	}
 
-	var isUp bool
+}
+
+func runRootCmd(cmd *cobra.Command, args []string) {
+	configureMinecraftServer(args)
+	go runServerHandler()
+	go internal.RunCommandHandler(minecraftServer.ContainerName)
+
 	for {
-		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
-		if isUp == true && iniciado == false {
-			subscriber.SendMessage(convertMessageToJson("server up"))
-		} else if isUp == false && iniciado == true {
-			subscriber.SendMessage(convertMessageToJson("server down"))
-		}
-
-		iniciado = isUp
-
-		time.Sleep(1 * time.Second)
 	}
-
 }
 
 var rootCmd = &cobra.Command{
