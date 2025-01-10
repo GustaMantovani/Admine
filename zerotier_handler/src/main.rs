@@ -1,6 +1,7 @@
 use log::{error, info};
 use models::message::AdmineMessage;
 use redis::Commands;
+use serde_json;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tokio;
@@ -149,10 +150,23 @@ async fn main() {
                             .join(", ");
                         info!("Authorized IPs: {}", ip_string);
 
+                        let admine_message = AdmineMessage {
+                            tags: vec!["server_up".to_string()],
+                            message: ip_string.clone(),
+                        };
+
+                        let json_message = match serde_json::to_string(&admine_message) {
+                            Ok(json) => json,
+                            Err(e) => {
+                                error!("Error converting message to JSON: {}", e);
+                                return;
+                            }
+                        };
+
                         match pub_connection_clone
                             .lock()
                             .unwrap()
-                            .publish::<&str, &String, ()>(vpn_channel_clone.as_str(), &ip_string)
+                            .publish::<&str, &String, ()>(vpn_channel_clone.as_str(), &json_message)
                         {
                             Ok(_) => {
                                 info!("IP successfully published to channel {}", vpn_channel_clone)
@@ -216,19 +230,24 @@ async fn main() {
             spawn(async move {
                 match handle::authorize_member_by_id(&config, &network_id, &id).await {
                     Ok(member) => {
-                        let member_json = match serde_json::to_string(&member) {
-                            Ok(json) => json,
-                            Err(e) => {
-                                error!("Error serializing member: {}", e);
-                                return;
-                            }
+                        let member_id = member
+                            .id
+                            .clone()
+                            .unwrap_or_else(|| Some(String::from("None")))
+                            .unwrap();
+
+                        let admine_message = AdmineMessage {
+                            tags: vec!["new_member".to_string()],
+                            message: member_id,
                         };
 
                         match pub_connection_clone
                             .lock()
                             .unwrap()
-                            .publish::<&str, &String, ()>(vpn_channel.as_str(), &member_json)
-                        {
+                            .publish::<&str, &String, ()>(
+                                vpn_channel.as_str(),
+                                &serde_json::to_string(&admine_message).unwrap(),
+                            ) {
                             Ok(_) => {
                                 info!("Member successfully published to channel {}", vpn_channel)
                             }
