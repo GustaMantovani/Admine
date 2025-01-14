@@ -14,7 +14,7 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 serde_with = { version = "3.12", default-features = false, features = ["base64", "std", "macros"] }
 serde_repr = "0.1"
 url = "2.5"
-uuid = { version = "1.8", features = ["serde", "v4"] }
+uuid = { version = "1.11", features = ["serde", "v4"] }
 reqwest = { version = "0.12", features = ["json", "multipart"] }
 log = "0.4"
 env_logger = "0.11"
