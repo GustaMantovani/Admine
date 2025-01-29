@@ -1,4 +1,4 @@
-package internal
+package file
 
 import (
 	"fmt"
@@ -62,7 +62,7 @@ func GetConfigFileData() (ConfigFile, error) {
 }
 
 // Retorna o path da área de trabalho
-func getLocalDirectory() string {
+func GetLocalDirectory() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Printf("Erro ao obter o diretório de trabalho: %v\n", err)

@@ -11,7 +11,7 @@ import (
 
 var serverChannel string
 
-type RedisPubSubMetadata struct {
+type PubSubMetadata struct {
 	Channel string
 	Addr    string
 }
@@ -23,16 +23,16 @@ type RedisPubSubSubscriber struct {
 	context context.Context
 }
 
-func GetConfigServerChannelFromDotEnv(envVarName string) RedisPubSubMetadata {
+func GetConfigServerChannelFromDotEnv(channelVarName string) PubSubMetadata {
 	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
 
-	return RedisPubSubMetadata{
-		Channel: os.Getenv(envVarName),
-		Addr:    os.Getenv("REDIS_URL") + ":" + os.Getenv("REDIS_PORT"),
+	return PubSubMetadata{
+		Channel: os.Getenv(channelVarName),
+		Addr:    os.Getenv("REDIS_URL"),
 	}
 }
 
@@ -59,6 +59,22 @@ func CreateSubscriber(addr, channel string) RedisPubSubSubscriber {
 }
 
 func (sub RedisPubSubSubscriber) SendMessage(message string) {
-	log.Println("Canal: ", sub.channel)
+	// log.Println("Canal: ", sub.channel)
 	sub.Client.Publish(sub.context, sub.channel, message)
+}
+
+func GetRedisMetadataFromDotEnv(channelVar string) {}
+
+func ListenChannelForMessages(pubsubChannel, address string, goChannel chan string) {
+	subscriber := CreatePubSub(pubsubChannel, context.Background(), CreateRedisClient(address))
+
+	for {
+		msg, err := subscriber.ReceiveMessage(context.Background())
+
+		if err != nil {
+			log.Fatal("Erro ao receber mensagem do canal redis: ", err)
+		}
+
+		goChannel <- msg.Payload
+	}
 }
