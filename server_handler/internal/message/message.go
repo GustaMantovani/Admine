@@ -1,4 +1,4 @@
-package internal
+package message
 
 import "encoding/json"
 
@@ -10,7 +10,7 @@ type Message struct {
 func ConvertMessageToJson(status, containerName string) string {
 	var m Message
 	m.Tags = append(m.Tags, status)
-	m.Msg = GetZeroTierNodeID(containerName)
+	// m.Msg = GetZeroTierNodeID(containerName)
 
 	jsonBytes, err := json.Marshal(m)
 	if err != nil {

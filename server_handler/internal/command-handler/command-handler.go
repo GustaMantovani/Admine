@@ -1,10 +1,12 @@
-package internal
+package commandhandler
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"server/handler/pubsub"
+	"server/handler/internal/pubsub"
+
+	"server/handler/internal/message"
 )
 
 func RunCommandHandler(containerName string) {
@@ -18,7 +20,7 @@ func RunCommandHandler(containerName string) {
 			panic(err)
 		}
 
-		var m Message
+		var m message.Message
 
 		err = json.Unmarshal([]byte(msg.Payload), &m)
 

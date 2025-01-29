@@ -1,4 +1,4 @@
-package internal
+package docker
 
 import (
 	"os/exec"
