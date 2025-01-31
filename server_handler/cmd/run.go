@@ -39,54 +39,6 @@ The directory is the working directory in the shell`
 var env bool
 var file bool
 
-// Roda o server handler
-// func runServerHandler() {
-// 	iniciado := false
-// 	config := pubsub.GetConfigServerChannelFromDotEnv("REDIS_SERVER_CHANNEL")
-// 	subscriber := pubsub.CreateSubscriber(config.Addr, config.Channel)
-//
-// 	var isUp bool
-// 	for {
-// 		_, isUp = minecraftServer.VerifyContainerAndUpIfDown()
-// 		if isUp == true && iniciado == false {
-// 			subscriber.SendMessage(internal.ConvertMessageToJson("server_up", minecraftServer.ContainerName))
-// 		} else if isUp == false && iniciado == true {
-// 			subscriber.SendMessage(internal.ConvertMessageToJson("server_down", minecraftServer.ContainerName))
-// 		}
-//
-// 		iniciado = isUp
-//
-// 		time.Sleep(1 * time.Second)
-// 	}
-// }
-
-// func configureMinecraftServer(args []string) {
-// 	if len(args) > 0 {
-// 		minecraftServer.ConfigureWithArgs(args)
-// 	} else if verifyEnvVars() {
-// 		minecraftServer.ConfigureWithEnv()
-// 	} else if verifyConfigFile() {
-// 		minecraftServer.ConfigureWithFile()
-// 	} else {
-// 		fmt.Println("Não foi possível obter as configurações do servidor. Elas não estão definidas.")
-// 		os.Exit(0)
-// 	}
-//
-// 	if env && file {
-// 		fmt.Println("Flag excludentes foram chamadas.")
-// 		os.Exit(1)
-// 	}
-//
-// 	if env {
-// 		minecraftServer.ConfigureWithEnv()
-// 	}
-//
-// 	if file {
-// 		minecraftServer.ConfigureWithFile()
-// 	}
-//
-// }
-
 func runRootCmd(cmd *cobra.Command, args []string) {
 	// configureMinecraftServer(args)
 	ms := minecraftserver.NewMinecraftServerContainerByCompose("mine_server", "/home/andre/pgm/pessoal/Admine/minecraft-server")
