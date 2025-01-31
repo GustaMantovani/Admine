@@ -31,7 +31,6 @@ func NewMinecraftServerContainerByCompose(serviceName, fullNameDirectory string)
 	minecraftServer := MinecraftServerContainerByCompose{
 		ContainerName:            containerName,
 		composeDirectoryFullName: fullNameDirectory,
-		containerId:              docker.GetContainerId(),
 		client:                   client,
 	}
 
@@ -75,22 +74,6 @@ func (ms MinecraftServerContainerByCompose) SeeStatus() string {
 	return "Container não encontrado."
 
 }
-
-// Verifica se o container do servidor está de pé e se não estiver sobe ele
-// func (ms *MinecraftServerContainerByCompose) VerifyContainerAndUpIfDown() (string, bool) {
-// 	ms.updateMinecraftServerContainerStatus()
-// 	var msg string
-// 	if !strings.Contains(ms.containerStatus, "Up") {
-// 		msg = "Servidor não está de pé. Status do seu container: " + ms.containerStatus
-// 		log.Println(msg)
-// 		ms.UpMinecraftServerContainerByCompose()
-// 		return msg, false
-// 	} else {
-// 		msg = "Servidor de pé. Status: " + ms.containerStatus
-// 		log.Println(msg)
-// 		return msg, true
-// 	}
-// }
 
 // Pega as informações do servidor de argumentos
 func (ms *MinecraftServerContainerByCompose) ConfigureWithArgs(args []string) {
