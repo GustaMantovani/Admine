@@ -14,14 +14,14 @@ import (
 // Minecraft Server metadata about the compose container
 type MinecraftServerContainerByCompose struct {
 	ContainerName            string
-	composeDirectoryFullName string
+	ComposeDirectoryFullName string
 	containerId              string
 	client                   *dockerClient.Client
 }
 
-func NewMinecraftServerContainerByCompose(serviceName, fullNameDirectory string) MinecraftServerContainerByCompose {
-	partsDirectory := strings.Split(fullNameDirectory, "/")
-	containerName := partsDirectory[len(partsDirectory)-1] + "-" + serviceName + "-1"
+func NewMinecraftServerContainerByCompose() MinecraftServerContainerByCompose {
+	// partsDirectory := strings.Split(fullNameDirectory, "/")
+	// containerName := partsDirectory[len(partsDirectory)-1] + "-" + serviceName + "-1"
 
 	client, err := dockerClient.NewClientFromEnv()
 	if err != nil {
@@ -29,8 +29,8 @@ func NewMinecraftServerContainerByCompose(serviceName, fullNameDirectory string)
 	}
 
 	minecraftServer := MinecraftServerContainerByCompose{
-		ContainerName:            containerName,
-		composeDirectoryFullName: fullNameDirectory,
+		ContainerName:            "",
+		ComposeDirectoryFullName: "",
 		client:                   client,
 	}
 
@@ -50,11 +50,11 @@ func (ms *MinecraftServerContainerByCompose) SetContainerNameByServiceAndDirecto
 	containerName := result[len(result)-1] + "-" + serviceName + "-1"
 
 	ms.ContainerName = containerName
-	ms.composeDirectoryFullName = fullNameDirectory
+	ms.ComposeDirectoryFullName = fullNameDirectory
 }
 
 func (ms MinecraftServerContainerByCompose) UpMinecraftServerContainerByCompose() ([]byte, error) {
-	return docker.StartServerDockerCompose(ms.composeDirectoryFullName)
+	return docker.StartServerDockerCompose(ms.ComposeDirectoryFullName)
 }
 
 func (ms MinecraftServerContainerByCompose) SeeStatus() string {
@@ -86,7 +86,6 @@ func (ms *MinecraftServerContainerByCompose) ConfigureWithEnv() {
 	directory := os.Getenv("MINECRAFT_SERVER_DIRECTORY")
 
 	ms.SetContainerNameByServiceAndDirectory(serverName, directory)
-	ms.UpMinecraftServerContainerByCompose()
 }
 
 // Pega as informações do servidor do arquivo de configuração
@@ -101,5 +100,18 @@ func (ms *MinecraftServerContainerByCompose) ConfigureWithFile() {
 	directory := configFileData.ComposeDirectory
 
 	ms.SetContainerNameByServiceAndDirectory(serverName, directory)
-	ms.UpMinecraftServerContainerByCompose()
+}
+
+func (ms *MinecraftServerContainerByCompose) ConfigureMinecraftServer(env, file bool, args []string) {
+	if len(args) != 0 {
+		ms.ConfigureWithArgs(args)
+	} else {
+		if env && file {
+			log.Fatal("Flags excludentes foram chamadas.")
+		} else if env {
+			ms.ConfigureWithEnv()
+		} else if file {
+			ms.ConfigureWithFile()
+		}
+	}
 }
