@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -40,10 +41,11 @@ var env bool
 var file bool
 
 func runRootCmd(cmd *cobra.Command, args []string) {
-	// configureMinecraftServer(args)
-	ms := minecraftserver.NewMinecraftServerContainerByCompose("mine_server", "/home/andre/pgm/pessoal/Admine/minecraft-server")
+	ms := minecraftserver.NewMinecraftServerContainerByCompose()
+	ms.ConfigureMinecraftServer(env, file, args)
+	log.Println(ms.ContainerName)
 	time.Sleep(time.Second * 2)
-	go serverhandler.RunServerHandler()
+	go serverhandler.RunServerHandler(ms)
 	go healthchecker.RunHealthChecker(ms)
 	go commandhandler.RunCommandHandler(ms.ContainerName)
 
