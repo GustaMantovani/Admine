@@ -3,6 +3,7 @@ package serverhandler
 import (
 	"log"
 	"server/handler/internal/docker"
+	"server/handler/internal/message"
 	minecraftserver "server/handler/internal/minecraft-server"
 	"server/handler/internal/pubsub"
 )
@@ -27,6 +28,13 @@ func RunServerHandler(ms minecraftserver.MinecraftServerContainerByCompose) {
 			r := string(res)
 
 			log.Println(r)
+			SendMessageToServerChannel("server_up", ms.ContainerName)
 		}
 	}
+}
+
+func SendMessageToServerChannel(status, containerName string) {
+	config := pubsub.GetConfigServerChannelFromDotEnv("REDIS_SERVER_CHANNEL")
+	publisher := pubsub.CreatePubsub(config.Addr, config.Channel)
+	publisher.SendMessage(message.GetMessageInJsonString(status, containerName))
 }
