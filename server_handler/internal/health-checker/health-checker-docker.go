@@ -51,7 +51,7 @@ func RunHealthCheckerWeb() {
 
 func sendAlertToServerHandler() {
 	config := pubsub.GetConfigServerChannelFromDotEnv("HEALTH_CHECKER_CHANNEL")
-	subscriber := pubsub.CreateSubscriber(config.Addr, config.Channel)
+	subscriber := pubsub.CreatePubsub(config.Addr, config.Channel)
 	subscriber.SendMessage("down")
 }
 
