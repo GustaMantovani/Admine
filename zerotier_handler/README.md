@@ -7,19 +7,19 @@ The ZeroTier Handler is a Rust-based component of the Admine infrastructure mana
 ## Environment variables:
 
 ```bash
-RUST_BACKTRACE=full
-PUBSUB_URL=redis://localhost
-PUBSUB_TYPE=Redis
-VPN_API_URL=https://api.zerotier.com/api/v1
-VPN_API_KEY=token
-VPN_NETWORK_ID=id
-COMMAND_CHANNEL=command_channel
-SERVER_CHANNEL=server_channel
-VPN_CHANNEL=vpn_channel
-DB_PATH=./sled
-STORE_TYPE=Sled
-VPN_RETRY_DELAY_MS=10000
-VPN_RETRY_ATTEMPTS=3
+export RUST_BACKTRACE=full
+export PUBSUB_URL=redis://localhost
+export PUBSUB_TYPE=Redis
+export VPN_API_URL=https://api.zerotier.com/api/v1
+export VPN_API_KEY=token
+export VPN_NETWORK_ID=id
+export COMMAND_CHANNEL=command_channel
+export SERVER_CHANNEL=server_channel
+export VPN_CHANNEL=vpn_channel
+export DB_PATH=./sled
+export STORE_TYPE=Sled
+export VPN_RETRY_DELAY_MS=10000
+export VPN_RETRY_ATTEMPTS=3
 ```
 
 ## Log Configuration
