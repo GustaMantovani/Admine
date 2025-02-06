@@ -1,4 +1,4 @@
-target
-record.json
+/target
 .env
+/sled
 zerotier_handler.log

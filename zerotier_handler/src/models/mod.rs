@@ -1,1 +1,1 @@
-pub mod message;
+pub mod admine_message;
