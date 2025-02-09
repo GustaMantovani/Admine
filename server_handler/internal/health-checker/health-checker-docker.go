@@ -32,18 +32,22 @@ func SeeContainerStatus(client *docker.Client, containerName string) string {
 	return containerStatus
 }
 
-func ContainerStatusEndpoint(w http.ResponseWriter, r *http.Request) {
-	client, err := docker.NewClientFromEnv()
+func ContainerStatusEndpoint(serverName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		client, err := docker.NewClientFromEnv()
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "%s", err.Error())
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "%s", err.Error())
+		}
+
+		fmt.Fprintf(w, "%s", SeeContainerStatus(client, serverName))
+
 	}
-	fmt.Fprintf(w, "%s", SeeContainerStatus(client, "minecraft-server-mine_server-1"))
 }
 
-func RunHealthCheckerWeb() {
-	http.HandleFunc("/status", ContainerStatusEndpoint)
+func RunHealthCheckerWeb(ms minecraftserver.MinecraftServerContainerByCompose) {
+	http.HandleFunc("/status", ContainerStatusEndpoint(ms.ContainerName))
 	if err := http.ListenAndServe(":3132", nil); err != nil {
 		log.Fatal("Erro ao inicializar serve: ", err)
 	}
@@ -71,5 +75,5 @@ func healthCheckerAlert(ms minecraftserver.MinecraftServerContainerByCompose) {
 func RunHealthChecker(ms minecraftserver.MinecraftServerContainerByCompose) {
 	go healthCheckerAlert(ms)
 
-	RunHealthCheckerWeb()
+	RunHealthCheckerWeb(ms)
 }
