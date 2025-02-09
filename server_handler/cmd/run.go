@@ -6,20 +6,13 @@ import (
 	"os"
 	"time"
 
-	// "server/handler/internal"
 	commandhandler "server/handler/internal/command-handler"
 	"server/handler/internal/health-checker"
 	minecraftserver "server/handler/internal/minecraft-server"
 	serverhandler "server/handler/internal/server-handler"
 
-	// minecraftserver "server/handler/internal/minecraft-server"
-	// "time"
-
 	"github.com/spf13/cobra"
 )
-
-// var minecraftServer = minecraftserver.MinecraftServerContainerByCompose{}
-// var subscriber = pubsub.RedisPubSubSubscriber{}
 
 var runLongDescription = `Up the server container by compose and continuosly monitors its status to ensure it stays up and running.
 If the docker container is down, the program will up him again.
