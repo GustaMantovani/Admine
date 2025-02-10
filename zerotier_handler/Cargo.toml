@@ -8,7 +8,7 @@ dotenvy = "0.15"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
-redis = { version = "0.27", features = ["tokio-comp"] }
+redis = { version = "0.28", features = ["tokio-comp"] }
 serde_with = { version = "3.12", default-features = false, features = ["base64", "std", "macros"] }
 url = "2.5"
 reqwest = { version = "0.12", features = ["json", "multipart"] }
