@@ -56,5 +56,5 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 )
