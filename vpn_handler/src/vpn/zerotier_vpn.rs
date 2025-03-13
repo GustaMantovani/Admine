@@ -1,10 +1,10 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use super::traits::{MemberVpnAuthStatus, MemberVpnStatus, TVpnClient};
+use super::vpn::{MemberVpnAuthStatus, MemberVpnStatus, TVpnClient};
 use crate::errors::VpnError;
-use crate::zerotier::apis::configuration::Configuration;
-use crate::zerotier::apis::network_member_api::{
+use crate::vpn::zerotier::apis::configuration::Configuration;
+use crate::vpn::zerotier::apis::network_member_api::{
     delete_network_member, get_network_member, update_network_member,
 };
 use async_trait::async_trait;

@@ -1,13 +1,13 @@
 use crate::models::admine_message::AdmineMessage;
 use crate::persistence::{
     factories::{StoreFactory, StoreType},
-    traits::KeyValueStore,
+    key_value_store::KeyValueStore,
 };
 use crate::pub_sub::factories::{PubSubFactory, PubSubType};
 use crate::pub_sub::traits::PubSubProvider;
 use crate::vpn::{
     factories::{VpnFactory, VpnType},
-    traits::TVpnClient,
+    vpn::TVpnClient,
 };
 use dotenvy::dotenv;
 use log::{error, info, warn};

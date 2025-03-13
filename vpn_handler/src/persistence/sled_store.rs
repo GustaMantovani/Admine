@@ -1,4 +1,4 @@
-use crate::persistence::traits::KeyValueStore;
+use crate::persistence::key_value_store::KeyValueStore;
 use sled::Db;
 
 pub struct SledStore {

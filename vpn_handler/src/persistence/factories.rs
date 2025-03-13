@@ -1,5 +1,5 @@
 use crate::persistence::sled_store::SledStore;
-use crate::persistence::traits::KeyValueStore;
+use crate::persistence::key_value_store::KeyValueStore;
 use std::str::FromStr;
 
 pub type DynKeyValueStore = Box<dyn KeyValueStore + Send + Sync>;

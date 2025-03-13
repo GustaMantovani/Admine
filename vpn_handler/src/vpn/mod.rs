@@ -1,3 +1,4 @@
 pub mod factories;
-pub mod traits;
+pub mod vpn;
 pub mod zerotier_vpn;
+mod zerotier;

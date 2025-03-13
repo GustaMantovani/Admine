@@ -4,7 +4,6 @@ mod models;
 mod persistence;
 mod pub_sub;
 mod vpn;
-mod zerotier;
 
 use handle::Handle;
 use log::{error, info};

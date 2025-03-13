@@ -1,5 +1,5 @@
 use super::{configuration, Error};
-use crate::zerotier::{apis::ResponseContent, models};
+use crate::vpn::zerotier::{apis::ResponseContent, models};
 use reqwest;
 use serde::{Deserialize, Serialize};
 
@@ -55,8 +55,8 @@ pub async fn delete_network_member(
     let local_var_uri_str = format!(
         "{}/network/{networkID}/member/{memberID}",
         local_var_configuration.base_path,
-        networkID = crate::zerotier::apis::urlencode(network_id),
-        memberID = crate::zerotier::apis::urlencode(member_id)
+        networkID = crate::vpn::zerotier::apis::urlencode(network_id),
+        memberID = crate::vpn::zerotier::apis::urlencode(member_id)
     );
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
@@ -102,8 +102,8 @@ pub async fn get_network_member(
     let local_var_uri_str = format!(
         "{}/network/{networkID}/member/{memberID}",
         local_var_configuration.base_path,
-        networkID = crate::zerotier::apis::urlencode(network_id),
-        memberID = crate::zerotier::apis::urlencode(member_id)
+        networkID = crate::vpn::zerotier::apis::urlencode(network_id),
+        memberID = crate::vpn::zerotier::apis::urlencode(member_id)
     );
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
@@ -150,8 +150,8 @@ pub async fn update_network_member(
     let local_var_uri_str = format!(
         "{}/network/{networkID}/member/{memberID}",
         local_var_configuration.base_path,
-        networkID = crate::zerotier::apis::urlencode(network_id),
-        memberID = crate::zerotier::apis::urlencode(member_id)
+        networkID = crate::vpn::zerotier::apis::urlencode(network_id),
+        memberID = crate::vpn::zerotier::apis::urlencode(member_id)
     );
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());

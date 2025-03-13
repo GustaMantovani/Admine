@@ -1,8 +1,8 @@
 ### README for ZeroTier Handler
 
-# ZeroTier Handler
+# VPN Handler
 
-The ZeroTier Handler is a Rust-based component of the Admine infrastructure management solution. It is responsible for managing network configurations and member authorizations within a ZeroTier network. This handler automates the process of adding and removing network members.
+The VPN Handler is a Rust-based component of the Admine infrastructure management solution. It is responsible for managing network configurations and member authorizations within a VPN network. This handler automates the process of adding and removing network members.
 
 ## Environment variables:
 

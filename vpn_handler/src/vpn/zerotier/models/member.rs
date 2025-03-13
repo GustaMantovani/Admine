@@ -1,4 +1,4 @@
-use crate::zerotier::models;
+use crate::vpn::zerotier::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]

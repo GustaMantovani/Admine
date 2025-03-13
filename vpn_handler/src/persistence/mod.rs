@@ -1,3 +1,3 @@
 pub mod factories;
 mod sled_store;
-pub mod traits;
+pub mod key_value_store;
