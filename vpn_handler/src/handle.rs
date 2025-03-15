@@ -4,7 +4,7 @@ use crate::persistence::{
     key_value_store::KeyValueStore,
 };
 use crate::pub_sub::factories::{PubSubFactory, PubSubType};
-use crate::pub_sub::traits::PubSubProvider;
+use crate::pub_sub::pub_sub::PubSubProvider;
 use crate::vpn::{
     factories::{VpnFactory, VpnType},
     vpn::TVpnClient,

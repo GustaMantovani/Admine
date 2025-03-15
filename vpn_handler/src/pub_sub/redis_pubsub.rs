@@ -1,4 +1,4 @@
-use super::traits::{TPublisher, TSubscriber};
+use super::pub_sub::{TPublisher, TSubscriber};
 use crate::errors::PubSubError;
 use redis::Commands;
 
