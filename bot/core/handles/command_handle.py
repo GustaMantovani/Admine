@@ -1,7 +1,7 @@
-from bot.models.admine_message import AdmineMessage
+from core.models.admine_message import AdmineMessage
 from typing import Callable, Dict, List
 from functools import wraps
-from bot.logger import get_logger
+from core.logger import get_logger
 
 # Decorator to mark commands as admin-only
 def admin_command(func):

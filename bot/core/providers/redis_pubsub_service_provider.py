@@ -1,7 +1,7 @@
 import redis
-from bot.abstractions.pubsub_service import PubSubService, PubSubServiceFactory
-from bot.models.admine_message import AdmineMessage
-from bot.logger import get_logger
+from core.abstractions.pubsub_service import PubSubService, PubSubServiceFactory
+from core.models.admine_message import AdmineMessage
+from core.logger import get_logger
 
 class RedisPubSubServiceProvider(PubSubService):
     def __init__(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]):

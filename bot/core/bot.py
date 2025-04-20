@@ -1,9 +1,9 @@
-from bot.logger import get_logger
-from bot.config import Config
-from bot.providers.discord_message_service_provider import DiscordMessageServiceProvider
-from bot.providers.redis_pubsub_service_provider import RedisPubSubServiceProvider
+from core.logger import get_logger
+from core.config import Config
+from core.providers.discord_message_service_provider import DiscordMessageServiceProvider
+from core.providers.redis_pubsub_service_provider import RedisPubSubServiceProvider
 class Bot:
-    """Main bot class that initializes and runs the message service provider."""
+    """Main core class that initializes and runs the message service provider."""
 
     def __init__(self, config: Config):
         self.logger = get_logger(self.__class__.__name__)
@@ -36,8 +36,8 @@ class Bot:
             self.logger.info("Minecraft REST service provider initialized.")
 
     def run(self):
-        """Run the bot."""
-        self.logger.info("Starting bot...")
+        """Run the core."""
+        self.logger.info("Starting core...")
         self._setup_providers()
 
         # Create thread to listen and handle messages from message service

@@ -1,5 +1,5 @@
-from bot.abstractions.message_service import MessageService
-from bot.models.admine_message import AdmineMessage
+from core.abstractions.message_service import MessageService
+from core.models.admine_message import AdmineMessage
 from typing import List, Callable, Dict
 
 class EventHandle:

@@ -11,7 +11,7 @@ if not logging.getLogger().hasHandlers():
         format=LOG_FORMAT,
         handlers=[
             logging.StreamHandler(),  # Log to console
-            logging.FileHandler("admine.log", mode="a")  # Log to file
+            logging.FileHandler("/tmp/bot.log", mode="a")  # Log to file
         ]
     )
 

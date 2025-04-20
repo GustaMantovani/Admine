@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from bot.models.minecraft_server_status import MinecraftServerStatus
-from bot.models.minecraft_server_info import MinecraftServerInfo
+from core.models.minecraft_server_status import MinecraftServerStatus
+from core.models.minecraft_server_info import MinecraftServerInfo
 
 class MinecraftServerInfoService(ABC):
     @abstractmethod

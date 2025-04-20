@@ -1,8 +1,8 @@
 import discord
 from discord import app_commands
-from bot.abstractions.message_service import MessageService, MessageServiceFactory
-from bot.config import Config
-from bot.logger import get_logger, get_logger_handler
+from core.abstractions.message_service import MessageService, MessageServiceFactory
+from core.config import Config
+from core.logger import get_logger, get_logger_handler
 
 class DiscordMessageServiceProvider(MessageService, discord.Client):
     def __init__(self, channels: list[str], administrators: list[str], token: str, command_prefix: str):
@@ -16,18 +16,18 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
         self.logger_handler = get_logger_handler(self.__class__.__name__)
 
     async def setup_hook(self):
-        """Setup the bot's command tree."""
+        """Setup the core's command tree."""
         await self.tree.sync()
         self.logger.info("Command tree synced.")
 
     async def on_ready(self):
-        """Event triggered when the bot is ready."""
+        """Event triggered when the core is ready."""
         self.logger.info(f"Bot is online as {self.user}")
 
     async def on_message(self, message: discord.Message):
         """Event triggered when a message is received."""
         if message.author == self.user:
-            return  # Ignore messages from the bot itself
+            return  # Ignore messages from the core itself
 
         if message.content.startswith(self.command_prefix):
             command = message.content[len(self.command_prefix):].strip().split(" ")[0]
@@ -49,8 +49,8 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
         return "Listening"
 
     def run_bot(self):
-        """Run the bot using the provided token."""
-        self.logger.info("Starting Discord bot...")
+        """Run the core using the provided token."""
+        self.logger.info("Starting Discord core...")
         self.run(self.token, log_handler = self.logger_handler, root_logger = True)
 
 class DiscordMessageServiceFactory(MessageServiceFactory):
