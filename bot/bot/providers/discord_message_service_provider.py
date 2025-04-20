@@ -62,7 +62,6 @@ class DiscordMessageServiceFactory(MessageServiceFactory):
 
 
     def create_message_service(self) -> DiscordMessageServiceProvider:
-        """Creates and returns an instance of DiscordMessageServiceProvider."""
         channels = self.channels
         administrators = self.administrators
         token = self.token
