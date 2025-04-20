@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
-from core.abstractions.message_service import MessageService, MessageServiceFactory
-from core.config import Config
+from core.external.abstractions.message_service import MessageService, MessageServiceFactory
 from core.logger import get_logger, get_logger_handler
 
 class DiscordMessageServiceProvider(MessageService, discord.Client):

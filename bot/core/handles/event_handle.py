@@ -1,4 +1,4 @@
-from core.abstractions.message_service import MessageService
+from core.external.abstractions.message_service import MessageService
 from core.models.admine_message import AdmineMessage
 from typing import List, Callable, Dict
 

@@ -1,5 +1,5 @@
 import redis
-from core.abstractions.pubsub_service import PubSubService, PubSubServiceFactory
+from core.external.abstractions.pubsub_service import PubSubService, PubSubServiceFactory
 from core.models.admine_message import AdmineMessage
 from core.logger import get_logger
 
