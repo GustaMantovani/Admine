@@ -27,10 +27,13 @@ class PubSubService(ABC):
     
     @abstractmethod
     def send_message(self, message):
-        """Sends a message to the producer channels."""
         pass
 
     @abstractmethod
     def listen_message(self):
-        """Listens for messages from the subscribed channels."""
+        pass
+
+class PubSubServiceFactory(ABC):
+    @abstractmethod
+    def create_message_service(self) -> PubSubService:
         pass

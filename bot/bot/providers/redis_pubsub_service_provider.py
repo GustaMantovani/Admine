@@ -23,6 +23,13 @@ class RedisPubSubServiceProvider(PubSubService):
 
 
 class RedisPubSubServiceFactory(PubSubServiceFactory):
-    def create_pubsub_service(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]) -> RedisPubSubServiceProvider:
+
+    def __init__(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]):
+        self.host = host
+        self.port = port
+        self.subscribed_channels = subscribed_channels
+        self.producer_channels = producer_channels
+
+    def create_pubsub_service(self) -> RedisPubSubServiceProvider:
         """Creates and returns an instance of RedisPubSubServiceProvider."""
-        return RedisPubSubServiceProvider(host, port, subscribed_channels, producer_channels)
+        return RedisPubSubServiceProvider(self.host, self.port, self.subscribed_channels, self.producer_channels)

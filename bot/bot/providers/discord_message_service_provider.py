@@ -53,12 +53,21 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
         self.run(self.token)
 
 class DiscordMessageServiceFactory(MessageServiceFactory):
-    def create_message_service(self, config: Config) -> DiscordMessageServiceProvider:
+
+    def __init__(self, channels: list[str], administrators: list[str], token: str, command_prefix: str):
+        self.channels = channels
+        self.administrators = administrators
+        self.token = token
+        self.command_prefix = command_prefix
+
+
+    def create_message_service(self) -> DiscordMessageServiceProvider:
         """Creates and returns an instance of DiscordMessageServiceProvider."""
-        discord_config = config.get("Discord", {})
-        channels = config.get("Discord.Channels", [])
-        administrators = config.get("Discord.Administrators", [])
-        token = discord_config.get("Token", "")
-        command_prefix = discord_config.get("CommandPrefix", "!")
+        channels = self.channels
+        administrators = self.administrators
+        token = self.token
+        command_prefix = self.command_prefix
+        administrators = administrators if administrators else []
+        channels = channels if channels else []
 
         return DiscordMessageServiceProvider(channels, administrators, token, command_prefix)
