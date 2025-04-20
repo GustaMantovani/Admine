@@ -34,7 +34,7 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
             self.logger.info(f"Received command: {command} with args: {args}")
             # Process the command (you can integrate with CommandHandle here)
 
-    def sendMessage(self, message: str):
+    def send_message(self, message: str):
         """Send a message to all configured channels."""
         for channel_id in self._channels:
             channel = self.get_channel(int(channel_id))
@@ -42,9 +42,9 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
                 self.loop.create_task(channel.send(message))
                 self.logger.info(f"Message sent to channel {channel_id}: {message}")
 
-    def listenMessage(self, pubsub):
+    def listen_message(self, pubsub):
         """Listen for messages (not implemented for Discord)."""
-        self.logger.warning("listenMessage is not implemented for Discord.")
+        self.logger.warning("listen_message is not implemented for Discord.")
         return "Listening"
 
     def run_bot(self):
@@ -52,8 +52,6 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
         self.logger.info("Starting Discord bot...")
         self.run(self.token)
 
-
-# Concrete implementation of MessageServiceFactory
 class DiscordMessageServiceFactory(MessageServiceFactory):
     def create_message_service(self, config: Config) -> DiscordMessageServiceProvider:
         """Creates and returns an instance of DiscordMessageServiceProvider."""

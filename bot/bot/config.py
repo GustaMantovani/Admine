@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 class Config:
     def __init__(self, config_file: str = "config.json"):
-        # Tenta carregar do JSON, se não existir, usa as variáveis de ambiente
+        # Try to load from JSON, if not found, use environment variables
         self.config = self._load_from_json(config_file) or self._load_from_env()
 
     def _load_from_json(self, config_file: str) -> Dict[str, Any]:
@@ -27,7 +27,7 @@ class Config:
             providers["Discord"] = {
                 "Token": os.getenv("DISCORD_TOKEN"),
                 "CommandPrefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc")
-        }
+            }
         
         if providers["PubSub"] == "Redis":
             providers["Redis"] = {
@@ -48,7 +48,9 @@ class Config:
         value = self.config
         for k in keys:
             if isinstance(value, dict):
-                value = value.get(k, {})
+                value = value.get(k)
             else:
                 return default
-        return value or default
+            if value is None:
+                return default
+        return value

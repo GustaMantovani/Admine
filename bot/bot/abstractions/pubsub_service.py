@@ -1,34 +1,36 @@
 from abc import ABC, abstractmethod
 
 class PubSubService(ABC):
-    def __init__(self, host: str, porta: int, canaisInscrito: list[str], canaisProdutor: list[str]):
+    def __init__(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]):
         self._host = host
-        self._porta = porta
-        self._canaisInscrito = canaisInscrito
-        self._canaisProdutor = canaisProdutor
+        self._port = port
+        self._subscribed_channels = subscribed_channels
+        self._producer_channels = producer_channels
     
-    def getHost(self)->str:
+    def get_host(self) -> str:
         return self._host
     
-    def setHost(self, host: str):
+    def set_host(self, host: str):
         self._host = host
     
-    def getPorta(self)->int:
-        return self._porta
+    def get_port(self) -> int:
+        return self._port
     
-    def setPorta(self,porta: int):
-        self._porta = porta
+    def set_port(self, port: int):
+        self._port = port
     
-    def getCanaisInscrito(self)->list[str]:
-        return self._canaisInscrito
+    def get_subscribed_channels(self) -> list[str]:
+        return self._subscribed_channels
     
-    def getCanaisProdutor(self)->list[str]:
-        return self._canaisProdutor
+    def get_producer_channels(self) -> list[str]:
+        return self._producer_channels
     
     @abstractmethod
-    def enviarMensagem(self):
+    def send_message(self, message):
+        """Sends a message to the producer channels."""
         pass
 
     @abstractmethod
-    def ouvirMensagem(self):
+    def listen_message(self):
+        """Listens for messages from the subscribed channels."""
         pass

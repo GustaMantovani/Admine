@@ -20,7 +20,7 @@ class MinecraftServerStatus:
         status: ServerStatus,
         description: str,
         uptime: Optional[str] = None,
-        online_players: Optional[int] = 0,
+        online_players: Optional[int] = None,
         tps: Optional[float] = None
     ):
         self.health = health
@@ -32,9 +32,24 @@ class MinecraftServerStatus:
 
     @classmethod
     def from_json(cls, json_data: dict):
+        """
+        Create a MinecraftServerStatus instance from a JSON dictionary
+        with camelCase keys (for external compatibility).
+        """
+        health_value = json_data.get("health", "unknown")
+        status_value = json_data.get("status", "unknown")
+        try:
+            health = HealthStatus(health_value.lower())
+        except ValueError:
+            health = HealthStatus.UNKNOWN
+        try:
+            status = ServerStatus(status_value.lower())
+        except ValueError:
+            status = ServerStatus.UNKNOWN
+
         return cls(
-            health=HealthStatus(json_data.get("health").lower()),
-            status=ServerStatus(json_data.get("status").lower()),
+            health=health,
+            status=status,
             description=json_data.get("description"),
             uptime=json_data.get("uptime"),
             online_players=json_data.get("onlinePlayers"),
@@ -42,6 +57,10 @@ class MinecraftServerStatus:
         )
 
     def to_json(self) -> dict:
+        """
+        Convert the MinecraftServerStatus instance to a JSON dictionary
+        with camelCase keys (for external compatibility).
+        """
         return {
             "health": self.health.value,
             "status": self.status.value,

@@ -8,6 +8,10 @@ class MinecraftServerInfo:
 
     @classmethod
     def from_json(cls, json_data: dict):
+        """
+        Create a MinecraftServerInfo instance from a JSON dictionary
+        with camelCase keys (for external compatibility).
+        """
         return cls(
             minecraft_version=json_data.get("minecraftVersion"),
             java_version=json_data.get("javaVersion"),
@@ -17,6 +21,10 @@ class MinecraftServerInfo:
         )
 
     def to_json(self) -> dict:
+        """
+        Convert the MinecraftServerInfo instance to a JSON dictionary
+        with camelCase keys (for external compatibility).
+        """
         return {
             "minecraftVersion": self.minecraft_version,
             "javaVersion": self.java_version,

@@ -13,9 +13,8 @@ class MinecraftServerInfoService(ABC):
         """Returns general information about the Minecraft server."""
         pass
 
-
 class MinecraftServerInfoServiceFactory(ABC):
     @abstractmethod
-    def create_server_service(self) -> MinecraftServerInfoService:
-        """Creates and returns an instance of a MinecraftServerService."""
+    def create_server_info_service(self) -> MinecraftServerInfoService:
+        """Creates and returns an instance of a MinecraftServerInfoService."""
         pass
