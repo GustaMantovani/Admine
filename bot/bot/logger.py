@@ -18,3 +18,7 @@ if not logging.getLogger().hasHandlers():
 def get_logger(name: str) -> logging.Logger:
     """Get a logger with the specified name."""
     return logging.getLogger(name)
+
+def get_logger_handler(name: str) -> logging.StreamHandler:
+    """Get a logger handler with the specified name."""
+    return logging.StreamHandler()

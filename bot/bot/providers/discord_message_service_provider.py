@@ -1,8 +1,8 @@
 import discord
-from discord.ext import app_commands
+from discord import app_commands
 from bot.abstractions.message_service import MessageService, MessageServiceFactory
 from bot.config import Config
-from bot.logger import get_logger
+from bot.logger import get_logger, get_logger_handler
 
 class DiscordMessageServiceProvider(MessageService, discord.Client):
     def __init__(self, channels: list[str], administrators: list[str], token: str, command_prefix: str):
@@ -13,6 +13,7 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
         self.token = token
         self.command_prefix = command_prefix
         self.logger = get_logger(self.__class__.__name__)
+        self.logger_handler = get_logger_handler(self.__class__.__name__)
 
     async def setup_hook(self):
         """Setup the bot's command tree."""
@@ -50,7 +51,7 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
     def run_bot(self):
         """Run the bot using the provided token."""
         self.logger.info("Starting Discord bot...")
-        self.run(self.token)
+        self.run(self.token, log_handler = self.logger_handler, root_logger = True)
 
 class DiscordMessageServiceFactory(MessageServiceFactory):
 
