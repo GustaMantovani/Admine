@@ -35,7 +35,7 @@ class CommandHandle:
         """
         self.event_handle_registry[command] = handler
 
-    def handle_command(self, command: str, args: List[str], user_id: str = None, administrators: List[str] = None):
+    def process_command(self, command: str, args: List[str], user_id: str = None, administrators: List[str] = None):
         """
         Process a command and execute the corresponding action.
         
