@@ -3,7 +3,7 @@ from bot.models.admine_message import AdmineMessage
 from typing import List, Callable, Dict
 
 class EventHandle:
-    # Registro estático padrão de handlers de eventos
+    # Default static registry for event handlers
     default_event_registry: Dict[str, Callable[[AdmineMessage], None]] = {}
 
     def __init__(self, message_services: List[MessageService], event_registry: Dict[str, Callable[[AdmineMessage], None]] = None):
@@ -42,7 +42,7 @@ class EventHandle:
             service.sendMessage(notification)
 
 
-# Preenchendo o registro padrão com handlers padrão
+# Populating the default registry with standard handlers
 def handle_server_start(event: AdmineMessage):
     print(f"Handler: Server has started with message: {event.getMessage()}")
 

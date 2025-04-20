@@ -1,5 +1,5 @@
-from config import Config
-from bot import Bot
+from bot.config import Config
+from bot.bot import Bot
 
 def main():
     config = Config()
