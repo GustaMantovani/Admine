@@ -75,12 +75,12 @@ func (ms MinecraftServerContainerByCompose) SeeStatus() string {
 
 }
 
-// Pega as informações do servidor de argumentos
+// Pega as informações do servidor por argumentos
 func (ms *MinecraftServerContainerByCompose) ConfigureWithArgs(args []string) {
 	ms.SetContainerNameByServiceAndDirectory(args[0], file.GetLocalDirectory())
 }
 
-// Pega as informações do servidor de variáveis de ambiente
+// Pega as informações do servidor por variáveis de ambiente
 func (ms *MinecraftServerContainerByCompose) ConfigureWithEnv() {
 	serverName := os.Getenv("MINECRAFT_SERVER_SERVICE")
 	directory := os.Getenv("MINECRAFT_SERVER_DIRECTORY")
@@ -88,7 +88,7 @@ func (ms *MinecraftServerContainerByCompose) ConfigureWithEnv() {
 	ms.SetContainerNameByServiceAndDirectory(serverName, directory)
 }
 
-// Pega as informações do servidor do arquivo de configuração
+// Pega as informações do servidor pelo arquivo de configuração
 func (ms *MinecraftServerContainerByCompose) ConfigureWithFile() {
 	configFileData, err := file.GetConfigFileData()
 	if err != nil {
@@ -102,6 +102,14 @@ func (ms *MinecraftServerContainerByCompose) ConfigureWithFile() {
 	ms.SetContainerNameByServiceAndDirectory(serverName, directory)
 }
 
+/*
+Configura os metadados do servidor, verificando se vão ser usados argumentos,
+variáveis de ambiente ou um arquivo de configuração para tal.
+
+Se os parâmetros 'env' e 'file' forem true, significa que duas flags excludentes foram chamadas.
+
+Se houver argumentos, estes serão usados para configurar o servidor, indepente das flags.
+*/
 func (ms *MinecraftServerContainerByCompose) ConfigureMinecraftServer(env, file bool, args []string) {
 	if len(args) != 0 {
 		ms.ConfigureWithArgs(args)
