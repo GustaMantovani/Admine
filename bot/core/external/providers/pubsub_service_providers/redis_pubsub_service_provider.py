@@ -1,5 +1,5 @@
 import redis
-from core.external.abstractions.pubsub_service import PubSubService, PubSubServiceFactory
+from core.external.abstractions.pubsub_service import PubSubService
 from core.models.admine_message import AdmineMessage
 from core.logger import get_logger
 
@@ -20,16 +20,3 @@ class RedisPubSubServiceProvider(PubSubService):
         for message in self._pubsub.listen():
             if message["type"] == "message":
                 return message
-
-
-class RedisPubSubServiceFactory(PubSubServiceFactory):
-
-    def __init__(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]):
-        self.host = host
-        self.port = port
-        self.subscribed_channels = subscribed_channels
-        self.producer_channels = producer_channels
-
-    def create_pubsub_service(self) -> RedisPubSubServiceProvider:
-        """Creates and returns an instance of RedisPubSubServiceProvider."""
-        return RedisPubSubServiceProvider(self.host, self.port, self.subscribed_channels, self.producer_channels)

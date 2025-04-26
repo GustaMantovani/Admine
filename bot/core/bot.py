@@ -1,7 +1,7 @@
 from core.logger import get_logger
 from core.config import Config
-from core.external.providers.discord_message_service_provider import DiscordMessageServiceProvider
-from core.external.providers import RedisPubSubServiceProvider
+from core.external.providers.message_service_providers.discord_message_service_provider import DiscordMessageServiceProvider
+from core.external.providers.pubsub_service_providers.redis_pubsub_service_provider import RedisPubSubServiceProvider
 class Bot:
     """Main core class that initializes and runs the message service provider."""
 

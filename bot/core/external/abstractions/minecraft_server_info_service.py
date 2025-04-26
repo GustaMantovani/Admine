@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from core.models.minecraft_server_status import MinecraftServerStatus
 from core.models.minecraft_server_info import MinecraftServerInfo
+from core.config import Config
 
 class MinecraftServerInfoService(ABC):
     @abstractmethod
@@ -9,9 +10,4 @@ class MinecraftServerInfoService(ABC):
 
     @abstractmethod
     def get_info(self) -> MinecraftServerInfo:
-        pass
-
-class MinecraftServerInfoServiceFactory(ABC):
-    @abstractmethod
-    def create_server_info_service(self) -> MinecraftServerInfoService:
         pass

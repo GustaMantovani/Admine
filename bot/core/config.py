@@ -14,24 +14,24 @@ class Config:
 
     def _load_from_env(self) -> Dict[str, Any]:
         return {
-            "Providers": {
-                "Messaging": os.getenv("PROVIDERS_MESSAGING", "Discord"),
-                "PubSub": os.getenv("PROVIDERS_PUBSUB", "Redis"),
-                "Minecraft": os.getenv("PROVIDERS_MINECRAFT", "REST"),
+            "providers": {
+                "messaging": os.getenv("PROVIDERS_MESSAGING", "Discord"),
+                "pubsub": os.getenv("PROVIDERS_PUBSUB", "Redis"),
+                "minecraft": os.getenv("PROVIDERS_MINECRAFT", "REST"),
             },
-            "Discord": {
-                "Token": os.getenv("DISCORD_TOKEN"),
-                "CommandPrefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc")
+            "discord": {
+                "token": os.getenv("DISCORD_TOKEN"),
+                "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc")
             },
-            "Redis": {
-                "ConnectionString": os.getenv("REDIS_CONNECTION_STRING", "localhost:6379"),
+            "redis": {
+                "connectionstring": os.getenv("REDIS_CONNECTION_STRING", "localhost:6379"),
             },
-            "Minecraft": {
-                "ConnectionString": os.getenv("MINECRAFT_CONNECTION_STRING", "localhost:8080"),
-                "Token": os.getenv("MINECRAFT_TOKEN", ""),
+            "minecraft": {
+                "connectionstring": os.getenv("MINECRAFT_CONNECTION_STRING", "localhost:8080"),
+                "token": os.getenv("MINECRAFT_TOKEN", ""),
             }
         }
-
+    
     def get(self, key: str, default: Any = None) -> Any:
         keys = key.split(".")
         value = self.config

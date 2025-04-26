@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from core.config import Config
 
 class MessageService(ABC):
     def __init__(self, channels: list[str], administrators: list[str]):
@@ -17,9 +18,4 @@ class MessageService(ABC):
 
     @abstractmethod
     def listen_message(self, pubsub):
-        pass
-
-class MessageServiceFactory(ABC):
-    @abstractmethod
-    def create_message_service(self) -> MessageService:
         pass

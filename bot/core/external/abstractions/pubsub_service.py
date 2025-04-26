@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from core.config import Config
 
 class PubSubService(ABC):
     def __init__(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]):
@@ -31,9 +32,4 @@ class PubSubService(ABC):
 
     @abstractmethod
     def listen_message(self):
-        pass
-
-class PubSubServiceFactory(ABC):
-    @abstractmethod
-    def create_message_service(self) -> PubSubService:
         pass

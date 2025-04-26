@@ -1,6 +1,8 @@
 import discord
 from discord import app_commands
-from core.external.abstractions.message_service import MessageService, MessageServiceFactory
+
+from core.config import Config
+from core.external.abstractions.message_service import MessageService
 from core.logger import get_logger, get_logger_handler
 
 class DiscordMessageServiceProvider(MessageService, discord.Client):
@@ -51,22 +53,3 @@ class DiscordMessageServiceProvider(MessageService, discord.Client):
         """Run the core using the provided token."""
         self.logger.info("Starting Discord core...")
         self.run(self.token, log_handler = self.logger_handler, root_logger = True)
-
-class DiscordMessageServiceFactory(MessageServiceFactory):
-
-    def __init__(self, channels: list[str], administrators: list[str], token: str, command_prefix: str):
-        self.channels = channels
-        self.administrators = administrators
-        self.token = token
-        self.command_prefix = command_prefix
-
-
-    def create_message_service(self) -> DiscordMessageServiceProvider:
-        channels = self.channels
-        administrators = self.administrators
-        token = self.token
-        command_prefix = self.command_prefix
-        administrators = administrators if administrators else []
-        channels = channels if channels else []
-
-        return DiscordMessageServiceProvider(channels, administrators, token, command_prefix)
