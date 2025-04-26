@@ -3,7 +3,6 @@ from core.bot import Bot
 
 def main():
     config = Config()
-    print(config)
     bot = Bot(config)
     bot.run()
 

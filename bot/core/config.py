@@ -15,8 +15,8 @@ class Config:
     def _load_from_env(self) -> Dict[str, Any]:
         return {
             "providers": {
-                "messaging": os.getenv("PROVIDERS_MESSAGING", "Discord"),
-                "pubsub": os.getenv("PROVIDERS_PUBSUB", "Redis"),
+                "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
+                "pubsub": os.getenv("PROVIDERS_PUBSUB", "REDIS"),
                 "minecraft": os.getenv("PROVIDERS_MINECRAFT", "REST"),
             },
             "discord": {
@@ -32,7 +32,7 @@ class Config:
             }
         }
     
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: str = None) -> str:
         keys = key.split(".")
         value = self.config
         for k in keys:

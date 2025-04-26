@@ -1,9 +1,17 @@
 from core.logger import get_logger
 from core.config import Config
-from core.external.providers.message_service_providers.discord_message_service_provider import DiscordMessageServiceProvider
-from core.external.providers.pubsub_service_providers.redis_pubsub_service_provider import RedisPubSubServiceProvider
+
+from core.external.providers.message_service_providers.message_service_factory import MessageServiceFactory
+from core.external.providers.message_service_providers.message_service_provider_type import MessageServiceProviderType
+
+from core.external.providers.pubsub_service_providers.pubsub_service_factory import PubSubServiceFactory
+from core.external.providers.pubsub_service_providers.pubsub_service_provider_type import PubSubServiceProviderType
+
+from core.external.providers.minecraft_server_info_service_providers.minecraft_info_service_factory import MinecraftInfoServiceFactory
+from core.external.providers.minecraft_server_info_service_providers.minecraft_info_service_provider_type import MinecraftInfoServiceProviderType
+
 class Bot:
-    """Main core class that initializes and runs the message service provider."""
+    """Main core class that initializes and runs the service providers."""
 
     def __init__(self, config: Config):
         self.logger = get_logger(self.__class__.__name__)
@@ -11,38 +19,28 @@ class Bot:
 
     def _setup_providers(self):
         # Message Service Provider
-        if self.config.get("Providers.Messaging") == "Discord":
-            self.message_service = DiscordMessageServiceProvider(
-                channels=self.config.get("Discord.Channels"),
-                administrators=self.config.get("Discord.Administrators"),
-                token=self.config.get("Discord.Token"),
-                command_prefix=self.config.get("Discord.CommandPrefix")
-            )
-            self.logger.info("Discord message service provider initialized.")
+        messaging_provider_str = self.config.get("providers.messaging", "DISCORD")
+        messaging_provider_type = MessageServiceProviderType[messaging_provider_str]
+        self.message_service = MessageServiceFactory.create(messaging_provider_type, self.config)
+        self.logger.info(f"{messaging_provider_str} message service provider initialized.")
 
         # PubSub Service Provider
-        if self.config.get("Providers.PubSub") == "Redis":
-            self.pubsub_service = RedisPubSubServiceProvider(
-                host=self.config.get("Redis.ConnectionString").split(":")[0],
-                port=int(self.config.get("Redis.ConnectionString").split(":")[1]),
-                subscribed_channels=self.config.get("Redis.SubscribedChannels"),
-                producer_channels=self.config.get("Redis.ProducerChannels")
-            )
-            self.logger.info("Redis pubsub service provider initialized.")
-        
+        pubsub_provider_str = self.config.get("providers.pubsub", "REDIS")
+        pubsub_provider_type = PubSubServiceProviderType[pubsub_provider_str]
+        self.pubsub_service = PubSubServiceFactory.create(pubsub_provider_type, self.config)
+        self.logger.info(f"{pubsub_provider_str} pubsub service provider initialized.")
+
         # Minecraft Info Service Provider
-        if self.config.get("Providers.Minecraft") == "REST":
-            # TODO: Implement REST service provider
-            self.logger.info("Minecraft REST service provider initialized.")
+        # minecraft_provider_str = self.config.get("providers.minecraft", "REST")
+        # minecraft_provider_type = MinecraftInfoServiceProviderType[minecraft_provider_str]
+        # self.minecraft_info_service = MinecraftInfoServiceFactory.create(minecraft_provider_type, self.config)
+        # self.logger.info(f"{minecraft_provider_str} minecraft info service provider initialized.")
 
     def run(self):
         """Run the core."""
         self.logger.info("Starting core...")
         self._setup_providers()
-
         # Create thread to listen and handle messages from message service
-
         # Create thread to listen and handle events from pubsub service
 
 
-        

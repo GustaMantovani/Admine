@@ -1,4 +1,4 @@
-from core.external.providers.minecraft_info_service_providers.minecraft_info_service_provider_type import MinecraftInfoServiceProviderType
+from core.external.providers.minecraft_server_info_service_providers.minecraft_info_service_provider_type import MinecraftInfoServiceProviderType
 from core.config import Config
 
 # Placeholder for your REST provider import
