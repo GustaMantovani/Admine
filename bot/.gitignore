@@ -3,3 +3,4 @@
 .env
 config.json
 admine.log
+__pycache__
