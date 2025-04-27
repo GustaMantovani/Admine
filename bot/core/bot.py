@@ -34,7 +34,7 @@ class Bot:
         self.__logger.info(f"{minecraft_provider_str} minecraft info service provider initialized.")
 
         self.__command_handle = CommandHandle(self.__logger, self.__pubsub_service, self.__minecraft_info_service)
-        self.__event_handle = EventHandle(self.__logger, [self.__message_service])
+        self.__event_handle = EventHandle(self.__logger, self.__message_services)
 
     def run(self):
         self.__logger.info("Starting bot...")
