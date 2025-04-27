@@ -6,33 +6,14 @@ from core.external.providers.pubsub_service_providers.pubsub_service_factory imp
 from core.external.providers.pubsub_service_providers.pubsub_service_provider_type import PubSubServiceProviderType
 from core.external.providers.minecraft_server_info_service_providers.minecraft_info_service_factory import MinecraftInfoServiceFactory
 from core.external.providers.minecraft_server_info_service_providers.minecraft_info_service_provider_type import MinecraftInfoServiceProviderType
-from core.models.admine_message import AdmineMessage
+from core.handles.command_handle import CommandHandle
+from core.handles.event_handle import EventHandle
 
 class Bot:
     def __init__(self, logger: Logger, config: Config):
         self.__logger = logger
         self.__config = config
-        self.__message_service = None
-        self.__pubsub_service = None
-        self.__minecraft_info_service = None
 
-    @property
-    def config(self) -> Config:
-        return self.__config
-
-    @property
-    def message_service(self):
-        return self.__message_service
-
-    @property
-    def pubsub_service(self):
-        return self.__pubsub_service
-
-    @property
-    def minecraft_info_service(self):
-        return self.__minecraft_info_service
-
-    def _setup_providers(self):
         # Message Service Provider
         messaging_provider_str = self.__config.get("providers.messaging", "DISCORD")
         messaging_provider_type = MessageServiceProviderType[messaging_provider_str]
@@ -51,8 +32,10 @@ class Bot:
         # self.__minecraft_info_service = MinecraftInfoServiceFactory.create(minecraft_provider_type, self.__config)
         # self.__logger.info(f"{minecraft_provider_str} minecraft info service provider initialized.")
 
+        self.__command_handle = CommandHandle(self.__logger, self.__pubsub_service)
+        self.__event_handle = EventHandle(self.__logger, [self.__message_service])
+
     def run(self):
         self.__logger.info("Starting core...")
-        self._setup_providers()
         # Create thread to listen and handle messages from message service
         # Create thread to listen and handle events from pubsub service
