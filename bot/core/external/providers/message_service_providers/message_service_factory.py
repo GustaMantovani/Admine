@@ -1,4 +1,5 @@
 from logging import Logger
+from core.external.abstractions.message_service import MessageService
 from core.external.providers.message_service_providers.discord_message_service_provider import DiscordMessageServiceProvider
 from core.external.providers.message_service_providers.message_service_provider_type import MessageServiceProviderType
 from core.config import Config
@@ -18,7 +19,7 @@ class MessageServiceFactory:
     }
 
     @staticmethod
-    def create(logging: Logger, provider_type: MessageServiceProviderType, config: Config):
+    def create(logging: Logger, provider_type: MessageServiceProviderType, config: Config) -> MessageService:
         factory = MessageServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
             try:

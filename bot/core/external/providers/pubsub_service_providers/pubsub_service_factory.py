@@ -18,7 +18,7 @@ class PubSubServiceFactory:
     }
 
     @staticmethod
-    def create(logging: Logger, provider_type: PubSubServiceProviderType, config: Config):
+    def create(logging: Logger, provider_type: PubSubServiceProviderType, config: Config) -> RedisPubSubServiceProvider:
         factory = PubSubServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
             try:
