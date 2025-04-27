@@ -32,10 +32,6 @@ class MinecraftServerStatus:
 
     @classmethod
     def from_json(cls, json_data: dict):
-        """
-        Create a MinecraftServerStatus instance from a JSON dictionary
-        with camelCase keys (for external compatibility).
-        """
         health_value = json_data.get("health", "unknown")
         status_value = json_data.get("status", "unknown")
         try:
@@ -57,10 +53,6 @@ class MinecraftServerStatus:
         )
 
     def to_json(self) -> dict:
-        """
-        Convert the MinecraftServerStatus instance to a JSON dictionary
-        with camelCase keys (for external compatibility).
-        """
         return {
             "health": self.health.value,
             "status": self.status.value,
