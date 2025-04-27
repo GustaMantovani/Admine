@@ -1,12 +1,12 @@
 from core.external.abstractions.message_service import MessageService
 from core.models.admine_message import AdmineMessage
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Optional
 from logging import Logger
 
 class EventHandle:
-    def __init__(self, logging: Logger, message_services: List[MessageService]):
+    def __init__(self, logging: Logger, message_services: Optional[List[MessageService]]):
         self.__logger = logging
-        self.__message_services = message_services
+        self.__message_services = message_services if message_services is not None else []
 
         self.__HANDLES: Dict[str, Callable[[AdmineMessage], None]] = {
             "server_start": self.__server_start,

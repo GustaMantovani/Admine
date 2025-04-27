@@ -1,7 +1,7 @@
 from core.models.admine_message import AdmineMessage
 from core.external.abstractions.pubsub_service import PubSubService
 from core.external.abstractions.minecraft_server_info_service import MinecraftServerInfoService
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 from functools import wraps
 from logging import Logger
 
@@ -25,7 +25,9 @@ class CommandHandle:
             "delete": self.__delete_world,
         }
 
-    def process_command(self, command: str, args: List[str], user_id: str = None, administrators: List[str] = None):
+    def process_command(self, command: str, args: Optional[List[str]] = None, user_id: str = None, administrators: List[str] = None):
+        if args is None:
+            args = []
         self.__logger.info(f"Handling command: {command} with args: {args}")
 
         if command in self.__HANDLES:
