@@ -13,7 +13,7 @@ class Config:
         return None
 
     def _load_from_env(self) -> Dict[str, Any]:
-        return {
+        base_config = {
             "providers": {
                 "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
                 "pubsub": os.getenv("PROVIDERS_PUBSUB", "REDIS"),
@@ -31,6 +31,10 @@ class Config:
                 "token": os.getenv("MINECRAFT_TOKEN", ""),
             }
         }
+
+        # Remove keys with None values
+        return {k: v for k, v in base_config.items() if v is not None}
+
     
     def get(self, key: str, default: str = None) -> str:
         keys = key.split(".")
