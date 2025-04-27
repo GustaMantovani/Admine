@@ -1,5 +1,4 @@
-from core.external.providers.message_service_providers.discord_message_service_provider import \
-    DiscordMessageServiceProvider
+from core.external.providers.message_service_providers.discord_message_service_provider import DiscordMessageServiceProvider
 from core.external.providers.message_service_providers.message_service_provider_type import MessageServiceProviderType
 from core.config import Config
 from typing import Callable, Dict
@@ -14,9 +13,7 @@ class MessageServiceFactory:
             administrators=config.get("discord.administrators"),
             token=config.get("discord.token"),
             command_prefix=config.get("discord.commandprefix")
-        ),
-        # Add other providers here as needed
-        # MessageServiceProviderType.SLACK: lambda config: SlackMessageServiceProvider(config),
+        )
     }
 
     @staticmethod
