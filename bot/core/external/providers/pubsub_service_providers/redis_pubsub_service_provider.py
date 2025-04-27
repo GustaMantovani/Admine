@@ -9,6 +9,7 @@ class RedisPubSubServiceProvider(PubSubService):
         super().__init__(logging, host, port, subscribed_channels, producer_channels)
         self.__client = redis.StrictRedis(host, port, db=0)
         self.__pubsub = self.__client.pubsub()
+        self.__client.ping()
         self._logger.info(f"Redis client initialized at {host}:{port}")
 
     def send_message(self, message: AdmineMessage):
