@@ -1,15 +1,23 @@
 import os
 import json
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from core.exceptions import ConfigError, ConfigFileError
 
 class Config:
     def __init__(self, config_file: str = "config.json"):
         self.config = self._load_from_json(config_file) or self._load_from_env()
+        if not self.config:
+            raise ConfigError("Failed to load configuration from file or environment")
 
-    def _load_from_json(self, config_file: str) -> Dict[str, Any]:
+    def _load_from_json(self, config_file: str) -> Optional[Dict[str, Any]]:
         if os.path.exists(config_file):
-            with open(config_file, "r") as file:
-                return json.load(file)
+            try:
+                with open(config_file, "r") as file:
+                    return json.load(file)
+            except json.JSONDecodeError as e:
+                raise ConfigFileError(config_file, f"Invalid JSON format: {str(e)}")
+            except IOError as e:
+                raise ConfigFileError(config_file, f"Error reading file: {str(e)}")
         return None
 
     def _load_from_env(self) -> Dict[str, Any]:
@@ -32,7 +40,6 @@ class Config:
             }
         }
 
-        # Remove keys with None values
         return {k: v for k, v in base_config.items() if v is not None}
 
     

@@ -17,13 +17,13 @@ class Bot:
         # Message Service Provider
         messaging_provider_str = self.__config.get("providers.messaging", "DISCORD")
         messaging_provider_type = MessageServiceProviderType[messaging_provider_str]
-        self.__message_service = MessageServiceFactory.create(messaging_provider_type, self.__config)
+        self.__message_service = MessageServiceFactory.create(self.__logger, messaging_provider_type, self.__config)
         self.__logger.info(f"{messaging_provider_str} message service provider initialized.")
 
         # PubSub Service Provider
         pubsub_provider_str = self.__config.get("providers.pubsub", "REDIS")
         pubsub_provider_type = PubSubServiceProviderType[pubsub_provider_str]
-        self.__pubsub_service = PubSubServiceFactory.create(pubsub_provider_type, self.__config)
+        self.__pubsub_service = PubSubServiceFactory.create(self.__logger, pubsub_provider_type, self.__config)
         self.__logger.info(f"{pubsub_provider_str} pubsub service provider initialized.")
 
         # Minecraft Info Service Provider
@@ -36,6 +36,9 @@ class Bot:
         self.__event_handle = EventHandle(self.__logger, [self.__message_service])
 
     def run(self):
-        self.__logger.info("Starting core...")
+        self.__logger.info("Starting bot...")
         # Create thread to listen and handle messages from message service
         # Create thread to listen and handle events from pubsub service
+
+    def shutdown(self):
+        self.__logger.info("Shutting down bot...")

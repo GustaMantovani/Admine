@@ -1,6 +1,7 @@
 from logging import Logger
 from typing import Optional
 from core.external.abstractions.message_service import MessageService
+from core.exceptions import DiscordTokenException, DiscordCommandPrefixException
 
 class DiscordMessageServiceProvider(MessageService):
     def __init__(self, logger: Logger, token: str, command_prefix: str = "!mc", channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
@@ -15,7 +16,7 @@ class DiscordMessageServiceProvider(MessageService):
     @token.setter
     def token(self, value: str) -> None:
         if not value:
-            raise ValueError("Token cannot be empty")
+            raise DiscordTokenException("Token cannot be empty")
         self.__token = value
     
     @property
@@ -25,7 +26,7 @@ class DiscordMessageServiceProvider(MessageService):
     @command_prefix.setter
     def command_prefix(self, value: str) -> None:
         if not value:
-            raise ValueError("Command prefix cannot be empty")
+            raise DiscordCommandPrefixException("Command prefix cannot be empty")
         self.__command_prefix = value
 
     def send_message(self, message: str):

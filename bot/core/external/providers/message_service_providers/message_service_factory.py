@@ -1,14 +1,15 @@
+from logging import Logger
 from core.external.providers.message_service_providers.discord_message_service_provider import DiscordMessageServiceProvider
 from core.external.providers.message_service_providers.message_service_provider_type import MessageServiceProviderType
 from core.config import Config
-from typing import Callable, Dict
+from core.exceptions import MessageServiceFactoryError
+from typing import Callable, Dict, Any
 
 
 class MessageServiceFactory:
-    # Dictionary mapping provider types to their factory functions
-    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Config], object]] = {
-        MessageServiceProviderType.DISCORD: lambda config: DiscordMessageServiceProvider(
-            logger=config.get_logger(),
+    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Config, Logger], Any]] = {
+        MessageServiceProviderType.DISCORD: lambda config, logger: DiscordMessageServiceProvider(
+            logger=logger,
             channels=config.get("discord.channels"),
             administrators=config.get("discord.administrators"),
             token=config.get("discord.token"),
@@ -17,8 +18,14 @@ class MessageServiceFactory:
     }
 
     @staticmethod
-    def create(provider_type: MessageServiceProviderType, config: Config):
-        try:
-            return MessageServiceFactory.__PROVIDER_FACTORIES[provider_type](config)
-        except KeyError:
-            raise ValueError(f"Unknown MessageServiceProviderType: {provider_type}")
+    def create(logging: Logger, provider_type: MessageServiceProviderType, config: Config):
+        factory = MessageServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
+        if factory:
+            try:
+                return factory(config, logging)
+            except Exception as e:
+                logging.error(f"Error creating Message Service provider {provider_type}: {e}")
+                raise MessageServiceFactoryError(provider_type, f"Failed to instantiate provider: {e}") from e
+        else:
+            logging.error(f"Unknown MessageServiceProviderType requested: {provider_type}")
+            raise MessageServiceFactoryError(provider_type, "Unknown MessageServiceProviderType")
