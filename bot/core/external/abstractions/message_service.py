@@ -3,8 +3,8 @@ from logging import Logger
 from typing import Optional
 
 class MessageService(ABC):
-    def __init__(self, loggin: Logger, channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
-        self.logger = loggin
+    def __init__(self, logging: Logger, channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
+        self.logger = logging
         self._channels = channels if channels is not None else []
         self._administrators = administrators if administrators is not None else []
 

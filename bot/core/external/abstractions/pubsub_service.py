@@ -3,8 +3,8 @@ from logging import Logger
 from typing import Optional
 
 class PubSubService(ABC):
-    def __init__(self, logger: Logger, host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
-        self.logger = logger
+    def __init__(self, logging: Logger, host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
+        self.logger = logging
         self._host = host
         self._port = port
         self._subscribed_channels = subscribed_channels if subscribed_channels is not None else []
