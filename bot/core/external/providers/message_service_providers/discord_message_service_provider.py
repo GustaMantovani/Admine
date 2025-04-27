@@ -4,8 +4,8 @@ from core.external.abstractions.message_service import MessageService
 from core.exceptions import DiscordTokenException, DiscordCommandPrefixException
 
 class DiscordMessageServiceProvider(MessageService):
-    def __init__(self, logger: Logger, token: str, command_prefix: str = "!mc", channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
-        super().__init__(logger, channels, administrators)
+    def __init__(self, logging: Logger, token: str, command_prefix: str = "!mc", channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
+        super().__init__(logging, channels, administrators)
         self.__token = token
         self.__command_prefix = command_prefix
 
@@ -30,7 +30,7 @@ class DiscordMessageServiceProvider(MessageService):
         self.__command_prefix = value
 
     def send_message(self, message: str):
-        self.__logger.debug(f"Sending message: {message}")
+        self._logger.debug(f"Sending message: {message}")
 
     def listen_message(self, pubsub):
-        self.__logger.debug(f"Listening for messages")
+        self._logger.debug(f"Listening for messages")

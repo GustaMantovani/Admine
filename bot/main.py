@@ -16,7 +16,7 @@ def main():
             get_logger().error(f"Configuration error: {e}")
             sys.exit(1)
 
-        bot = Bot(config, get_logger())
+        bot = Bot(get_logger(), config)
         bot.run()
     except Exception as e:
         get_logger().error(f"Unexpected error: {e}\n{traceback.format_exc()}")

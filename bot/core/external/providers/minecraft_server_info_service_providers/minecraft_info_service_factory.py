@@ -5,7 +5,7 @@ from core.config import Config
 from core.exceptions import MinecraftInfoServiceFactoryException
 
 class MinecraftInfoServiceFactory:
-    __PROVIDER_FACTORIES: Dict[MinecraftInfoServiceProviderType, Callable[[Config, Logger], Any]] = {
+    __PROVIDER_FACTORIES: Dict[MinecraftInfoServiceProviderType, Callable[[Logger, Config], Any]] = {
         MinecraftInfoServiceProviderType.REST: lambda config, logger: None
     }
 

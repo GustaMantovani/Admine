@@ -7,9 +7,9 @@ from typing import Callable, Dict, Any
 
 
 class MessageServiceFactory:
-    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Config, Logger], Any]] = {
-        MessageServiceProviderType.DISCORD: lambda config, logger: DiscordMessageServiceProvider(
-            logger=logger,
+    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Logger, Config], Any]] = {
+        MessageServiceProviderType.DISCORD: lambda logging, config: DiscordMessageServiceProvider(
+            logging=logging,
             channels=config.get("discord.channels"),
             administrators=config.get("discord.administrators"),
             token=config.get("discord.token"),
@@ -22,7 +22,7 @@ class MessageServiceFactory:
         factory = MessageServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
             try:
-                return factory(config, logging)
+                return factory(logging, config)
             except Exception as e:
                 logging.error(f"Error creating Message Service provider {provider_type}: {e}")
                 raise MessageServiceFactoryError(provider_type, f"Failed to instantiate provider: {e}") from e

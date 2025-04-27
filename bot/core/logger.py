@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 # Logger configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -15,7 +16,7 @@ if not logging.getLogger().hasHandlers():
         ]
     )
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: Optional[str] = "Admine Bot") -> logging.Logger:
     return logging.getLogger(name)
 
 def get_logger_handler(name: str) -> logging.StreamHandler:
