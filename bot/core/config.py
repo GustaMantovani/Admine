@@ -5,11 +5,11 @@ from core.exceptions import ConfigError, ConfigFileError
 
 class Config:
     def __init__(self, config_file: str = "config.json"):
-        self.config = self._load_from_json(config_file) or self._load_from_env()
-        if not self.config:
+        self.__config = self.__load_from_json(config_file) or self.__load_from_env()
+        if not self.__config:
             raise ConfigError("Failed to load configuration from file or environment")
 
-    def _load_from_json(self, config_file: str) -> Optional[Dict[str, Any]]:
+    def __load_from_json(self, config_file: str) -> Optional[Dict[str, Any]]:
         if os.path.exists(config_file):
             try:
                 with open(config_file, "r") as file:
@@ -20,7 +20,7 @@ class Config:
                 raise ConfigFileError(config_file, f"Error reading file: {str(e)}")
         return None
 
-    def _load_from_env(self) -> Dict[str, Any]:
+    def __load_from_env(self) -> Dict[str, Any]:
         base_config = {
             "providers": {
                 "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
@@ -45,7 +45,7 @@ class Config:
     
     def get(self, key: str, default: str = None) -> str:
         keys = key.split(".")
-        value = self.config
+        value = self.__config
         for k in keys:
             if isinstance(value, dict):
                 value = value.get(k)

@@ -12,7 +12,7 @@ class RedisPubSubServiceProvider(PubSubService):
         self._logger.info(f"Redis client initialized at {host}:{port}")
 
     def send_message(self, message: AdmineMessage):
-        self._logger.debug(f"Sending message to channels: {', '.join(self.get_producer_channels())}")
+        self._logger.debug(f"Sending message to channels: {', '.join(self.producer_channels)}")
 
     def listen_message(self):
-        self._logger.debug(f"Listening to channels: {', '.join(self.get_subscribed_channels())}")
+        self._logger.debug(f"Listening to channels: {', '.join(self.subscribed_channels)}")

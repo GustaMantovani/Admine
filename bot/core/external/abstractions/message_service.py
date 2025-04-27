@@ -9,11 +9,11 @@ class MessageService(ABC):
         self.__administrators = administrators if administrators is not None else []
 
     @property
-    def get_channels(self) -> list[str]:
+    def channels(self) -> list[str]:
         return self.__channels
     
     @property
-    def get_administrators(self) -> list[str]:
+    def administrators(self) -> list[str]:
         return self.__administrators
 
     @abstractmethod

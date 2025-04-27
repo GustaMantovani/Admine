@@ -11,19 +11,19 @@ class PubSubService(ABC):
         self.__producer_channels = producer_channels if producer_channels is not None else []
 
     @property
-    def get_host(self) -> str:
+    def host(self) -> str:
         return self.__host
 
     @property
-    def get_port(self) -> int:
+    def port(self) -> int:
         return self.__port
 
     @property
-    def get_subscribed_channels(self) -> list[str]:
+    def subscribed_channels(self) -> list[str]:
         return self.__subscribed_channels
 
     @property
-    def get_producer_channels(self) -> list[str]:
+    def producer_channels(self) -> list[str]:
         return self.__producer_channels
 
     @abstractmethod

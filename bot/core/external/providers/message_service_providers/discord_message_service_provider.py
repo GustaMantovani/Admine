@@ -13,12 +13,6 @@ class DiscordMessageServiceProvider(MessageService):
     def token(self) -> str:
         return self.__token
     
-    @token.setter
-    def token(self, value: str) -> None:
-        if not value:
-            raise DiscordTokenException("Token cannot be empty")
-        self.__token = value
-    
     @property
     def command_prefix(self) -> str:
         return self.__command_prefix

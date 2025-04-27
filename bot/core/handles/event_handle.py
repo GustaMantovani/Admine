@@ -14,7 +14,7 @@ class EventHandle:
         }
 
     def handle_event(self, event: AdmineMessage):
-        self.__logger.info(f"Handling event: {event.get_message()}")
+        self.__logger.info(f"Handling event: {event.message}")
         tags = event.tags
 
         for tag in tags:
@@ -29,7 +29,7 @@ class EventHandle:
             message_service.send_message(notification)
 
     def __server_start(self, event: AdmineMessage):
-        self.__logger.debug(f"Handler: Server has started with message: {event.get_message()}")
+        self.__logger.debug(f"Handler: Server has started with message: {event.message}")
 
     def __server_stop(self, event: AdmineMessage):
-        self.__logger.debug(f"Handler: Server has stopped with message: {event.get_message()}")
+        self.__logger.debug(f"Handler: Server has stopped with message: {event.message}")
