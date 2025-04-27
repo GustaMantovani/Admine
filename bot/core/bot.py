@@ -13,8 +13,6 @@ from core.external.providers.minecraft_server_info_service_providers.minecraft_i
 
 from core.models.admine_message import AdmineMessage
 class Bot:
-    """Main core class that initializes and runs the service providers."""
-
     def __init__(self, loggin: Logger, config: Config):
         self.logger = loggin
         self.config = config
@@ -39,20 +37,8 @@ class Bot:
         # self.logger.info(f"{minecraft_provider_str} minecraft info service provider initialized.")
 
     def run(self):
-        """Run the core."""
         self.logger.info("Starting core...")
         self._setup_providers()
         # Create thread to listen and handle messages from message service
 
-        message = self.message_service.listen_message()
-        if(message == "server_up"):
-            admine_message = AdmineMessage(
-                message=message,
-                tags=["server_up"]
-            )
-            self.pubsub_service.send_message(admine_message)
-
         # Create thread to listen and handle events from pubsub service
-        message = self.pubsub_service.listen_message()
-        event_handle.process_message(message)
-
