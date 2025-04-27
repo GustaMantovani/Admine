@@ -6,7 +6,7 @@ from core.exceptions import MinecraftInfoServiceFactoryException
 
 class MinecraftInfoServiceFactory:
     __PROVIDER_FACTORIES: Dict[MinecraftInfoServiceProviderType, Callable[[Logger, Config], Any]] = {
-        MinecraftInfoServiceProviderType.REST: lambda config, logger: None
+        MinecraftInfoServiceProviderType.REST: lambda logging, config: None
     }
 
     @staticmethod

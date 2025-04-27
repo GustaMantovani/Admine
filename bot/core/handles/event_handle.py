@@ -4,8 +4,8 @@ from typing import List, Callable, Dict
 from logging import Logger
 
 class EventHandle:
-    def __init__(self, logger: Logger, message_services: List[MessageService]):
-        self.__logger = logger
+    def __init__(self, logging: Logger, message_services: List[MessageService]):
+        self.__logger = logging
         self.__message_services = message_services
 
         self.__HANDLES: Dict[str, Callable[[AdmineMessage], None]] = {
@@ -15,7 +15,7 @@ class EventHandle:
 
     def handle_event(self, event: AdmineMessage):
         self.__logger.info(f"Handling event: {event.get_message()}")
-        tags = event.get_tags()
+        tags = event.tags
 
         for tag in tags:
             if tag in self.__HANDLES:

@@ -12,8 +12,8 @@ def admin_command(func):
     return wrapper
 
 class CommandHandle:
-    def __init__(self, logger: Logger, pubsub_service: PubSubService, event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
-        self.__logger = logger
+    def __init__(self, logging: Logger, pubsub_service: PubSubService, event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
+        self.__logger = logging
         self.__pubsub_service = pubsub_service
 
         self.__HANDLES: Dict[str, Callable[[List[str]], None]] = {

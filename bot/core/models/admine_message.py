@@ -2,8 +2,8 @@ import json
 
 class AdmineMessage:
     def __init__(self, tags: list[str], message: str):
-        self._tags = tags
-        self._message = message
+        self.tags = tags
+        self.message = message
 
     @classmethod
     def from_json_to_object(cls, json_str):

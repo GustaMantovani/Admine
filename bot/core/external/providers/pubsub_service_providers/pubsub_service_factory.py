@@ -8,8 +8,8 @@ from typing import Callable, Dict, Any
 
 class PubSubServiceFactory:
     __PROVIDER_FACTORIES: Dict[PubSubServiceProviderType, Callable[[Logger, Config], Any]] = {
-        PubSubServiceProviderType.REDIS: lambda logger, config: RedisPubSubServiceProvider(
-            logging=logger,
+        PubSubServiceProviderType.REDIS: lambda logging, config: RedisPubSubServiceProvider(
+            logging=logging,
             host=config.get("redis.connectionstring").split(":")[0],
             port=int(config.get("redis.connectionstring").split(":")[1]),
             subscribed_channels=config.get("redis.subscribedchannels", []),
