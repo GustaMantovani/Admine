@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
-from core.config import Config
+from logging import Logger
+from typing import Optional
 
 class PubSubService(ABC):
-    def __init__(self, host: str, port: int, subscribed_channels: list[str], producer_channels: list[str]):
+    def __init__(self, logger: Logger, host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
+        self.logger = logger
         self._host = host
         self._port = port
-        self._subscribed_channels = subscribed_channels
-        self._producer_channels = producer_channels
+        self._subscribed_channels = subscribed_channels if subscribed_channels is not None else []
+        self._producer_channels = producer_channels if producer_channels is not None else []
     
     def get_host(self) -> str:
         return self._host

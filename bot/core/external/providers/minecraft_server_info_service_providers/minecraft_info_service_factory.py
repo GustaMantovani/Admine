@@ -8,9 +8,5 @@ class MinecraftInfoServiceFactory:
     @staticmethod
     def create(provider_type: MinecraftInfoServiceProviderType, config: Config):
         if provider_type == MinecraftInfoServiceProviderType.REST:
-            # return RestMinecraftInfoServiceProvider(
-            #     connection_string=config.get("minecraft.connectionstring"),
-            #     token=config.get("minecraft.token")
-            # )
-            raise NotImplementedError("REST MinecraftInfoServiceProvider not implemented yet.")
+            pass
         raise ValueError(f"Unknown MinecraftInfoServiceProviderType: {provider_type}")

@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
+from logging import Logger
 from core.models.minecraft_server_status import MinecraftServerStatus
 from core.models.minecraft_server_info import MinecraftServerInfo
-from core.config import Config
 
 class MinecraftServerInfoService(ABC):
+    def __init__(self, loggin: Logger):
+        self.logger = loggin
+
     @abstractmethod
     def get_status(self) -> MinecraftServerStatus:
+        self.logger.info("Getting server status")
         pass
 
     @abstractmethod

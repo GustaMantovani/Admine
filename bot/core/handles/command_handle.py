@@ -1,7 +1,7 @@
 from core.models.admine_message import AdmineMessage
 from typing import Callable, Dict, List
 from functools import wraps
-from core.logger import get_logger
+from logging import Logger
 
 # Decorator to mark commands as admin-only
 def admin_command(func):
@@ -13,10 +13,11 @@ def admin_command(func):
     return wrapper
 
 class CommandHandle:
+
     # Default static registry for event handlers
     default_event_handle_registry: Dict[str, Callable[[List[str]], None]] = {}
     
-    def __init__(self, event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
+    def __init__(self, logging: Logger , event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
         """
         Initialize the CommandHandle with a registry of command handlers.
         
@@ -24,7 +25,7 @@ class CommandHandle:
                                       If None, the default registry is used.
         """
         self.event_handle_registry = event_handle_registry or CommandHandle.default_event_handle_registry
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = logging
 
     def register_command(self, command: str, handler: Callable[[List[str]], None]):
         """
@@ -67,6 +68,10 @@ class CommandHandle:
 # Populating the default registry with standard handlers
 def start_server(args: List[str]):
     print(f"Starting server with args: {args}")
+    self.pubsub.send_message(AdmineMessage(
+        message="Server started",
+        tags=["server_start"]
+    ))
 
 def stop_server(args: List[str]):
     print(f"Stopping server with args: {args}")

@@ -1,17 +1,19 @@
 from core.external.abstractions.message_service import MessageService
 from core.models.admine_message import AdmineMessage
 from typing import List, Callable, Dict
+from logging import Logger
 
 class EventHandle:
     # Default static registry for event handlers
     default_event_registry: Dict[str, Callable[[AdmineMessage], None]] = {}
 
-    def __init__(self, message_services: List[MessageService], event_registry: Dict[str, Callable[[AdmineMessage], None]] = None):
+    def __init__(self, loggin: Logger, message_services: List[MessageService], event_registry: Dict[str, Callable[[AdmineMessage], None]] = None):
         """
         Initialize the EventHandle with a list of message services and an event registry.
         """
         self.message_services = message_services
         self.event_registry = event_registry or EventHandle.default_event_registry
+        self.logger = loggin
 
     def handle_event(self, event: AdmineMessage):
         """
