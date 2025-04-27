@@ -3,16 +3,18 @@ from logging import Logger
 from typing import Optional
 
 class MessageService(ABC):
-    def __init__(self, logging: Logger, channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
-        self.logger = logging
-        self._channels = channels if channels is not None else []
-        self._administrators = administrators if administrators is not None else []
+    def __init__(self, logger: Logger, channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
+        self.__logger = logger
+        self.__channels = channels if channels is not None else []
+        self.__administrators = administrators if administrators is not None else []
 
-    def get_channels(self) -> list[str]:
-        return self._channels
-
-    def get_administrators(self) -> list[str]:
-        return self._administrators
+    @property
+    def channels(self) -> list[str]:
+        return self.__channels
+    
+    @property
+    def administrators(self) -> list[str]:
+        return self.__administrators
 
     @abstractmethod
     def send_message(self, message: str):
