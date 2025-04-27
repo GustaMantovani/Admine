@@ -13,11 +13,12 @@ class Bot:
     def __init__(self, logger: Logger, config: Config):
         self.__logger = logger
         self.__config = config
+        self.__message_services = []
 
         # Message Service Provider
         messaging_provider_str = self.__config.get("providers.messaging", "DISCORD")
         messaging_provider_type = MessageServiceProviderType[messaging_provider_str]
-        self.__message_service = MessageServiceFactory.create(self.__logger, messaging_provider_type, self.__config)
+        self.__message_services.append(MessageServiceFactory.create(self.__logger, messaging_provider_type, self.__config))
         self.__logger.info(f"{messaging_provider_str} message service provider initialized.")
 
         # PubSub Service Provider

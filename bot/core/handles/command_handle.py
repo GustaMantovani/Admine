@@ -13,7 +13,7 @@ def admin_command(func):
     return wrapper
 
 class CommandHandle:
-    def __init__(self, logging: Logger, pubsub_service: PubSubService, minecraft_info_service: MinecraftServerInfoService,event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
+    def __init__(self, logging: Logger, pubsub_service: PubSubService, minecraft_info_service: MinecraftServerInfoService):
         self.__logger = logging
         self.__pubsub_service = pubsub_service
         self.__minecraft_info_service = minecraft_info_service
