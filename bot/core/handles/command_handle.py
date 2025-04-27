@@ -1,5 +1,6 @@
 from core.models.admine_message import AdmineMessage
 from core.external.abstractions.pubsub_service import PubSubService
+from core.external.abstractions.minecraft_server_info_service import MinecraftServerInfoService
 from typing import Callable, Dict, List
 from functools import wraps
 from logging import Logger
@@ -12,9 +13,10 @@ def admin_command(func):
     return wrapper
 
 class CommandHandle:
-    def __init__(self, logging: Logger, pubsub_service: PubSubService, event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
+    def __init__(self, logging: Logger, pubsub_service: PubSubService, minecraft_info_service: MinecraftServerInfoService,event_handle_registry: Dict[str, Callable[[List[str]], None]] = None):
         self.__logger = logging
         self.__pubsub_service = pubsub_service
+        self.__minecraft_info_service = minecraft_info_service
 
         self.__HANDLES: Dict[str, Callable[[List[str]], None]] = {
             "start": self.__start_server,

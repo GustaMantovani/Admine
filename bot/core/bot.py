@@ -27,12 +27,12 @@ class Bot:
         self.__logger.info(f"{pubsub_provider_str} pubsub service provider initialized.")
 
         # Minecraft Info Service Provider
-        # minecraft_provider_str = self.__config.get("providers.minecraft", "REST")
-        # minecraft_provider_type = MinecraftInfoServiceProviderType[minecraft_provider_str]
-        # self.__minecraft_info_service = MinecraftInfoServiceFactory.create(minecraft_provider_type, self.__config)
-        # self.__logger.info(f"{minecraft_provider_str} minecraft info service provider initialized.")
+        minecraft_provider_str = self.__config.get("providers.minecraft", "REST")
+        minecraft_provider_type = MinecraftInfoServiceProviderType[minecraft_provider_str]
+        self.__minecraft_info_service = MinecraftInfoServiceFactory.create(self.__logger , minecraft_provider_type, self.__config)
+        self.__logger.info(f"{minecraft_provider_str} minecraft info service provider initialized.")
 
-        self.__command_handle = CommandHandle(self.__logger, self.__pubsub_service)
+        self.__command_handle = CommandHandle(self.__logger, self.__pubsub_service, self.__minecraft_info_service)
         self.__event_handle = EventHandle(self.__logger, [self.__message_service])
 
     def run(self):
