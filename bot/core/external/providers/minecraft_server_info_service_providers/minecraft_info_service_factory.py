@@ -8,7 +8,7 @@ from core.config import Config
 
 class MinecraftInfoServiceFactory:
     # Dictionary mapping provider types to their factory functions
-    _PROVIDER_FACTORIES: Dict[MinecraftInfoServiceProviderType, Callable[[Config], object]] = {
+    __PROVIDER_FACTORIES: Dict[MinecraftInfoServiceProviderType, Callable[[Config], object]] = {
         MinecraftInfoServiceProviderType.REST: lambda config: None  # Placeholder
         # When implemented, this should be:
         # MinecraftInfoServiceProviderType.REST: lambda config: RestMinecraftInfoServiceProvider(
@@ -21,7 +21,7 @@ class MinecraftInfoServiceFactory:
     @staticmethod
     def create(provider_type: MinecraftInfoServiceProviderType, config: Config):
         try:
-            provider = MinecraftInfoServiceFactory._PROVIDER_FACTORIES[provider_type](config)
+            provider = MinecraftInfoServiceFactory.__PROVIDER_FACTORIES[provider_type](config)
             if provider is None:
                 raise NotImplementedError(f"Provider {provider_type} is recognized but not implemented yet")
             return provider

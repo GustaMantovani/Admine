@@ -6,7 +6,7 @@ from typing import Callable, Dict
 
 class PubSubServiceFactory:
     # Dictionary mapping provider types to their factory functions
-    _PROVIDER_FACTORIES: Dict[PubSubServiceProviderType, Callable[[Config], object]] = {
+    __PROVIDER_FACTORIES: Dict[PubSubServiceProviderType, Callable[[Config], object]] = {
         PubSubServiceProviderType.REDIS: lambda config: RedisPubSubServiceProvider(
             logger=config.get_logger() if hasattr(config, 'get_logger') else None,
             host=config.get("redis.connectionstring").split(":")[0],
@@ -19,6 +19,6 @@ class PubSubServiceFactory:
     @staticmethod
     def create(provider_type: PubSubServiceProviderType, config: Config):
         try:
-            return PubSubServiceFactory._PROVIDER_FACTORIES[provider_type](config)
+            return PubSubServiceFactory.__PROVIDER_FACTORIES[provider_type](config)
         except KeyError:
             raise ValueError(f"Unknown PubSubServiceProviderType: {provider_type}")
