@@ -6,6 +6,7 @@ import (
 )
 
 // Testes end to end
+
 func Test_Server_Should_Not_Fatal(t *testing.T) {
 	err := StartServerCompose()
 
