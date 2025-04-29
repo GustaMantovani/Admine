@@ -18,7 +18,7 @@ func Test_Server_Should_Not_Fatal(t *testing.T) {
 	t.Logf("servidor inicializado e derrubado com sucesso")
 }
 
-func Test_Server_ShouldFail(t *testing.T) {
+func Test_Server_Should_Fail(t *testing.T) {
 	config.GetInstance().ComposeAbsPath = "non-existing-path"
 
 	err := StartServerCompose()
