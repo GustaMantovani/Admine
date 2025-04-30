@@ -32,7 +32,7 @@ Admine is a comprehensive infrastructure management solution for Minecraft serve
 
 The system architecture is designed to ensure modularity and separation of concerns. Each component is responsible for a specific aspect of the infrastructure, and they communicate via Redis Pub/Sub channels.
 
-![alt text](.assets/image.png)
+![alt text](.readme/image.png)
 
 ### Pipeline Overview
 
