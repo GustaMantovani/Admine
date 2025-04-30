@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"server-handler/cmd/queue"
+	"server_handler/cmd/queue"
 
 	"github.com/spf13/cobra"
 )

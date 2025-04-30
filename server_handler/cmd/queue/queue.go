@@ -2,7 +2,7 @@ package queue
 
 import (
 	"log"
-	"server-handler/internal/pubsub"
+	"server_handler/internal/pubsub"
 )
 
 func RunListenQueue() {

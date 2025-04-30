@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"server-handler/internal/handler"
-	"server-handler/internal/message"
+	"server_handler/internal/handler"
+	"server_handler/internal/message"
 
 	"github.com/redis/go-redis/v9"
 )
