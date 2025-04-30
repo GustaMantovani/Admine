@@ -2,8 +2,10 @@ package pubsub
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"server-handler/internal/handler"
+	"server-handler/internal/message"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -34,10 +36,25 @@ func (ps PubSubRedis) ListenForMessages() {
 	for {
 		msg, err := subscriber.ReceiveMessage(context.Background())
 
+		log.Println("mensagem: ", msg)
+
 		if err != nil {
 			log.Fatal("Erro ao receber mensagem do canal redis: ", err)
 		}
 
-		handler.ManageCommand(msg.Payload)
+		var m message.Message
+
+		err = json.Unmarshal([]byte(msg.Payload), &m)
+
+		if err != nil {
+			log.Println("erro: ", err)
+		}
+
+		log.Println(m.Tags)
+
+		for _, tag := range m.Tags {
+			handler.ManageCommand(tag)
+		}
+
 	}
 }
