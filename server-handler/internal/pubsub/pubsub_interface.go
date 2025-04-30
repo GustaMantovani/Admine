@@ -1,6 +1,6 @@
 package pubsub
 
-type PusSubInterface interface {
+type PubSubInterface interface {
 	ListenForMessages()
 	SendMessage(string)
 }
