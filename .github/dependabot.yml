@@ -6,7 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: "cargo" # See documentation for possible values
-    directory: "/zerotier_handler" # Location of package manifests
+    directory: "/vpn_handler" # Location of package manifests
     schedule:
       interval: "weekly"
   - package-ecosystem: "gomod" # See documentation for possible values

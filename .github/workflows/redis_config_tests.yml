@@ -3,12 +3,12 @@ name: Redis Configuration CI
 on:
   push:
     paths:
-      - "redis-pub-sub/docker-compose.yaml"
-      - "redis-pub-sub/redis.conf"
+      - "redis_pubsub/docker-compose.yaml"
+      - "redis_pubsub/redis.conf"
   pull_request:
     paths:
-      - "redis-pub-sub/docker-compose.yaml"
-      - "redis-pub-sub/redis.conf"
+      - "redis_pubsub/docker-compose.yaml"
+      - "redis_pubsub/redis.conf"
 
 jobs:
   validate-config:
@@ -20,11 +20,11 @@ jobs:
 
       - name: Run Redis with configuration
         run: docker compose up -d
-        working-directory: redis-pub-sub
+        working-directory: redis_pubsub
           
       - name: Check Redis status
         run: docker exec redis-test redis-cli PING
 
       - name: Remove container
         run: docker compose down
-        working-directory: redis-pub-sub
+        working-directory: redis_pubsub
