@@ -23,7 +23,7 @@ jobs:
         working-directory: redis_pubsub
           
       - name: Check Redis status
-        run: docker exec redis-test redis-cli PING
+        run: docker compose exec redis redis-cli PING
 
       - name: Remove container
         run: docker compose down
