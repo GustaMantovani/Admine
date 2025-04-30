@@ -2,7 +2,7 @@ package handler
 
 import (
 	"errors"
-	"server-handler/internal/server"
+	"server_handler/internal/server"
 )
 
 func ManageCommand(command string) error {

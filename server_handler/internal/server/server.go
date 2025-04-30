@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
-	"server-handler/internal/config"
+	"server_handler/internal/config"
 
 	"github.com/harrim91/docker-compose-go/client"
 )

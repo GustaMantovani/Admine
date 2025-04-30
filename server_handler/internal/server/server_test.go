@@ -1,7 +1,7 @@
 package server
 
 import (
-	"server-handler/internal/config"
+	"server_handler/internal/config"
 	"testing"
 )
 
