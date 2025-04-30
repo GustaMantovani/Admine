@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 module server/handler
 
 go 1.23.1
@@ -57,4 +58,18 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/sys v0.31.0 // indirect
+=======
+module server_handler
+
+go 1.24.2
+
+require (
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/harrim91/docker-compose-go v1.3.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/redis/go-redis/v9 v9.7.3 // indirect
+	github.com/spf13/cobra v1.9.1 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
+>>>>>>> 3c25096 (:truck: rename package)
 )
