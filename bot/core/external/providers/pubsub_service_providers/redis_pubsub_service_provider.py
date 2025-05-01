@@ -14,6 +14,12 @@ class RedisPubSubServiceProvider(PubSubService):
 
     def send_message(self, message: AdmineMessage):
         self._logger.debug(f"Sending message to channels: {', '.join(self.producer_channels)}")
+        for channel in self.producer_channels:
+            self.__client.publish(channel,message.from_object_to_json())
 
     def listen_message(self):
         self._logger.debug(f"Listening to channels: {', '.join(self.subscribed_channels)}")
+        self.__pubsub.subscribe("teste")
+        for message in self.__pubsub.listen():  # Itera sobre o gerador
+            if message["type"] == "message":  # Filtra mensagens reais
+                return message

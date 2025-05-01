@@ -8,6 +8,9 @@ from core.external.providers.minecraft_server_info_service_providers.minecraft_s
 from core.external.providers.minecraft_server_info_service_providers.minecraft_server_info_service_provider_type import MinecraftInfoServiceProviderType
 from core.handles.command_handle import CommandHandle
 from core.handles.event_handle import EventHandle
+from core.models.admine_message import AdmineMessage
+import threading
+import asyncio
 
 class Bot:
     def __init__(self, logger: Logger, config: Config):
@@ -36,8 +39,39 @@ class Bot:
         self.__command_handle = CommandHandle(self.__logger, self.__pubsub_service, self.__minecraft_info_service)
         self.__event_handle = EventHandle(self.__logger, self.__message_services)
 
+
+    def listening(self):
+        while(True):
+            data = self.__pubsub_service.listen_message()["data"].decode("utf-8")
+            message = AdmineMessage.from_json_to_object(data)
+            self.__event_handle.handle_event(message)
+
+
     def run(self):
         self.__logger.info("Starting bot...")
+        message= AdmineMessage(["server_start"],"FUNCIONOU")
+        self.__pubsub_service.send_message(message)
+
+        asyncio.run(self.listening())
+        #thread = threading.Thread(target=self.start_listening_loop)
+        #thread.start()
+
+
+
+
+        
+        
+
+    
+        
+        
+       
+
+        
+        
+        
+        
+        
         # Create thread to listen and handle messages from message service
         # Create thread to listen and handle events from pubsub service
 

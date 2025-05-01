@@ -2,12 +2,19 @@ from logging import Logger
 from typing import Optional
 from core.external.abstractions.message_service import MessageService
 from core.exceptions import DiscordTokenException, DiscordCommandPrefixException
+import discord
+from discord import app_commands
 
-class DiscordMessageServiceProvider(MessageService):
+class DiscordMessageServiceProvider(MessageService, discord.Client):
     def __init__(self, logging: Logger, token: str, command_prefix: str = "!mc", channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
         super().__init__(logging, channels, administrators)
         self.__token = token
         self.__command_prefix = command_prefix
+
+        #Herança do discord.Client
+        intents = discord.Intents.all()
+        discord.Client.__init__(self, intents=intents)
+        self.tree = app_commands.CommandTree(self)
 
     @property
     def token(self) -> str:

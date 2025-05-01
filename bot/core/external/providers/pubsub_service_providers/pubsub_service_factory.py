@@ -13,7 +13,7 @@ class PubSubServiceFactory:
             host=config.get("redis.connectionstring").split(":")[0],
             port=int(config.get("redis.connectionstring").split(":")[1]),
             subscribed_channels=config.get("redis.subscribedchannels", []),
-            producer_channels=config.get("redis.producerchannels", [])
+            producer_channels=config.get("redis.producerchannels", ["teste"])
         )
     }
 
