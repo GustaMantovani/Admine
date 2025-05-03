@@ -71,5 +71,9 @@ require (
 	github.com/redis/go-redis/v9 v9.7.3 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+<<<<<<< HEAD
 >>>>>>> 3c25096 (:truck: rename package)
+=======
+	gopkg.in/yaml.v3 v3.0.1
+>>>>>>> 5214b67 (:heavy_plus_sign: add yaml dependency)
 )
