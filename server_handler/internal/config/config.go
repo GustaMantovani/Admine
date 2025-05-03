@@ -14,7 +14,7 @@ var once sync.Once
 // Obter instancia Singleton da configuração do servidor
 func GetInstance() *Config {
 	once.Do(func() {
-		instance = &Config{ComposeAbsPath: "/home/andre/pgm/pessoal/Admine/minecraft-server/docker-compose.yaml"}
+		instance = &Config{ComposeAbsPath: "/home/andre/pgm/pessoal/Admine/minecraft_server/docker-compose.yaml"}
 	})
 
 	return instance
