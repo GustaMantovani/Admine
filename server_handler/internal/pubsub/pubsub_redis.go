@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"server_handler/internal/handler"
+	// "server_handler/internal/handler"
 	"server_handler/internal/message"
 
 	"github.com/redis/go-redis/v9"
@@ -30,13 +30,15 @@ func (ps PubSubRedis) SendMessage(message string) {
 	ps.client.Publish(context.Background(), ps.channel, message)
 }
 
-func (ps PubSubRedis) ListenForMessages() {
+// Listen pubsub for messages in format of the struct Message from internal/message
+// and send then to a channel from parameter
+func (ps PubSubRedis) ListenForMessages(msgChannel chan message.Message) {
 	subscriber := ps.client.Subscribe(context.Background(), ps.channel)
 
 	for {
 		msg, err := subscriber.ReceiveMessage(context.Background())
 
-		log.Println("mensagem: ", msg)
+		log.Println("Mensagem recebida pelo pubsub redis: ", msg)
 
 		if err != nil {
 			log.Fatal("Erro ao receber mensagem do canal redis: ", err)
@@ -50,11 +52,6 @@ func (ps PubSubRedis) ListenForMessages() {
 			log.Println("erro: ", err)
 		}
 
-		log.Println(m.Tags)
-
-		for _, tag := range m.Tags {
-			handler.ManageCommand(tag)
-		}
-
+		msgChannel <- m
 	}
 }

@@ -1,6 +1,8 @@
 package pubsub
 
+import "server_handler/internal/message"
+
 type PubSubInterface interface {
-	ListenForMessages()
+	ListenForMessages(chan message.Message)
 	SendMessage(string)
 }
