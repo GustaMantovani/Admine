@@ -8,14 +8,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "hugo",
-	Short: "short hugo",
-	Long:  "long hugo",
-	Run: func(cmd *cobra.Command, args []string) {
-		print("rodando queue")
+var shortDescription = "Up minecraft server from a docker compose file."
 
-		queue.RunListenQueue()
+var longDescription = `Up minecraft server from a docker compose file.
+The compose file must be specified in a YAML file in ~/.config/admine/server.yaml.
+
+server.yaml content
+composeDirectory: "/compose/absolute/path.yaml"
+consumerChannel: "channel-who-receives-commands"
+`
+
+var rootCmd = &cobra.Command{
+	Use:   "",
+	Short: shortDescription,
+	Long:  longDescription,
+	Run: func(cmd *cobra.Command, args []string) {
+		go queue.RunListenQueue()
+		for {
+		}
 	},
 }
 
