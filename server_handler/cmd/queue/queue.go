@@ -2,6 +2,7 @@ package queue
 
 import (
 	"log"
+	"server_handler/internal/config"
 	"server_handler/internal/handler"
 	"server_handler/internal/message"
 	"server_handler/internal/pubsub"
@@ -11,6 +12,7 @@ import (
 Start to listen a pubsub for commands
 */
 func RunListenQueue() {
+	log.Println("Running queue. Consumer channel: ", config.GetInstance().ConsumerChannel)
 	listenCommands()
 }
 
@@ -20,7 +22,7 @@ Define two threads.
 One for listen the pubsub and other to send commands to handler.
 */
 func listenCommands() {
-	psType := "redis"
+	psType := "redis-consumer"
 	ps := pubsub.PubSubFactoryCreate(psType)
 
 	psType = "redis-sender"
