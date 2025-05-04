@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"sync"
 )
 
@@ -14,7 +15,13 @@ var once sync.Once
 // Obter instancia Singleton da configuração do servidor
 func GetInstance() *Config {
 	once.Do(func() {
-		instance = &Config{ComposeAbsPath: "/home/andre/pgm/pessoal/Admine/minecraft_server/docker-compose.yaml"}
+		configFile, err := GetConfigFileData()
+		if err != nil {
+			log.Println("erro get config file data: ", err.Error())
+		}
+		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
+		log.Println("Compose Abs Path: ", composeAbsPath)
+		instance = &Config{ComposeAbsPath: composeAbsPath}
 	})
 
 	return instance
