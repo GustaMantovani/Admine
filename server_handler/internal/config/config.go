@@ -6,7 +6,8 @@ import (
 )
 
 type Config struct {
-	ComposeAbsPath string
+	ComposeAbsPath  string
+	ConsumerChannel string
 }
 
 var instance *Config
@@ -19,9 +20,13 @@ func GetInstance() *Config {
 		if err != nil {
 			log.Println("erro get config file data: ", err.Error())
 		}
+
 		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
-		log.Println("Compose Abs Path: ", composeAbsPath)
-		instance = &Config{ComposeAbsPath: composeAbsPath}
+
+		instance = &Config{
+			ComposeAbsPath:  composeAbsPath,
+			ConsumerChannel: configFile.ConsumerChannel,
+		}
 	})
 
 	return instance
