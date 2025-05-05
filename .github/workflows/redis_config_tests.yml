@@ -5,6 +5,7 @@ on:
     paths:
       - "redis_pubsub/docker-compose.yaml"
       - "redis_pubsub/redis.conf"
+      - ".github/workflows/redis_config_tests.yml"
   pull_request:
     paths:
       - "redis_pubsub/docker-compose.yaml"
@@ -21,9 +22,13 @@ jobs:
       - name: Run Redis with configuration
         run: docker compose up -d
         working-directory: redis_pubsub
-          
+
+      - name: Wait for Redis to start
+        run: sleep 1
+
       - name: Check Redis status
-        run: docker compose exec redis redis-cli PING
+        run: docker compose exec -T redis redis-cli PING
+        working-directory: redis_pubsub
 
       - name: Remove container
         run: docker compose down
