@@ -2,12 +2,14 @@ package config
 
 import (
 	"log"
+	"path"
 	"sync"
 )
 
 type Config struct {
-	ComposeAbsPath  string
-	ConsumerChannel string
+	ComposeAbsPath       string
+	ComposeContainerName string
+	ConsumerChannel      string
 }
 
 var instance *Config
@@ -22,10 +24,12 @@ func GetInstance() *Config {
 		}
 
 		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
+		containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
 
 		instance = &Config{
-			ComposeAbsPath:  composeAbsPath,
-			ConsumerChannel: configFile.ConsumerChannel,
+			ComposeAbsPath:       composeAbsPath,
+			ConsumerChannel:      configFile.ConsumerChannel,
+			ComposeContainerName: containerName,
 		}
 	})
 
