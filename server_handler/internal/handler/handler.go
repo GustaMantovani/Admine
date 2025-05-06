@@ -5,20 +5,35 @@ import (
 	"log"
 	"os/exec"
 	commandhandler "server_handler/internal/command_handler"
+	"server_handler/internal/docker"
+	"server_handler/internal/pubsub"
 	"server_handler/internal/server"
 	"strings"
 	"time"
 )
 
-func ManageCommand(command string) error {
+func ManageCommand(command string, ps pubsub.PubSubInterface) error {
 	if command == "start_server" {
 		server.StartServerCompose()
 		log.Println("Start server")
+		ps.SendMessage("Starting server")
 	} else if command == "stop_server" {
 		commandhandler.WriteToContainer("/stop")
 		time.Sleep(5 * time.Second)
+		ps.SendMessage("Stopping server")
+		sair := false
+		for sair {
+			msg, err := docker.ReadLastContainerLine()
+			if err != nil {
+				log.Println("Erro ao ler a última linha do container do servidor: ", err.Error())
+			}
+			if strings.Contains(msg, "All dimensions are saved") {
+				sair = true
+			}
+		}
 		server.StopServerCompose()
 		log.Println("Stop server")
+		ps.SendMessage("Server stopped")
 	} else if command == "ping" {
 		commandhandler.WriteToContainer("/say PONG")
 	} else {
