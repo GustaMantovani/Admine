@@ -40,8 +40,7 @@ func listenCommands() {
 	for msg := range mc {
 		log.Println(msg)
 		if len(msg.Tags) > 0 {
-			handler.ManageCommand(msg.Tags[0])
+			handler.ManageCommand(msg.Tags[0], pss)
 		}
-		pss.SendMessage("comando enviado")
 	}
 }
