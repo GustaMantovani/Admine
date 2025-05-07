@@ -22,11 +22,8 @@ Define two threads.
 One for listen the pubsub and other to send commands to handler.
 */
 func listenCommands() {
-	psType := "redis-consumer"
+	psType := "redis"
 	ps := pubsub.PubSubFactoryCreate(psType)
-
-	psType = "redis-sender"
-	pss := pubsub.PubSubFactoryCreate(psType)
 
 	if ps == nil {
 		log.Fatal("Tipo de PubSub não existe: ", psType)
@@ -40,7 +37,7 @@ func listenCommands() {
 	for msg := range mc {
 		log.Println(msg)
 		if len(msg.Tags) > 0 {
-			handler.ManageCommand(msg.Tags[0], pss)
+			handler.ManageCommand(msg.Tags[0], ps)
 		}
 	}
 }
