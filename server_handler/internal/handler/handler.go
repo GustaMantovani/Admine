@@ -5,6 +5,7 @@ import (
 	"log"
 	"os/exec"
 	commandhandler "server_handler/internal/command_handler"
+	"server_handler/internal/config"
 	"server_handler/internal/docker"
 	"server_handler/internal/pubsub"
 	"server_handler/internal/server"
@@ -13,13 +14,14 @@ import (
 )
 
 func ManageCommand(command string, ps pubsub.PubSubInterface) error {
+	c := config.GetInstance()
 	if command == "start_server" {
 		server.StartServerCompose()
 		log.Println("Start server")
-		ps.SendMessage("Starting server")
+		ps.SendMessage("Starting server", c.SenderChannel)
 	} else if command == "stop_server" {
 		commandhandler.WriteToContainer("/stop")
-		ps.SendMessage("Stopping server")
+		ps.SendMessage("Stopping server", c.SenderChannel)
 		sair := false
 		for sair {
 			msg, err := docker.ReadLastContainerLine()
@@ -32,7 +34,7 @@ func ManageCommand(command string, ps pubsub.PubSubInterface) error {
 		}
 		server.StopServerCompose()
 		log.Println("Stop server")
-		ps.SendMessage("Server stopped")
+		ps.SendMessage("Server stopped", c.SenderChannel)
 	} else if command == "ping" {
 		commandhandler.WriteToContainer("/say PONG")
 	} else {
