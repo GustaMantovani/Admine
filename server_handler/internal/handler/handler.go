@@ -19,7 +19,6 @@ func ManageCommand(command string, ps pubsub.PubSubInterface) error {
 		ps.SendMessage("Starting server")
 	} else if command == "stop_server" {
 		commandhandler.WriteToContainer("/stop")
-		time.Sleep(5 * time.Second)
 		ps.SendMessage("Stopping server")
 		sair := false
 		for sair {
