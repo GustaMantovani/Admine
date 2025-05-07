@@ -10,7 +10,6 @@ import (
 	"server_handler/internal/pubsub"
 	"server_handler/internal/server"
 	"strings"
-	"time"
 )
 
 func ManageCommand(command string, ps pubsub.PubSubInterface) error {
