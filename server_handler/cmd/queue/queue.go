@@ -22,6 +22,7 @@ Define two threads.
 One for listen the pubsub and other to send commands to handler.
 */
 func listenCommands() {
+	c := config.GetInstance()
 	psType := "redis"
 	ps := pubsub.PubSubFactoryCreate(psType)
 
@@ -32,7 +33,7 @@ func listenCommands() {
 	// message channel
 	mc := make(chan message.Message)
 
-	go ps.ListenForMessages(mc)
+	go ps.ListenForMessages(c.ConsumerChannel, mc)
 
 	for msg := range mc {
 		log.Println(msg)
