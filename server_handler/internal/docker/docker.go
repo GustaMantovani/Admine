@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"slices"
 )
 
 func main() {
@@ -43,11 +44,8 @@ func ReadLastContainerLine() (string, error) {
 
 	var containerID string
 	for _, c := range containers {
-		for _, name := range c.Names {
-			if name == "/"+containerName {
-				containerID = c.ID
-				break
-			}
+		if slices.Contains(c.Names, "/"+containerName) {
+			containerID = c.ID
 		}
 	}
 
