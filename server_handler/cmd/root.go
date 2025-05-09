@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"server_handler/cmd/queue"
+	"server_handler/internal/config"
 
 	"github.com/spf13/cobra"
 )
@@ -11,11 +13,20 @@ import (
 var shortDescription = "Up minecraft server from a docker compose file."
 
 var longDescription = `Up minecraft server from a docker compose file.
-The compose file must be specified in a YAML file in ~/.config/admine/server.yaml.
+The compose file must be specified in a YAML file in ~/.config/admine/server.yaml or in environment variables.
+If the env vars is not fully set, then the file is used to configure the handler.
 
 server.yaml content
+serverName: "name-of-the-service-in-the-compose-file"
 composeDirectory: "/compose/absolute/path.yaml"
 consumerChannel: "channel-who-receives-commands"
+senderChannel: "channel-who-send-responses"
+
+env vars:
+SERVER_NAME
+COMPOSE_DIRECTORY
+CONSUMER_CHANNEL
+SENDER_CHANNEL
 `
 
 var rootCmd = &cobra.Command{
