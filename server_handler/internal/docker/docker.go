@@ -60,9 +60,11 @@ func ReadLastContainerLine() (string, error) {
 		Timestamps: false,
 		Tail:       "1", // Lê apenas a última linha
 	})
+
 	if err != nil {
 		return "", err
 	}
+
 	defer out.Close()
 
 	// Docker logs vêm com um cabeçalho de 8 bytes por stream
