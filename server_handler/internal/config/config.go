@@ -15,34 +15,38 @@ type Config struct {
 
 var instance *Config
 var once sync.Once
-var env bool
 
-func ChoseDataFont(env bool) {
-	env = env
-}
+/*
+Get the Singleton instance of the server configuration.
 
-// Obter instancia Singleton da configuração do servidor
+Checks whether it is possible to fetch ddata from a configuration file
+or environment variables. If not, it closes the program.
+*/
 func GetInstance() *Config {
 	once.Do(func() {
 		instance = &Config{}
-		if !isEnvSetAndSetConfig(instance) {
-			configFile, err := GetConfigFileData()
-			if err != nil {
-				log.Println("erro get config file data: ", err.Error())
+		configFile, err := GetConfigFileData()
+
+		if err != nil {
+			log.Println("Could not fetch data from configuration file. Error: ", err.Error())
+
+			if !isEnvSetAndSetConfig(instance) {
+				log.Fatalln("Coult not fetch data from env vars too. Closing program.")
 			}
 
-			composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
-			containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
+			return
+		}
 
-			instance = &Config{
-				ComposeAbsPath:       composeAbsPath,
-				ConsumerChannel:      configFile.ConsumerChannel,
-				SenderChannel:        configFile.SenderChannel,
-				ComposeContainerName: containerName,
-			}
+		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
+		containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
+
+		instance = &Config{
+			ComposeAbsPath:       composeAbsPath,
+			ConsumerChannel:      configFile.ConsumerChannel,
+			SenderChannel:        configFile.SenderChannel,
+			ComposeContainerName: containerName,
 		}
 	})
 
 	return instance
 }
-
