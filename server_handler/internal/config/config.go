@@ -15,25 +15,34 @@ type Config struct {
 
 var instance *Config
 var once sync.Once
+var env bool
+
+func ChoseDataFont(env bool) {
+	env = env
+}
 
 // Obter instancia Singleton da configuração do servidor
 func GetInstance() *Config {
 	once.Do(func() {
-		configFile, err := GetConfigFileData()
-		if err != nil {
-			log.Println("erro get config file data: ", err.Error())
-		}
+		instance = &Config{}
+		if !isEnvSetAndSetConfig(instance) {
+			configFile, err := GetConfigFileData()
+			if err != nil {
+				log.Println("erro get config file data: ", err.Error())
+			}
 
-		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
-		containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
+			composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
+			containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
 
-		instance = &Config{
-			ComposeAbsPath:       composeAbsPath,
-			ConsumerChannel:      configFile.ConsumerChannel,
-			SenderChannel:        configFile.SenderChannel,
-			ComposeContainerName: containerName,
+			instance = &Config{
+				ComposeAbsPath:       composeAbsPath,
+				ConsumerChannel:      configFile.ConsumerChannel,
+				SenderChannel:        configFile.SenderChannel,
+				ComposeContainerName: containerName,
+			}
 		}
 	})
 
 	return instance
 }
+
