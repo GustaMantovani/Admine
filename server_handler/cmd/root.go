@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"server_handler/cmd/queue"
-	"server_handler/internal/config"
 
 	"github.com/spf13/cobra"
 )
