@@ -4,6 +4,8 @@ from core.config import Config
 from core.bot import Bot
 from core.logger import get_logger
 from core.exceptions import ConfigError, ConfigFileError
+import asyncio
+import discord
 
 def main():
     try:
@@ -17,10 +19,17 @@ def main():
             sys.exit(1)
 
         bot = Bot(get_logger(), config)
-        bot.run()
+
+
+        bot.start()
+        
     except Exception as e:
         get_logger().error(f"Unexpected error: {e}\n{traceback.format_exc()}")
         sys.exit(1)
 
+
+
 if __name__ == "__main__":
     main()
+
+

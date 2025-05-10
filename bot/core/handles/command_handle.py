@@ -24,6 +24,8 @@ class CommandHandle:
             "restart": self.__restart_server,
             "delete": self.__delete_world,
         }
+    def fodase(self):
+        print("Foda-se")
 
     def process_command(self, command: str, args: Optional[List[str]] = None, user_id: str = None, administrators: List[str] = None):
         if args is None:
@@ -45,6 +47,8 @@ class CommandHandle:
         
     def __start_server(self, args: List[str]):
         self.__logger.debug(f"Starting server with args: {args}")
+        message = AdmineMessage(["server_start"], "FUNCIONOU")
+        self.__pubsub_service.send_message(message)
 
     def __stop_server(self, args: List[str]):
         self.__logger.debug(f"Stopping server with args: {args}")

@@ -5,12 +5,14 @@ from core.external.providers.message_service_providers.message_service_provider_
 from core.config import Config
 from core.exceptions import MessageServiceFactoryError
 from typing import Callable, Dict, Any
+from core.handles.command_handle import CommandHandle
 
 
 class MessageServiceFactory:
-    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Logger, Config], Any]] = {
-        MessageServiceProviderType.DISCORD: lambda logging, config: DiscordMessageServiceProvider(
+    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Logger, CommandHandle,Config], Any]] = {
+        MessageServiceProviderType.DISCORD: lambda logging, command_handle,config: DiscordMessageServiceProvider(
             logging=logging,
+            command_handle= command_handle,
             channels=config.get("discord.channels"),
             administrators=config.get("discord.administrators"),
             token=config.get("discord.token"),
@@ -19,11 +21,11 @@ class MessageServiceFactory:
     }
 
     @staticmethod
-    def create(logging: Logger, provider_type: MessageServiceProviderType, config: Config) -> MessageService:
+    def create(logging: Logger, command_handle : CommandHandle, provider_type: MessageServiceProviderType, config: Config) -> MessageService:
         factory = MessageServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
             try:
-                return factory(logging, config)
+                return factory(logging, command_handle, config)
             except Exception as e:
                 logging.error(f"Error creating Message Service provider {provider_type}: {e}")
                 raise MessageServiceFactoryError(provider_type, f"Failed to instantiate provider: {e}") from e
