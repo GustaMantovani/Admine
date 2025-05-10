@@ -3,12 +3,10 @@ import redis
 from logging import Logger
 from core.external.abstractions.pubsub_service import PubSubService
 from core.models.admine_message import AdmineMessage
-from core.handles.event_handle import EventHandle
 
 class RedisPubSubServiceProvider(PubSubService):
-    def __init__(self, logging: Logger, event_handle : EventHandle, host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
-        super().__init__(logging,event_handle, host, port, subscribed_channels, producer_channels)
-        self.__event_handle = event_handle
+    def __init__(self, logging: Logger,host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
+        super().__init__(logging, host, port, subscribed_channels, producer_channels)
         self.__client = redis.StrictRedis(host, port, db=0)
         self.__pubsub = self.__client.pubsub()
         self.__client.ping()
@@ -24,5 +22,4 @@ class RedisPubSubServiceProvider(PubSubService):
         self.__pubsub.subscribe("teste")
         for message in self.__pubsub.listen():  # Itera sobre o gerador
             if message["type"] == "message":  # Filtra mensagens reais
-                event = AdmineMessage.from_json_to_object(message["data"].decode("utf-8"))
-                self.__event_handle.handle_event(event)
+                return message

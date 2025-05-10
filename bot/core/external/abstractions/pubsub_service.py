@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Optional
-from core.handles.event_handle import EventHandle
 
 class PubSubService(ABC):
-    def __init__(self, logging: Logger, event_handle: EventHandle,host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
+    def __init__(self, logging: Logger,host: str, port: int, subscribed_channels: Optional[list[str]] = None, producer_channels: Optional[list[str]] = None):
         self._logger = logging
-        self.__event_handle = event_handle
         self.__host = host
         self.__port = port
         self.__subscribed_channels = subscribed_channels if subscribed_channels is not None else []
