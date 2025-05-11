@@ -1,53 +1,46 @@
 from logging import Logger
-from typing import Optional
-from core.external.abstractions.message_service import MessageService
+from typing import Optional, Callable
 import discord
-from discord import app_commands
 from discord.ext import commands
+from core.external.abstractions.message_service import MessageService
 from core.handles.command_handle import CommandHandle
 
-import discord
-from discord.ext import commands
-from logging import Logger
-from typing import Optional
-
-# Cliente principal do bot
-class DiscordClient(commands.Bot):
-    def __init__(self, command_prefix,command_handle : CommandHandle):
+class _DiscordClient(commands.Bot):
+    def __init__(self, command_prefix, logger: Logger, callback_function: Optional[Callable[[str], None]] = None):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
-        self.__command_handle = command_handle
-        self.__contador = 0
+        self.command_handle_function_callback = callback_function
+        self._logger = logger
 
     async def setup_hook(self):
-        # Registra comandos na árvore (necessário para comandos de barra)
-        @self.tree.command(name="ping", description="Responde com pong!")
-        async def ping(interaction: discord.Interaction):
-            self.__command_handle.process_command(command="start")
-            await interaction.response.send_message("Python version 3.8 on linux ubuntu_cloud_shell")
-                
-
-
-
-        @self.tree.command(name="server", description="Responde com pong!")
-        async def server(interaction: discord.Interaction):
-            if self.__contador == 0:
-                self.__contador = self.__contador + 1
-                await interaction.response.send_message("Python version 3.8 on linux ubuntu_cloud_shell")
+        self._logger.info("Setting up Discord client commands.")
+        @self.tree.command(name="start", description="Responds with pong!")
+        async def start(interaction: discord.Interaction):
+            self._logger.debug(f"Received 'start' command. Callback function: {self.command_handle_function_callback}")
+            if self.command_handle_function_callback is not None: 
+                self._logger.info("Calling the command handle callback with 'start'.")
+                self.command_handle_function_callback("start")
+                await interaction.response.send_message("Request to start the Minecraft server received!")
+                self._logger.info("Sent confirmation message for 'start' command.")
             else:
-                await interaction.response.send_message(f"Vai tomar no cu {interaction.user}!")
-
-        # Sincroniza os comandos de barra
+                self._logger.warning("Callback function not set for 'start' command.")
+                await interaction.response.send_message("No processor available for this command.")
         await self.tree.sync()
-        print("Comandos sincronizados!")
+        self._logger.info("Discord commands synced successfully.")
 
 class DiscordMessageServiceProvider(MessageService):
-    def __init__(self, logging: Logger,command_handle:CommandHandle, token: str, command_prefix: str = "!mc", channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
-        super().__init__(logging,command_handle, channels, administrators)
+    def __init__(
+        self,
+        logging: Logger,
+        token: str,
+        command_prefix: str = "!mc",
+        channels: Optional[list[str]] = None,
+        administrators: Optional[list[str]] = None
+    ):
+        super().__init__(logging, channels, administrators)
         self.__token = token
         self.__command_prefix = command_prefix
-        self.discord_client = DiscordClient(command_prefix=command_prefix,command_handle=command_handle)
+        self.__discord_client = _DiscordClient(command_prefix=self.__command_prefix, logger=logging)
 
-  
     @property
     def token(self) -> str:
         return self.__token
@@ -65,12 +58,7 @@ class DiscordMessageServiceProvider(MessageService):
     def send_message(self, message: str):
         self._logger.debug(f"Sending message: {message}")
 
-    def listen_message(self):
+    def listen_message(self, callback_function: Callable[[str], None] = None):
         self._logger.debug("Listening for messages")
-        self.discord_client.run(token=self.token, log_handler=self._logger.handlers[1])
-        
-
-    # Exemplo de comando de barra
-    #@app_commands.command(name="ping", description="Responde com pong!")
-    #async def ping(self, interaction: discord.Interaction):
-    #    await interaction.response.send_message("Pong!")
+        self.__discord_client.command_handle_function_callback = callback_function
+        self.__discord_client.run(token=self.token, log_handler=self._logger.handlers[1])

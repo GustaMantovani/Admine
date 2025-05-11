@@ -41,53 +41,16 @@ class Bot:
         # Message Service Provider
         messaging_provider_str = self.__config.get("providers.messaging", "DISCORD")
         messaging_provider_type = MessageServiceProviderType[messaging_provider_str]
-        self.__message_services.append(MessageServiceFactory.create(self.__logger,self.__command_handle, messaging_provider_type, self.__config))
+        self.__message_services.append(MessageServiceFactory.create(self.__logger, messaging_provider_type, self.__config))
         self.__logger.info(f"{messaging_provider_str} message service provider initialized.")
-
-    
-    # async def send_discord_message(self, message: str):
-    #     """Envia uma mensagem para o canal especificado."""
-    #     discord_bot = self.__message_services[0]
-    #     channel = discord_bot.get_channel(1370199691412639784)
-    #     if channel:
-    #         await channel.send(message)
-    #         self.__logger.info(f"Mensagem enviada para o canal {channel}: {message}")
-    #     else:
-    #         self.__logger.error(f"Canal com ID {channel} não encontrado.")
-
-    # async def listening(self):
-    #     while True:
-    #         data = self.__pubsub_service.listen_message()["data"].decode("utf-8")
-    #         message = AdmineMessage.from_json_to_object(data)
-    #         self.__event_handle.handle_event(message)
-            
-            
-
-
-    # def start_listening_loop(self):
-    #     self.__logger.info("Starting listening loop...")
-    #     asyncio.run(self.listening())
 
     def start(self):
         self.__logger.info("Starting bot...")
         message = AdmineMessage(["server_start"], "FUNCIONOU")
         self.__pubsub_service.send_message(message)
 
-        # Criando uma thread para a escuta assíncrona
-        # thread = threading.Thread(target=self.start_listening_loop)
-        # thread.daemon = True  # Permite encerrar com o processo principal
-        # thread.start()
-
         bot:MessageService = self.__message_services[0]
-        
-       
-
-        # Rodando o bot na thread principal
-        bot.listen_message()
-
-        
-        # Create thread to listen and handle messages from message service
-        # Create thread to listen and handle events from pubsub service
+        bot.listen_message(callback_function=self.__command_handle.process_command)
 
     def shutdown(self):
         self.__logger.info("Shutting down bot...")
