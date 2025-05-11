@@ -1,5 +1,12 @@
 class MinecraftServerInfo:
-    def __init__(self, minecraft_version: str, java_version: str, mod_engine: str, max_players: int, seed: str):
+    def __init__(
+        self,
+        minecraft_version: str,
+        java_version: str,
+        mod_engine: str,
+        max_players: int,
+        seed: str,
+    ):
         self.minecraft_version = minecraft_version
         self.java_version = java_version
         self.mod_engine = mod_engine
@@ -13,7 +20,7 @@ class MinecraftServerInfo:
             java_version=json_data.get("javaVersion"),
             mod_engine=json_data.get("modEngine"),
             max_players=json_data.get("maxPlayers"),
-            seed=json_data.get("seed")
+            seed=json_data.get("seed"),
         )
 
     def to_json(self) -> dict:
@@ -22,5 +29,6 @@ class MinecraftServerInfo:
             "javaVersion": self.java_version,
             "modEngine": self.mod_engine,
             "maxPlayers": self.max_players,
-            "seed": self.seed
+            "seed": self.seed,
         }
+

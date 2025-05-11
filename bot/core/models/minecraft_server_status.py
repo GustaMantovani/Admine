@@ -1,17 +1,20 @@
 from enum import Enum
 from typing import Optional
 
+
 class HealthStatus(Enum):
     HEALTHY = "healthy"
     SICK = "sick"
     CRITICAL = "critical"
     UNKNOWN = "unknown"
 
+
 class ServerStatus(Enum):
     ONLINE = "online"
     OFFLINE = "offline"
     MAINTENANCE = "maintenance"
     UNKNOWN = "unknown"
+
 
 class MinecraftServerStatus:
     def __init__(
@@ -21,7 +24,7 @@ class MinecraftServerStatus:
         description: str,
         uptime: Optional[str] = None,
         online_players: Optional[int] = None,
-        tps: Optional[float] = None
+        tps: Optional[float] = None,
     ):
         self.health = health
         self.status = status
@@ -49,7 +52,7 @@ class MinecraftServerStatus:
             description=json_data.get("description"),
             uptime=json_data.get("uptime"),
             online_players=json_data.get("onlinePlayers"),
-            tps=json_data.get("tps")
+            tps=json_data.get("tps"),
         )
 
     def to_json(self) -> dict:
@@ -59,5 +62,6 @@ class MinecraftServerStatus:
             "description": self.description,
             "uptime": self.uptime,
             "onlinePlayers": self.online_players,
-            "tps": self.tps
+            "tps": self.tps,
         }
+

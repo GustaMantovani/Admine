@@ -3,6 +3,7 @@ import json
 from typing import Dict, Any, Optional
 from core.exceptions import ConfigError, ConfigFileError
 
+
 class Config:
     def __init__(self, config_file: str = "config.json"):
         self.__config = self.__load_from_json(config_file) or self.__load_from_env()
@@ -29,20 +30,23 @@ class Config:
             },
             "discord": {
                 "token": os.getenv("DISCORD_TOKEN"),
-                "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc")
+                "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc"),
             },
             "redis": {
-                "connectionstring": os.getenv("REDIS_CONNECTION_STRING", "localhost:6379"),
+                "connectionstring": os.getenv(
+                    "REDIS_CONNECTION_STRING", "localhost:6379"
+                ),
             },
             "minecraft": {
-                "connectionstring": os.getenv("MINECRAFT_CONNECTION_STRING", "localhost:8080"),
+                "connectionstring": os.getenv(
+                    "MINECRAFT_CONNECTION_STRING", "localhost:8080"
+                ),
                 "token": os.getenv("MINECRAFT_TOKEN", ""),
-            }
+            },
         }
 
         return {k: v for k, v in base_config.items() if v is not None}
 
-    
     def get(self, key: str, default: str = None) -> str:
         keys = key.split(".")
         value = self.__config
@@ -54,3 +58,4 @@ class Config:
             if value is None:
                 return default
         return value
+

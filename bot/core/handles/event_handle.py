@@ -3,14 +3,19 @@ from core.models.admine_message import AdmineMessage
 from typing import List, Callable, Dict, Optional
 from logging import Logger
 
+
 class EventHandle:
-    def __init__(self, logging: Logger, message_services: Optional[List[MessageService]]):
+    def __init__(
+        self, logging: Logger, message_services: Optional[List[MessageService]]
+    ):
         self.__logger = logging
-        self.__message_services = message_services if message_services is not None else []
+        self.__message_services = (
+            message_services if message_services is not None else []
+        )
 
         self.__HANDLES: Dict[str, Callable[[AdmineMessage], None]] = {
             "server_start": self.__server_start,
-            "server_stop": self.__server_stop
+            "server_stop": self.__server_stop,
         }
 
     def handle_event(self, event: AdmineMessage):
@@ -29,7 +34,11 @@ class EventHandle:
             message_service.send_message(notification)
 
     def __server_start(self, event: AdmineMessage):
-        self.__logger.debug(f"Handler: Server has started with message: {event.message}")
+        self.__logger.debug(
+            f"Handler: Server has started with message: {event.message}"
+        )
 
     def __server_stop(self, event: AdmineMessage):
-        self.__logger.debug(f"Handler: Server has stopped with message: {event.message}")
+        self.__logger.debug(
+            f"Handler: Server has stopped with message: {event.message}"
+        )
