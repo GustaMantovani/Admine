@@ -33,7 +33,6 @@ class CommandHandle:
             "start": self.__start_server,
             "stop": self.__stop_server,
             "restart": self.__restart_server,
-            "delete": self.__delete_world,
         }
 
     def process_command(
@@ -69,13 +68,10 @@ class CommandHandle:
         message = AdmineMessage(["server_start"], "FUNCIONOU")
         self.__pubsub_service.send_message(message)
 
+    @admin_command
     def __stop_server(self, args: List[str]):
         self.__logger.debug(f"Stopping server with args: {args}")
 
     @admin_command
     def __restart_server(self, args: List[str]):
         self.__logger.debug(f"Restarting server with args: {args}")
-
-    @admin_command
-    def __delete_world(self, args: List[str]):
-        self.__logger.debug(f"Deleting world with args: {args}")

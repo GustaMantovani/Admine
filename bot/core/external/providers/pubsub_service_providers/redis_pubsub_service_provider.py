@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Optional
+from typing import Optional,Callable
 
 import redis
 
@@ -15,8 +15,10 @@ class RedisPubSubServiceProvider(PubSubService):
             port: int,
             subscribed_channels: Optional[list[str]] = None,
             producer_channels: Optional[list[str]] = None,
+            callback_function: Callable[[AdmineMessage], None] = None,
     ):
         super().__init__(logging, host, port, subscribed_channels, producer_channels)
+        self.event_handle_function_callback = callback_function
         self.__client = redis.StrictRedis(host, port, db=0)
         self.__pubsub = self.__client.pubsub()
         self.__client.ping()
@@ -29,11 +31,13 @@ class RedisPubSubServiceProvider(PubSubService):
         for channel in self.producer_channels:
             self.__client.publish(channel, message.from_object_to_json())
 
-    def listen_message(self):
+    def listen_message(self, callback_function: Callable[[AdmineMessage], None] = None):
         self._logger.debug(
             f"Listening to channels: {', '.join(self.subscribed_channels)}"
         )
         self.__pubsub.subscribe("teste")
         for message in self.__pubsub.listen():  # Itera sobre o gerador
             if message["type"] == "message":  # Filtra mensagens reais
-                return message
+                data = AdmineMessage.from_json_to_object(message["data"].decode("utf-8"))
+                callback_function(data)
+                

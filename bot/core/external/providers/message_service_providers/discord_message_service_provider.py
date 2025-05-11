@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 
 import discord
 from discord.ext import commands
@@ -12,7 +12,8 @@ class _DiscordClient(commands.Bot):
             self,
             command_prefix,
             logger: Logger,
-            callback_function: Optional[Callable[[str], None]] = None,
+            callback_function: Optional[Callable[[str,Optional[List[str]],str,List[str]], None]] = None,
+            #lembrar colocar lista administradores
     ):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
         self.command_handle_function_callback = callback_function
@@ -67,16 +68,10 @@ class DiscordMessageServiceProvider(MessageService):
     def command_prefix(self) -> str:
         return self.__command_prefix
 
-    @command_prefix.setter
-    def command_prefix(self, value: str) -> None:
-        if not value:
-            raise Exception("Command prefix cannot be empty")
-        self.__command_prefix = value
-
     def send_message(self, message: str):
         self._logger.debug(f"Sending message: {message}")
 
-    def listen_message(self, callback_function: Callable[[str], None] = None):
+    def listen_message(self, callback_function: Callable[[str,Optional[List[str]],str,List[str]], None] = None):
         self._logger.debug("Listening for messages")
         self.__discord_client.command_handle_function_callback = callback_function
         self.__discord_client.run(

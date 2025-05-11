@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 
 
 class MessageService(ABC):
@@ -27,5 +27,6 @@ class MessageService(ABC):
         pass
 
     @abstractmethod
-    def listen_message(self, callback_function: Callable[[str], None] = None):
+    def listen_message(self, callback_function: Callable[[str,Optional[List[str]],str,List[str]], None] = None):
         pass
+    

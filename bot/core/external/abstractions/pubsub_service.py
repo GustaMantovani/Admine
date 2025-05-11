@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Optional
+from typing import Optional, Callable
+from core.models.admine_message import AdmineMessage
+
 
 
 class PubSubService(ABC):
@@ -43,5 +45,5 @@ class PubSubService(ABC):
         pass
 
     @abstractmethod
-    def listen_message(self):
+    def listen_message(self, callback_function: Callable[[AdmineMessage], None] = None):
         pass

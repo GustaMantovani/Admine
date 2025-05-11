@@ -23,13 +23,16 @@ from core.external.providers.pubsub_service_providers.pubsub_service_provider_ty
 from core.handles.command_handle import CommandHandle
 from core.handles.event_handle import EventHandle
 from core.models.admine_message import AdmineMessage
+from core.external.abstractions.pubsub_service import PubSubService
+from typing import List
 
 
 class Bot:
     def __init__(self, logger: Logger, config: Config):
         self.__logger = logger
         self.__config = config
-        self.__message_services = []
+        self.__message_services : List[MessageService] = []
+        self.__pubsub_service : PubSubService
 
         # PubSub Service Provider
         pubsub_provider_str = self.__config.get("providers.pubsub", "REDIS")
@@ -75,8 +78,10 @@ class Bot:
         message = AdmineMessage(["server_start"], "FUNCIONOU")
         self.__pubsub_service.send_message(message)
 
-        bot: MessageService = self.__message_services[0]
-        bot.listen_message(callback_function=self.__command_handle.process_command)
+        pubSub: PubSubService = self.__pubsub_service
+
+        for ms in self.__message_services:
+            ms.listen_message(callback_function=self.__command_handle.process_command)
 
     def shutdown(self):
         self.__logger.info("Shutting down bot...")
