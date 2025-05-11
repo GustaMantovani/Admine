@@ -40,14 +40,6 @@ class DiscordClient(commands.Bot):
         await self.tree.sync()
         print("Comandos sincronizados!")
 
-
-    
-
-
-
-
-
-
 class DiscordMessageServiceProvider(MessageService):
     def __init__(self, logging: Logger,command_handle:CommandHandle, token: str, command_prefix: str = "!mc", channels: Optional[list[str]] = None, administrators: Optional[list[str]] = None):
         super().__init__(logging,command_handle, channels, administrators)
@@ -75,7 +67,7 @@ class DiscordMessageServiceProvider(MessageService):
 
     def listen_message(self):
         self._logger.debug("Listening for messages")
-        self.discord_client.run(self.__token)
+        self.discord_client.run(token=self.token, log_handler=self._logger.handlers[1])
         
 
     # Exemplo de comando de barra
