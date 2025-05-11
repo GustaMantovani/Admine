@@ -1,9 +1,11 @@
 import sys
 import traceback
-from core.config import Config
-from core.bot import Bot
-from core.logger import CustomLogger
+
 from dotenv import load_dotenv
+
+from core.bot import Bot
+from core.config import Config
+from core.logger import CustomLogger
 
 load_dotenv()
 

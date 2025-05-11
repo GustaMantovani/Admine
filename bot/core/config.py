@@ -1,6 +1,7 @@
-import os
 import json
+import os
 from typing import Dict, Any, Optional
+
 from core.exceptions import ConfigError, ConfigFileError
 
 
@@ -58,4 +59,3 @@ class Config:
             if value is None:
                 return default
         return value
-

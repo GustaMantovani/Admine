@@ -6,7 +6,7 @@ class ConfigError(Exception):
 
 class ConfigFileError(ConfigError):
     def __init__(
-        self, file_path: str, message: str = "Could not load configuration file"
+            self, file_path: str, message: str = "Could not load configuration file"
     ):
         self.file_path = file_path
         super().__init__(f"{message}: {file_path}")
@@ -14,7 +14,7 @@ class ConfigFileError(ConfigError):
 
 class MessageServiceFactoryError(Exception):
     def __init__(
-        self, provider_type, message="Failed to create message service provider"
+            self, provider_type, message="Failed to create message service provider"
     ):
         self.provider_type = provider_type
         super().__init__(f"{message}: {provider_type}")
@@ -40,7 +40,7 @@ class DiscordCommandPrefixException(MessageServiceError):
 
 class PubSubServiceFactoryException(Exception):
     def __init__(
-        self, provider_type, message="Failed to create PubSub service provider"
+            self, provider_type, message="Failed to create PubSub service provider"
     ):
         self.provider_type = provider_type
         super().__init__(f"{message}: {provider_type}")
@@ -48,8 +48,7 @@ class PubSubServiceFactoryException(Exception):
 
 class MinecraftInfoServiceFactoryException(Exception):
     def __init__(
-        self, provider_type, message="Failed to create Minecraft info service provider"
+            self, provider_type, message="Failed to create Minecraft info service provider"
     ):
         self.provider_type = provider_type
         super().__init__(f"{message}: {provider_type}")
-

@@ -5,10 +5,10 @@ from typing import Optional, Callable
 
 class MessageService(ABC):
     def __init__(
-        self,
-        logger: Logger,
-        channels: Optional[list[str]] = None,
-        administrators: Optional[list[str]] = None,
+            self,
+            logger: Logger,
+            channels: Optional[list[str]] = None,
+            administrators: Optional[list[str]] = None,
     ):
         self._logger = logger
         self.__channels = channels if channels is not None else []

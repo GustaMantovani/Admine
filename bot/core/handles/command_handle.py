@@ -1,11 +1,12 @@
-from core.models.admine_message import AdmineMessage
-from core.external.abstractions.pubsub_service import PubSubService
+from functools import wraps
+from logging import Logger
+from typing import Callable, Dict, List, Optional
+
 from core.external.abstractions.minecraft_server_info_service import (
     MinecraftServerInfoService,
 )
-from typing import Callable, Dict, List, Optional
-from functools import wraps
-from logging import Logger
+from core.external.abstractions.pubsub_service import PubSubService
+from core.models.admine_message import AdmineMessage
 
 
 def admin_command(func):
@@ -19,10 +20,10 @@ def admin_command(func):
 
 class CommandHandle:
     def __init__(
-        self,
-        logging: Logger,
-        pubsub_service: PubSubService,
-        minecraft_info_service: MinecraftServerInfoService,
+            self,
+            logging: Logger,
+            pubsub_service: PubSubService,
+            minecraft_info_service: MinecraftServerInfoService,
     ):
         self.__logger = logging
         self.__pubsub_service = pubsub_service
@@ -36,11 +37,11 @@ class CommandHandle:
         }
 
     def process_command(
-        self,
-        command: str,
-        args: Optional[List[str]] = None,
-        user_id: str = None,
-        administrators: List[str] = None,
+            self,
+            command: str,
+            args: Optional[List[str]] = None,
+            user_id: str = None,
+            administrators: List[str] = None,
     ):
         if args is None:
             args = []
@@ -78,4 +79,3 @@ class CommandHandle:
     @admin_command
     def __delete_world(self, args: List[str]):
         self.__logger.debug(f"Deleting world with args: {args}")
-

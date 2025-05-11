@@ -18,13 +18,13 @@ class ServerStatus(Enum):
 
 class MinecraftServerStatus:
     def __init__(
-        self,
-        health: HealthStatus,
-        status: ServerStatus,
-        description: str,
-        uptime: Optional[str] = None,
-        online_players: Optional[int] = None,
-        tps: Optional[float] = None,
+            self,
+            health: HealthStatus,
+            status: ServerStatus,
+            description: str,
+            uptime: Optional[str] = None,
+            online_players: Optional[int] = None,
+            tps: Optional[float] = None,
     ):
         self.health = health
         self.status = status
@@ -64,4 +64,3 @@ class MinecraftServerStatus:
             "onlinePlayers": self.online_players,
             "tps": self.tps,
         }
-

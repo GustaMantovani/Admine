@@ -1,16 +1,18 @@
 from logging import Logger
 from typing import Optional, Callable
+
 import discord
 from discord.ext import commands
+
 from core.external.abstractions.message_service import MessageService
 
 
 class _DiscordClient(commands.Bot):
     def __init__(
-        self,
-        command_prefix,
-        logger: Logger,
-        callback_function: Optional[Callable[[str], None]] = None,
+            self,
+            command_prefix,
+            logger: Logger,
+            callback_function: Optional[Callable[[str], None]] = None,
     ):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
         self.command_handle_function_callback = callback_function
@@ -43,12 +45,12 @@ class _DiscordClient(commands.Bot):
 
 class DiscordMessageServiceProvider(MessageService):
     def __init__(
-        self,
-        logging: Logger,
-        token: str,
-        command_prefix: str = "!mc",
-        channels: Optional[list[str]] = None,
-        administrators: Optional[list[str]] = None,
+            self,
+            logging: Logger,
+            token: str,
+            command_prefix: str = "!mc",
+            channels: Optional[list[str]] = None,
+            administrators: Optional[list[str]] = None,
     ):
         super().__init__(logging, channels, administrators)
         self.__token = token
@@ -80,4 +82,3 @@ class DiscordMessageServiceProvider(MessageService):
         self.__discord_client.run(
             token=self.token, log_handler=self._logger.handlers[1]
         )
-

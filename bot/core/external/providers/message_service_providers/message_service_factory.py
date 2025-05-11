@@ -1,4 +1,8 @@
 from logging import Logger
+from typing import Callable, Dict, Any
+
+from core.config import Config
+from core.exceptions import MessageServiceFactoryError
 from core.external.abstractions.message_service import MessageService
 from core.external.providers.message_service_providers.discord_message_service_provider import (
     DiscordMessageServiceProvider,
@@ -6,9 +10,6 @@ from core.external.providers.message_service_providers.discord_message_service_p
 from core.external.providers.message_service_providers.message_service_provider_type import (
     MessageServiceProviderType,
 )
-from core.config import Config
-from core.exceptions import MessageServiceFactoryError
-from typing import Callable, Dict, Any
 
 
 class MessageServiceFactory:
@@ -16,7 +17,7 @@ class MessageServiceFactory:
         MessageServiceProviderType, Callable[[Logger, Config], Any]
     ] = {
         MessageServiceProviderType.DISCORD: lambda logging,
-        config: DiscordMessageServiceProvider(
+                                                   config: DiscordMessageServiceProvider(
             logging=logging,
             channels=config.get("discord.channels"),
             administrators=config.get("discord.administrators"),
@@ -27,7 +28,7 @@ class MessageServiceFactory:
 
     @staticmethod
     def create(
-        logging: Logger, provider_type: MessageServiceProviderType, config: Config
+            logging: Logger, provider_type: MessageServiceProviderType, config: Config
     ) -> MessageService:
         factory = MessageServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
@@ -47,4 +48,3 @@ class MessageServiceFactory:
             raise MessageServiceFactoryError(
                 provider_type, "Unknown MessageServiceProviderType"
             )
-

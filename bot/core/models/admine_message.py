@@ -13,4 +13,3 @@ class AdmineMessage:
 
     def from_object_to_json(self):
         return json.dumps({"tags": self.tags, "message": self.message})
-

@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from core.models.minecraft_server_status import MinecraftServerStatus
+
 from core.models.minecraft_server_info import MinecraftServerInfo
+from core.models.minecraft_server_status import MinecraftServerStatus
 
 
 class MinecraftServerInfoService(ABC):

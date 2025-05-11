@@ -1,11 +1,11 @@
 class MinecraftServerInfo:
     def __init__(
-        self,
-        minecraft_version: str,
-        java_version: str,
-        mod_engine: str,
-        max_players: int,
-        seed: str,
+            self,
+            minecraft_version: str,
+            java_version: str,
+            mod_engine: str,
+            max_players: int,
+            seed: str,
     ):
         self.minecraft_version = minecraft_version
         self.java_version = java_version
@@ -31,4 +31,3 @@ class MinecraftServerInfo:
             "maxPlayers": self.max_players,
             "seed": self.seed,
         }
-

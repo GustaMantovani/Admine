@@ -1,18 +1,20 @@
-from typing import Optional
-import redis
 from logging import Logger
+from typing import Optional
+
+import redis
+
 from core.external.abstractions.pubsub_service import PubSubService
 from core.models.admine_message import AdmineMessage
 
 
 class RedisPubSubServiceProvider(PubSubService):
     def __init__(
-        self,
-        logging: Logger,
-        host: str,
-        port: int,
-        subscribed_channels: Optional[list[str]] = None,
-        producer_channels: Optional[list[str]] = None,
+            self,
+            logging: Logger,
+            host: str,
+            port: int,
+            subscribed_channels: Optional[list[str]] = None,
+            producer_channels: Optional[list[str]] = None,
     ):
         super().__init__(logging, host, port, subscribed_channels, producer_channels)
         self.__client = redis.StrictRedis(host, port, db=0)

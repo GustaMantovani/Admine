@@ -5,12 +5,12 @@ from typing import Optional
 
 class PubSubService(ABC):
     def __init__(
-        self,
-        logging: Logger,
-        host: str,
-        port: int,
-        subscribed_channels: Optional[list[str]] = None,
-        producer_channels: Optional[list[str]] = None,
+            self,
+            logging: Logger,
+            host: str,
+            port: int,
+            subscribed_channels: Optional[list[str]] = None,
+            producer_channels: Optional[list[str]] = None,
     ):
         self._logger = logging
         self.__host = host

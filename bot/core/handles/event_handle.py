@@ -1,12 +1,13 @@
+from logging import Logger
+from typing import List, Callable, Dict, Optional
+
 from core.external.abstractions.message_service import MessageService
 from core.models.admine_message import AdmineMessage
-from typing import List, Callable, Dict, Optional
-from logging import Logger
 
 
 class EventHandle:
     def __init__(
-        self, logging: Logger, message_services: Optional[List[MessageService]]
+            self, logging: Logger, message_services: Optional[List[MessageService]]
     ):
         self.__logger = logging
         self.__message_services = (
