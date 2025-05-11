@@ -1,6 +1,5 @@
 import logging
 from logging.handlers import RotatingFileHandler
-import os
 
 class CustomLogger:
     def __init__(self, logger_name='MyApp', log_file='app.log', max_bytes=1000000, backup_count=5):
