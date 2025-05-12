@@ -38,7 +38,8 @@ func listenCommands() {
 	for msg := range mc {
 		log.Println(msg)
 		if len(msg.Tags) > 0 {
-			handler.ManageCommand(msg.Tags[0], ps)
+			log.Println(msg.Tags[0])
+			handler.ManageCommand(msg.Tags[0], msg.Msg, ps)
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"errors"
+	// "errors"
 	"log"
 	"os/exec"
 	commandhandler "server_handler/internal/command_handler"
@@ -12,13 +12,13 @@ import (
 	"strings"
 )
 
-func ManageCommand(command string, ps pubsub.PubSubInterface) error {
+func ManageCommand(tag, message string, ps pubsub.PubSubInterface) error {
 	c := config.GetInstance()
-	if command == "start_server" {
+	if tag == "start_server" {
 		server.StartServerCompose()
 		log.Println("Start server")
 		ps.SendMessage("Starting server", c.SenderChannel)
-	} else if command == "stop_server" {
+	} else if tag == "stop_server" {
 		commandhandler.WriteToContainer("/stop")
 		ps.SendMessage("Stopping server", c.SenderChannel)
 		sair := false
@@ -34,10 +34,11 @@ func ManageCommand(command string, ps pubsub.PubSubInterface) error {
 		server.StopServerCompose()
 		log.Println("Stop server")
 		ps.SendMessage("Server stopped", c.SenderChannel)
-	} else if command == "ping" {
-		commandhandler.WriteToContainer("/say PONG")
+	} else if tag == "command" {
+		commandhandler.WriteToContainer(message)
 	} else {
-		return errors.New("invalid command")
+		commandhandler.WriteToContainer(tag)
+		// return errors.New("invalid command")
 	}
 
 	return nil
