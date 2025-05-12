@@ -6,12 +6,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os/exec"
+	"strings"
 
 	"server_handler/internal/config"
 
+	"slices"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"slices"
 )
 
 func main() {
@@ -85,4 +88,19 @@ func ReadLastContainerLine() (string, error) {
 	}
 
 	return "", fmt.Errorf("nenhuma linha encontrada")
+}
+
+func GetZeroTierNodeID(containerName string) string {
+	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		panic(err)
+	}
+
+	outputStr := string(output)
+
+	parts := strings.Split(outputStr, " ")
+
+	return parts[2]
 }
