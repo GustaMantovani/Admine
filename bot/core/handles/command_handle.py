@@ -30,9 +30,13 @@ class CommandHandle:
         self.__minecraft_info_service = minecraft_info_service
 
         self.__HANDLES: Dict[str, Callable[[List[str]], None]] = {
-            "start": self.__start_server,
-            "stop": self.__stop_server,
-            "restart": self.__restart_server,
+            "up": self.__server_up,
+            "off": self.__server_off,
+            "restart": self.__server_restart,
+            "auth": self.__auth_member,
+            "command": self.__command,
+            "info": self.__info,
+            "status": self.__status,
         }
 
     def process_command(
@@ -63,15 +67,43 @@ class CommandHandle:
             self.__logger.warning(f"Unknown command: {command}")
             return False
 
-    def __start_server(self, args: List[str]):
+    def __server_up(self, args: List[str]):
         self.__logger.debug(f"Starting server with args: {args}")
-        message = AdmineMessage(["server_start"], "FUNCIONOU")
+        message = AdmineMessage(["server_up"], " ")
+        self.__pubsub_service.send_message(message)
+
+    #@admin_command
+    def __server_off(self, args: List[str]):
+        self.__logger.debug(f"Stopping server with args: {args}")
+        message = AdmineMessage(["server_off"], " ")
+        self.__pubsub_service.send_message(message)
+
+    #@admin_command
+    def __server_restart(self, args: List[str]):
+        self.__logger.debug(f"Restarting server with args: {args}")
+        message = AdmineMessage(["server_restart"], " ")
+        self.__pubsub_service.send_message(message)
+
+    
+    def __auth_member(self, args: List[str]):
+        self.__logger.debug(f"Authorizing members with args: {args}")
+        message = AdmineMessage(["auth_member"], args[0])
+        self.__pubsub_service.send_message(message)
+
+    #@admin_command
+    def __command(self, args: List[str]):
+        self.__logger.debug(f"Execute a command in Minecraft with args: {args}")
+        message = AdmineMessage(["command"], args[0])
         self.__pubsub_service.send_message(message)
 
     @admin_command
-    def __stop_server(self, args: List[str]):
-        self.__logger.debug(f"Stopping server with args: {args}")
+    def __info(self, args: List[str]):
+        self.__logger.debug(f"Getting info off the server with args: {args}")
+        message = AdmineMessage(["info"], " ")
+        self.__pubsub_service.send_message(message)
 
     @admin_command
-    def __restart_server(self, args: List[str]):
-        self.__logger.debug(f"Restarting server with args: {args}")
+    def __status(self, args: List[str]):
+        self.__logger.debug(f"Getting status off the server with args: {args}")
+        message = AdmineMessage(["status"], " ")
+        self.__pubsub_service.send_message(message)

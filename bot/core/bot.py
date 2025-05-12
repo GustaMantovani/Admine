@@ -43,6 +43,7 @@ class Bot:
         self.__logger.info(
             f"{pubsub_provider_str} pubsub service provider initialized."
         )
+        
 
         # Minecraft Info Service Provider
         minecraft_provider_str = self.__config.get("providers.minecraft", "REST")

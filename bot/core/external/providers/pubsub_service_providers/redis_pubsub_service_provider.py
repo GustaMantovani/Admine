@@ -28,6 +28,9 @@ class RedisPubSubServiceProvider(PubSubService):
         self._logger.debug(
             f"Sending message to channels: {', '.join(self.producer_channels)}"
         )
+        
+        print(self.producer_channels)
+
         for channel in self.producer_channels:
             self.__client.publish(channel, message.from_object_to_json())
 

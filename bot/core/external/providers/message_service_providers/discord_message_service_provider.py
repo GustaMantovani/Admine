@@ -22,20 +22,135 @@ class _DiscordClient(commands.Bot):
     async def setup_hook(self):
         self._logger.info("Setting up Discord client commands.")
 
-        @self.tree.command(name="start", description="Responds with pong!")
-        async def start(interaction: discord.Interaction):
+        #Command to start the server!
+        @self.tree.command(name="up", description="Command to start the Minecraft Server!")
+        async def up(interaction: discord.Interaction):
             self._logger.debug(
-                f"Received 'start' command. Callback function: {self.command_handle_function_callback}"
+                f"Received 'up' command. Callback function: {self.command_handle_function_callback}"
             )
             if self.command_handle_function_callback is not None:
-                self._logger.info("Calling the command handle callback with 'start'.")
-                self.command_handle_function_callback("start")
+                self._logger.info("Calling the command handle callback with 'up'.")
+                self.command_handle_function_callback("up")
                 await interaction.response.send_message(
                     "Request to start the Minecraft server received!"
                 )
-                self._logger.info("Sent confirmation message for 'start' command.")
+                self._logger.info("Sent confirmation message for 'up' command.")
             else:
-                self._logger.warning("Callback function not set for 'start' command.")
+                self._logger.warning("Callback function not set for 'up' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
+        #Command to take down the server!   
+        @self.tree.command(name="off", description="Command to take down the server")
+        async def off(interaction: discord.Interaction):
+            self._logger.debug(
+                f"Received 'off' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'off'.")
+                self.command_handle_function_callback("off")
+                await interaction.response.send_message(
+                    "Request to take down the Minecraft server received!"
+                )
+                self._logger.info("Sent confirmation message for 'off' command.")
+            else:
+                self._logger.warning("Callback function not set for 'off' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
+        #Command to restart the server!   
+        @self.tree.command(name="restart", description="Command to restart the server")
+        async def restart(interaction: discord.Interaction):
+            self._logger.debug(
+                f"Received 'restart' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'restart'.")
+                self.command_handle_function_callback("restart")
+                await interaction.response.send_message(
+                    "Request to restart the Minecraft server received!"
+                )
+                self._logger.info("Sent confirmation message for 'restart' command.")
+            else:
+                self._logger.warning("Callback function not set for 'restart' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
+        #Command to authorizing a member in the server!   
+        @self.tree.command(name="auth", description="Command to authorizing a member in the server")
+        async def auth(interaction: discord.Interaction, vpn_id:str):
+            self._logger.debug(
+                f"Received 'auth' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'auth'.")
+                self.command_handle_function_callback("auth", [vpn_id])
+                await interaction.response.send_message(
+                    "Request to authorizing a member in the Minecraft server received!"
+                )
+                self._logger.info("Sent confirmation message for 'auth' command.")
+            else:
+                self._logger.warning("Callback function not set for 'auth' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+        
+        #Command to do a minecraft command in the server!   
+        @self.tree.command(name="command", description="Command to do minecraft_command in the server")
+        async def command(interaction: discord.Interaction, mine_command:str):
+            self._logger.debug(
+                f"Received 'command' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'command'.")
+                self.command_handle_function_callback("command", [mine_command])
+                await interaction.response.send_message(
+                    "Request to do a command in the Minecraft server received!"
+                )
+                self._logger.info("Sent confirmation message for 'command' command.")
+            else:
+                self._logger.warning("Callback function not set for 'command' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
+        #Command to get info off the server!   
+        @self.tree.command(name="info", description="Command to get information(java version, minecraft version, ...) off the server")
+        async def info(interaction: discord.Interaction):
+            self._logger.debug(
+                f"Received 'info' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'info'.")
+                self.command_handle_function_callback("info")
+                await interaction.response.send_message(
+                    "Request to get info off the Minecraft server received!"
+                )
+                self._logger.info("Sent confirmation message for 'info' command.")
+            else:
+                self._logger.warning("Callback function not set for 'info' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
+        #Command to get a status off the server!   
+        @self.tree.command(name="status", description="Command to get a status off the server")
+        async def status(interaction: discord.Interaction):
+            self._logger.debug(
+                f"Received 'info' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'status'.")
+                self.command_handle_function_callback("status")
+                await interaction.response.send_message(
+                    "Request to get a status off the Minecraft server received!"
+                )
+                self._logger.info("Sent confirmation message for 'status' command.")
+            else:
+                self._logger.warning("Callback function not set for 'status' command.")
                 await interaction.response.send_message(
                     "No processor available for this command."
                 )
