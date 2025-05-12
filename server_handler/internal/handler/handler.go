@@ -1,9 +1,7 @@
 package handler
 
 import (
-	// "errors"
 	"log"
-	"os/exec"
 	commandhandler "server_handler/internal/command_handler"
 	"server_handler/internal/config"
 	"server_handler/internal/docker"
@@ -14,11 +12,16 @@ import (
 
 func ManageCommand(tag, message string, ps pubsub.PubSubInterface) error {
 	c := config.GetInstance()
+
 	if tag == "start_server" {
+
 		server.StartServerCompose()
-		log.Println("Start server")
 		ps.SendMessage("Starting server", c.SenderChannel)
+		ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
+		log.Println("Start server")
+
 	} else if tag == "stop_server" {
+
 		commandhandler.WriteToContainer("/stop")
 		ps.SendMessage("Stopping server", c.SenderChannel)
 		sair := false
@@ -32,29 +35,25 @@ func ManageCommand(tag, message string, ps pubsub.PubSubInterface) error {
 			}
 		}
 		server.StopServerCompose()
-		log.Println("Stop server")
 		ps.SendMessage("Server stopped", c.SenderChannel)
+		ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
+
+		log.Println("Stop server")
+
 	} else if tag == "command" {
+
 		commandhandler.WriteToContainer(message)
+		ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
+
+		log.Println("Send a command to the server: ", message)
+
 	} else {
-		commandhandler.WriteToContainer(tag)
-		// return errors.New("invalid command")
+
+		ps.SendMessage("Invalid tag.", c.SenderChannel)
+
+		log.Println("Received a invalid tag")
+
 	}
 
 	return nil
-}
-
-func GetZeroTierNodeID(containerName string) string {
-	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
-	output, err := cmd.CombinedOutput()
-
-	if err != nil {
-		panic(err)
-	}
-
-	outputStr := string(output)
-
-	parts := strings.Split(outputStr, " ")
-
-	return parts[2]
 }
