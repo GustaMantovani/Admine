@@ -29,9 +29,11 @@ func (ps PubSubRedis) SendMessage(message, channel string) {
 
 // Listen pubsub for messages in format of the struct Message from internal/message
 // and send then to a channel from parameter
-func (ps PubSubRedis) ListenForMessages(channel string, msgChannel chan message.Message) {
-	subscriber := ps.client.Subscribe(context.Background(), channel)
-	ch := subscriber.Channel()
+func (ps PubSubRedis) ListenForMessages(channels string[], msgChannel chan message.Message) {
+	for msg := range channels {
+		subscriber := ps.client.Subscribe(context.Background(), channel)
+		ch := subscriber.Channel()
+	}
 
 	for msg := range ch {
 		var m message.Message
