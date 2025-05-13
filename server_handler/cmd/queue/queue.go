@@ -27,11 +27,12 @@ func listenCommands() {
 	ps := pubsub.PubSubFactoryCreate(psType)
 
 	if ps == nil {
-		log.Fatal("Tipo de PubSub não existe: ", psType)
+		log.Fatal("PubSub type not exists", psType)
 	}
 
-	// message channel
 	mc := make(chan message.Message)
+
+	channels := ["consummer1", "consummer2"]
 
 	go ps.ListenForMessages(c.ConsumerChannel, mc)
 
