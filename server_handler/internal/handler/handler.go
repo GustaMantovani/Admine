@@ -2,7 +2,7 @@ package handler
 
 import (
 	"log"
-	commandhandler "server_handler/internal/command_handler"
+	"server_handler/internal/commandexecuter"
 	"server_handler/internal/config"
 	"server_handler/internal/docker"
 	"server_handler/internal/pubsub"
@@ -36,7 +36,7 @@ func serverUp(ps pubsub.PubSubInterface) {
 }
 
 func serverDown(ps pubsub.PubSubInterface) {
-	commandhandler.WriteToContainer("/stop")
+	commandexecuter.WriteToContainer("/stop")
 	ps.SendMessage("Stopping server", c.SenderChannel)
 
 	sair := false
@@ -57,7 +57,7 @@ func serverDown(ps pubsub.PubSubInterface) {
 }
 
 func command(ps pubsub.PubSubInterface, message string) {
-	commandhandler.WriteToContainer(message)
+	commandexecuter.WriteToContainer(message)
 	ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
 
 	log.Println("Send a command to the server: ", message)
