@@ -8,10 +8,10 @@ import (
 )
 
 type ConfigFile struct {
-	ServerName       string `yaml:"serverName"`
-	ComposeDirectory string `yaml:"composeDirectory"`
-	ConsumerChannel  string `yaml:"consumerChannel"`
-	SenderChannel    string `yaml:"senderChannel"`
+	ServerName       string   `yaml:"serverName"`
+	ComposeDirectory string   `yaml:"composeDirectory"`
+	ConsumerChannels []string `yaml:"consumerChannels"`
+	SenderChannel    string   `yaml:"senderChannel"`
 }
 
 // Return a ConfigFile. It takes the data from config file in "~/.config/admine/server.yaml"
