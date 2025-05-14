@@ -17,14 +17,17 @@ If the env vars is not fully set, then the file is used to configure the handler
 server.yaml content
 serverName: "name-of-the-service-in-the-compose-file"
 composeDirectory: "/compose/absolute/path.yaml"
-consumerChannel: "channel-who-receives-commands"
-senderChannel: "channel-who-send-responses"
+senderChannel: "channel"
+consumerChannel:
+- "channel1"
+- "channel2"
 
 env vars:
-SERVER_NAME
-COMPOSE_DIRECTORY
-CONSUMER_CHANNEL
-SENDER_CHANNEL
+SERVER_NAME "channel"
+COMPOSE_DIRECTORY "/path"
+CONSUMER_CHANNEL "channel1:channel2"
+SENDER_CHANNEL "channel"
+PUBSUB "pubsub-type"
 `
 
 var rootCmd = &cobra.Command{
