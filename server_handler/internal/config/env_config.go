@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strings"
 )
@@ -17,8 +18,11 @@ func isEnvSetAndSetConfig(config *Config) bool {
 	config.ComposeAbsPath = os.Getenv("COMPOSE_DIRECTORY")
 	config.ConsumerChannel = channels
 	config.SenderChannel = os.Getenv("SENDER_CHANNEL")
+	config.Pubsub = os.Getenv("PUBSUB")
 
-	if config.ComposeContainerName == "" || config.ComposeAbsPath == "" || len(config.ConsumerChannel) == 0 || config.SenderChannel == "" {
+	log.Println(config)
+
+	if config.ComposeContainerName == "" || config.ComposeAbsPath == "" || len(config.ConsumerChannel) == 0 || config.SenderChannel == "" || config.Pubsub == "" {
 		return false
 	}
 
