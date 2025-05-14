@@ -23,12 +23,7 @@ One for listen the pubsub and other to send commands to handler.
 */
 func listenCommands() {
 	c := config.GetInstance()
-	psType := "redis"
-	ps := pubsub.PubSubFactoryCreate(psType)
-
-	if ps == nil {
-		log.Fatal("PubSub type not exists", psType)
-	}
+	ps := pubsub.PubSubFactoryCreate()
 
 	mc := make(chan message.Message)
 

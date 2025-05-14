@@ -8,6 +8,7 @@ var pubSubTypes = map[string]PubSubInterface{
 	"redis": New("127.0.0.1:6379"),
 }
 
-func PubSubFactoryCreate(pubsub string) PubSubInterface {
-	return pubSubTypes[pubsub]
+// Returns a concrete Pubsub by config.Config pubsub field
+func PubSubFactoryCreate() PubSubInterface {
+	return pubSubTypes[c.Pubsub]
 }

@@ -12,6 +12,7 @@ type ConfigFile struct {
 	ComposeDirectory string   `yaml:"composeDirectory"`
 	ConsumerChannels []string `yaml:"consumerChannels"`
 	SenderChannel    string   `yaml:"senderChannel"`
+	Pubsub           string   `yaml:"pubsub"`
 }
 
 // Return a ConfigFile. It takes the data from config file in "~/.config/admine/server.yaml"

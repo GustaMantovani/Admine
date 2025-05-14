@@ -9,9 +9,9 @@ import (
 type Config struct {
 	ComposeAbsPath       string
 	ComposeContainerName string
-	ConsumerChannel      string
 	ConsumerChannel      []string
 	SenderChannel        string
+	Pubsub               string
 }
 
 var instance *Config
@@ -46,6 +46,7 @@ func GetInstance() *Config {
 			ConsumerChannel:      configFile.ConsumerChannels,
 			SenderChannel:        configFile.SenderChannel,
 			ComposeContainerName: containerName,
+			Pubsub:               configFile.Pubsub,
 		}
 	})
 
