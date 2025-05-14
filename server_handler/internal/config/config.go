@@ -10,6 +10,7 @@ type Config struct {
 	ComposeAbsPath       string
 	ComposeContainerName string
 	ConsumerChannel      string
+	ConsumerChannel      []string
 	SenderChannel        string
 }
 
@@ -42,7 +43,7 @@ func GetInstance() *Config {
 
 		instance = &Config{
 			ComposeAbsPath:       composeAbsPath,
-			ConsumerChannel:      configFile.ConsumerChannel,
+			ConsumerChannel:      configFile.ConsumerChannels,
 			SenderChannel:        configFile.SenderChannel,
 			ComposeContainerName: containerName,
 		}

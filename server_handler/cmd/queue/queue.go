@@ -32,8 +32,6 @@ func listenCommands() {
 
 	mc := make(chan message.Message)
 
-	channels := ["consummer1", "consummer2"]
-
 	go ps.ListenForMessages(c.ConsumerChannel, mc)
 
 	for msg := range mc {
@@ -44,3 +42,4 @@ func listenCommands() {
 		}
 	}
 }
+
