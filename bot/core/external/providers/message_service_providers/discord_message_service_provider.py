@@ -6,11 +6,14 @@ from discord.ext import commands
 
 from core.external.abstractions.message_service import MessageService
 
+import asyncio
+
+
 
 class _DiscordClient(commands.Bot):
     def __init__(
             self,
-            command_prefix,
+            command_prefix: str,
             logger: Logger,
             callback_function: Optional[Callable[[str,Optional[List[str]],str,List[str]], None]] = None,
             #lembrar colocar lista administradores
@@ -18,6 +21,12 @@ class _DiscordClient(commands.Bot):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
         self.command_handle_function_callback = callback_function
         self._logger = logger
+        self._ready_event = asyncio.Event()
+
+
+    async def on_ready(self):
+        self._logger.info(f"Bot conectado como {self.user.name} (ID: {self.user.id})")
+        self._ready_event.set()
 
     async def setup_hook(self):
         self._logger.info("Setting up Discord client commands.")
@@ -158,6 +167,16 @@ class _DiscordClient(commands.Bot):
         await self.tree.sync()
         self._logger.info("Discord commands synced successfully.")
 
+    async def send_message_to_channel(self, channel_id: int, message: str):
+        await self._ready_event.wait()
+        self._logger.debug(f"Trying to send message to channel {channel_id}: {message}")
+        channel = await self.fetch_channel(channel_id)
+        self._logger.debug(f"Channel found: {channel}")
+        if channel is None:
+            self._logger.error(f"Channel with ID {channel_id} not found.")
+            return
+        self._logger.debug(f"Sending message to channel {channel_id}: {message}")
+        await channel.send(message)
 
 class DiscordMessageServiceProvider(MessageService):
     def __init__(
@@ -182,10 +201,21 @@ class DiscordMessageServiceProvider(MessageService):
     @property
     def command_prefix(self) -> str:
         return self.__command_prefix
+    
+    def set_callback(self, callback_function: Callable[[str, Optional[List[str]], str, List[str]], None]):
+        self._logger.debug("Setting command handler callback")
+        self.__discord_client.command_handle_function_callback = callback_function
 
-    def send_message(self, message: str):
+    
+    async def connect(self):
+        self._logger.debug("Connecting to Discord...")
+        await self.__discord_client.start(self.token)
+        self._logger.info("Connected to Discord successfully.")
+
+    async def send_message(self, message: str):
         self._logger.debug(f"Sending message: {message}")
-
+        await self.__discord_client.send_message_to_channel(1338254030295662644, "123 Testando")
+ 
     def listen_message(self, callback_function: Callable[[str,Optional[List[str]],str,List[str]], None] = None):
         self._logger.debug("Listening for messages")
         self.__discord_client.command_handle_function_callback = callback_function

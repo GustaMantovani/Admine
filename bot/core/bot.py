@@ -25,6 +25,7 @@ from core.handles.event_handle import EventHandle
 from core.models.admine_message import AdmineMessage
 from core.external.abstractions.pubsub_service import PubSubService
 from typing import List
+import asyncio
 
 
 class Bot:
@@ -74,15 +75,22 @@ class Bot:
             f"{messaging_provider_str} message service provider initialized."
         )
 
-    def start(self):
+    async def start(self):
         self.__logger.info("Starting bot...")
+
+        # Envia mensagem de inicialização no PubSub
         message = AdmineMessage(["server_start"], "FUNCIONOU")
         self.__pubsub_service.send_message(message)
 
-        pubSub: PubSubService = self.__pubsub_service
+        self.__message_services[0].set_callback(self.__command_handle.process_command)
 
-        for ms in self.__message_services:
-            ms.listen_message(callback_function=self.__command_handle.process_command)
+        # Executa ambas as tarefas de escuta em paralelo
+        await asyncio.gather(
+            self.__message_services[0].connect(),  # Discord bot ouvindo comandos
+            self.__pubsub_service.listen_message(self.__event_handle.handle_event)  # Redis ouvindo eventos
+        )
+
+
 
     def shutdown(self):
         self.__logger.info("Shutting down bot...")

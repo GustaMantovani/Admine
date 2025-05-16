@@ -23,7 +23,19 @@ class MessageService(ABC):
         return self.__administrators
 
     @abstractmethod
-    def send_message(self, message: str):
+    async def connect(self):
+        """
+        Método para conectar ao serviço de mensagens.
+        Deve ser implementado pelas subclasses.
+        """
+        pass
+
+    @abstractmethod
+    def set_callback(self, callback_function: Callable[[str, Optional[List[str]], str, List[str]], None]):
+        pass
+
+    @abstractmethod
+    async def send_message(self, message: str):
         pass
 
     @abstractmethod
