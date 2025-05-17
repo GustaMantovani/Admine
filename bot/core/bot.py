@@ -82,15 +82,14 @@ class Bot:
         message = AdmineMessage(["server_start"], "FUNCIONOU")
         self.__pubsub_service.send_message(message)
 
+        # Configura o callback para processar comandos do Discord
         self.__message_services[0].set_callback(self.__command_handle.process_command)
 
-        # Executa ambas as tarefas de escuta em paralelo
+        # Inicia as tarefas de escuta em paralelo
         await asyncio.gather(
             self.__message_services[0].connect(),  # Discord bot ouvindo comandos
             self.__pubsub_service.listen_message(self.__event_handle.handle_event)  # Redis ouvindo eventos
         )
-
-
 
     def shutdown(self):
         self.__logger.info("Shutting down bot...")

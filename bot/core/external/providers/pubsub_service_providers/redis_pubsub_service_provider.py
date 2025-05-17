@@ -1,5 +1,6 @@
 from logging import Logger
 from typing import Optional,Callable
+import asyncio
 
 import redis
 
@@ -34,14 +35,19 @@ class RedisPubSubServiceProvider(PubSubService):
         for channel in self.producer_channels:
             self.__client.publish(channel, message.from_object_to_json())
 
-    async def listen_message(self, callback_function: Callable[[AdmineMessage], None] = None):
-        self._logger.debug(
-            f"Listening to channels: {', '.join(self.subscribed_channels)}"
-        )
+    async def listen_message(self, callback_function):
+        self._logger.debug(f"Listening to channels: {', '.join(self.subscribed_channels)}")
         self.__pubsub.subscribe("teste")
-        for message in self.__pubsub.listen():  # Itera sobre o gerador
-            if message["type"] == "message":  # Filtra mensagens reais
+        
+        # Create a task to check for messages
+        while True:
+            # Use a non-blocking approach to check for messages
+            message = self.__pubsub.get_message()
+            if message and message["type"] == "message":
                 self._logger.debug(f"Received message: {message['data']}")
                 data = AdmineMessage.from_json_to_object(message["data"].decode("utf-8"))
                 await callback_function(data)
-                
+            
+            # Add a small sleep to prevent high CPU usage
+            await asyncio.sleep(0.1)
+

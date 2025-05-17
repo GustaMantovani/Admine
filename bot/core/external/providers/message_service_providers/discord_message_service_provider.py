@@ -204,11 +204,18 @@ class DiscordMessageServiceProvider(MessageService):
     
     def set_callback(self, callback_function: Callable[[str, Optional[List[str]], str, List[str]], None]):
         self._logger.debug("Setting command handler callback")
-        self.__discord_client.command_handle_function_callback = callback_function
+        self._callback_function = callback_function
+        if hasattr(self, '__discord_client'):
+            self.__discord_client.command_handle_function_callback = callback_function
 
     
     async def connect(self):
         self._logger.debug("Connecting to Discord...")
+        # Set the callback before connecting
+        if hasattr(self, '_callback_function') and self._callback_function:
+            self.__discord_client.command_handle_function_callback = self._callback_function
+        
+        # Use start() which works in an async context
         await self.__discord_client.start(self.token)
         self._logger.info("Connected to Discord successfully.")
 
