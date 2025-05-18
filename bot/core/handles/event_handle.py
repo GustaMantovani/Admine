@@ -17,6 +17,7 @@ class EventHandle:
         self.__HANDLES: Dict[str, Callable[[AdmineMessage], None]] = {
             "server_start": self.__server_start,
             "server_stop": self.__server_stop,
+            "notification": self.__notification,
         }
 
     async def handle_event(self, event: AdmineMessage):
@@ -30,7 +31,7 @@ class EventHandle:
             else:
                 self.__logger.warning(f"No handler registered for tag: {tag}")
 
-    async def notify_all(self, notification: str):
+    async def __notify_all(self, notification: str):
         for message_service in self.__message_services:
             await message_service.send_message(notification)
 
@@ -38,11 +39,19 @@ class EventHandle:
         self.__logger.debug(
             f"Handler: Server has started with message: {event.message}"
         )
-        await self.notify_all(
+        await self.__notify_all(
             f"Server has started with message: {event.message}"
         )
 
     def __server_stop(self, event: AdmineMessage):
         self.__logger.debug(
             f"Handler: Server has stopped with message: {event.message}"
+        )
+
+    async def __notification(self, event: AdmineMessage):
+        self.__logger.debug(
+            f"Handler: Notification with message: {event.message}"
+        )
+        await self.__notify_all(
+            event.message
         )

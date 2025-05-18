@@ -221,7 +221,7 @@ class DiscordMessageServiceProvider(MessageService):
 
     async def send_message(self, message: str):
         self._logger.debug(f"Sending message: {message}")
-        await self.__discord_client.send_message_to_channel(1338254030295662644, "123 Testando")
+        await self.__discord_client.send_message_to_channel(1338254030295662644, message)
  
     def listen_message(self, callback_function: Callable[[str,Optional[List[str]],str,List[str]], None] = None):
         self._logger.debug("Listening for messages")
