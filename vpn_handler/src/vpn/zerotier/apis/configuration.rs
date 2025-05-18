@@ -31,7 +31,7 @@ impl ApiKey {
 impl Configuration {
     pub fn new(base_path: String, api_key: String) -> Configuration {
         Configuration {
-            base_path: base_path,
+            base_path,
             user_agent: Some("Rust Zerotier Handler v1".to_owned()),
             client: reqwest::Client::new(),
             basic_auth: None,

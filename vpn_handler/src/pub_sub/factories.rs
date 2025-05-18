@@ -1,6 +1,6 @@
 use crate::errors::PubSubError;
-use crate::pub_sub::redis_pubsub::RedisPubSub;
 use crate::pub_sub::pub_sub::PubSubProvider;
+use crate::pub_sub::redis_pubsub::RedisPubSub;
 use std::str::FromStr;
 
 pub type DynPubSub = Box<dyn PubSubProvider>;
