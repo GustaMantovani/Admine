@@ -1,7 +1,7 @@
 use crate::errors::VpnError;
 use crate::vpn::vpn::TVpnClient;
-use crate::vpn::zerotier_vpn::ZerotierVpn;
 use crate::vpn::zerotier::apis::configuration::Configuration;
+use crate::vpn::zerotier_vpn::ZerotierVpn;
 
 pub enum VpnType {
     Zerotier,
