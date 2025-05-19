@@ -43,7 +43,7 @@ func ReadLastContainerLine() (string, error) {
 	}
 
 	if containerID == "" {
-		return "", fmt.Errorf("container '%s' não encontrado", containerName)
+		return "", fmt.Errorf("container '%s' not found", containerName)
 	}
 
 	// Captura os logs
@@ -77,7 +77,7 @@ func ReadLastContainerLine() (string, error) {
 		return "", err
 	}
 
-	return "", fmt.Errorf("nenhuma linha encontrada")
+	return "", fmt.Errorf("no lines found")
 }
 
 func GetZeroTierNodeID(containerName string) string {

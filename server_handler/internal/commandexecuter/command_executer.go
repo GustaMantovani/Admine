@@ -38,7 +38,7 @@ func WriteToContainer(input string) error {
 	}
 
 	if containerID == "" {
-		return fmt.Errorf("container '%s' não encontrado", containerName)
+		return fmt.Errorf("container '%s' not found", containerName)
 	}
 
 	fmt.Println(containerID)

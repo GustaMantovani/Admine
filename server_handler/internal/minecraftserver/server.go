@@ -26,13 +26,13 @@ func StartServerCompose() error {
 	upCh, err := compose.Up(&client.UpOptions{Detach: true}, nil)
 
 	if err != nil {
-		return fmt.Errorf("erro ao iniciar compose: %w", err)
+		return fmt.Errorf("error starting compose: %w", err)
 	}
 
 	err = <-upCh
 
 	if err != nil {
-		return fmt.Errorf("erro no canal de subida do compose: %w", err)
+		return fmt.Errorf("error in compose: %w", err)
 	}
 
 	return nil
@@ -45,12 +45,12 @@ func StopServerCompose() {
 	downCh, err := compose.Down(&client.DownOptions{}, nil)
 
 	if err != nil {
-		log.Fatal("erro: ", err.Error())
+		log.Fatal("error stopping compose: ", err.Error())
 	}
 
 	err = <-downCh
 
 	if err != nil {
-		log.Fatal("erro: ", err.Error())
+		log.Fatal("error in compose: ", err.Error())
 	}
 }

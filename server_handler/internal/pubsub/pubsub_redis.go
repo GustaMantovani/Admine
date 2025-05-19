@@ -38,13 +38,12 @@ func (ps PubSubRedis) ListenForMessages(channels []string, msgChannel chan model
 	log.Println("lintening channels: ", channels)
 
 	for msg := range ch {
-		log.Println("recebi aqui")
 		var m models.Message
 
 		err := json.Unmarshal([]byte(msg.Payload), &m)
 
 		if err != nil {
-			log.Println("erro: ", err)
+			log.Println("error in json unmarshal process: ", err)
 		}
 
 		msgChannel <- m
