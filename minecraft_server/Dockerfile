@@ -30,3 +30,5 @@ WORKDIR /srv/minecraft
 
 RUN curl -O https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.3.0/forge-1.20.1-47.3.0-installer.jar && \
     java -jar forge-1.20.1-47.3.0-installer.jar --installServer
+
+CMD zerotier-one & ./run.sh
