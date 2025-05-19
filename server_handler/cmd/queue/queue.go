@@ -4,7 +4,7 @@ import (
 	"log"
 	"server_handler/internal/config"
 	"server_handler/internal/handler"
-	"server_handler/internal/message"
+	"server_handler/internal/models"
 	"server_handler/internal/pubsub"
 )
 
@@ -25,7 +25,7 @@ func listenCommands() {
 	c := config.GetInstance()
 	ps := pubsub.PubSubFactoryCreate()
 
-	mc := make(chan message.Message)
+	mc := make(chan models.Message)
 
 	go ps.ListenForMessages(c.ConsumerChannel, mc)
 

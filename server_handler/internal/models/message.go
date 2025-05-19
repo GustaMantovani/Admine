@@ -1,4 +1,4 @@
-package message
+package models
 
 type Message struct {
 	Tags []string `json:"tags"`

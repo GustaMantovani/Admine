@@ -1,8 +1,10 @@
 package pubsub
 
-import "server_handler/internal/message"
+import (
+	"server_handler/internal/models"
+)
 
 type PubSubInterface interface {
-	ListenForMessages([]string, chan message.Message)
+	ListenForMessages([]string, chan models.Message)
 	SendMessage(string, string)
 }

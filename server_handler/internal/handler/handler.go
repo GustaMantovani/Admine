@@ -5,15 +5,15 @@ import (
 	"server_handler/internal/commandexecuter"
 	"server_handler/internal/config"
 	"server_handler/internal/docker"
-	"server_handler/internal/message"
 	"server_handler/internal/minecraftserver"
+	"server_handler/internal/models"
 	"server_handler/internal/pubsub"
 	"strings"
 )
 
 var c = config.GetInstance()
 
-func ManageCommand(msg message.Message, ps pubsub.PubSubInterface) error {
+func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
 	if msg.Tags[0] == "server_up" {
 		serverUp(ps)
 	} else if msg.Tags[0] == "server_down" {
