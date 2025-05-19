@@ -7,7 +7,7 @@ import (
 )
 
 // Set a Config variable and if any value is an empty string returns false, because the config is not full set
-func isEnvSetAndSetConfig(config *Config) bool {
+func isEnvSetAndSetConfig(config *config) bool {
 	var channels []string
 
 	envChannels := os.Getenv("CONSUMER_CHANNEL")

@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type Config struct {
+type config struct {
 	ComposeAbsPath       string
 	ComposeContainerName string
 	ConsumerChannel      []string
@@ -14,7 +14,7 @@ type Config struct {
 	Pubsub               string
 }
 
-var instance *Config
+var instance *config
 var once sync.Once
 
 /*
@@ -23,9 +23,9 @@ Get the Singleton instance of the server configuration.
 Checks whether it is possible to fetch ddata from a configuration file
 or environment variables. If not, it closes the program.
 */
-func GetInstance() *Config {
+func GetInstance() *config {
 	once.Do(func() {
-		instance = &Config{}
+		instance = &config{}
 		configFile, err := GetConfigFileData()
 
 		if err != nil {
@@ -41,7 +41,7 @@ func GetInstance() *Config {
 		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
 		containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
 
-		instance = &Config{
+		instance = &config{
 			ComposeAbsPath:       composeAbsPath,
 			ConsumerChannel:      configFile.ConsumerChannels,
 			SenderChannel:        configFile.SenderChannel,

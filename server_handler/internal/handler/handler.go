@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var c *config.Config = config.GetInstance()
+var c = config.GetInstance()
 
 func ManageCommand(tag, message string, ps pubsub.PubSubInterface) error {
 	if tag == "server_up" {
