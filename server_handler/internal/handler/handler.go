@@ -5,8 +5,8 @@ import (
 	"server_handler/internal/commandexecuter"
 	"server_handler/internal/config"
 	"server_handler/internal/docker"
+	"server_handler/internal/minecraftserver"
 	"server_handler/internal/pubsub"
-	"server_handler/internal/server"
 	"strings"
 )
 
@@ -29,7 +29,7 @@ func ManageCommand(tag, message string, ps pubsub.PubSubInterface) error {
 }
 
 func serverUp(ps pubsub.PubSubInterface) {
-	server.StartServerCompose()
+	minecraftserver.StartServerCompose()
 	ps.SendMessage("Starting server", c.SenderChannel)
 	ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
 	log.Println("Server up")
@@ -50,7 +50,7 @@ func serverDown(ps pubsub.PubSubInterface) {
 		}
 	}
 
-	server.StopServerCompose()
+	minecraftserver.StopServerCompose()
 	ps.SendMessage("Server stopped", c.SenderChannel)
 
 	log.Println("Stop server")
