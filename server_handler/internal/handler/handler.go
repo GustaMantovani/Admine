@@ -5,6 +5,7 @@ import (
 	"server_handler/internal/commandexecuter"
 	"server_handler/internal/config"
 	"server_handler/internal/docker"
+	"server_handler/internal/message"
 	"server_handler/internal/minecraftserver"
 	"server_handler/internal/pubsub"
 	"strings"
@@ -12,13 +13,13 @@ import (
 
 var c = config.GetInstance()
 
-func ManageCommand(tag, message string, ps pubsub.PubSubInterface) error {
-	if tag == "server_up" {
+func ManageCommand(msg message.Message, ps pubsub.PubSubInterface) error {
+	if msg.Tags[0] == "server_up" {
 		serverUp(ps)
-	} else if tag == "server_down" {
+	} else if msg.Tags[0] == "server_down" {
 		serverDown(ps)
-	} else if tag == "command" {
-		command(ps, message)
+	} else if msg.Tags[0] == "command" {
+		command(ps, msg.Msg)
 	} else {
 		ps.SendMessage("Invalid tag.", c.SenderChannel)
 

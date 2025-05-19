@@ -33,8 +33,7 @@ func listenCommands() {
 		log.Println(msg)
 		if len(msg.Tags) > 0 {
 			log.Println(msg.Tags[0])
-			handler.ManageCommand(msg.Tags[0], msg.Msg, ps)
+			handler.ManageCommand(msg, ps)
 		}
 	}
 }
-
