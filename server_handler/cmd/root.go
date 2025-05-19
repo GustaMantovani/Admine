@@ -17,6 +17,8 @@ If the env vars is not fully set, then the file is used to configure the handler
 server.yaml content
 serverName: "name-of-the-service-in-the-compose-file"
 composeDirectory: "/compose/absolute/path.yaml"
+host: "pubsub-host-adress"
+port: "pubsub-port"
 senderChannel: "channel"
 consumerChannel:
 - "channel1"
@@ -28,6 +30,8 @@ COMPOSE_DIRECTORY "/path"
 CONSUMER_CHANNEL "channel1:channel2"
 SENDER_CHANNEL "channel"
 PUBSUB "pubsub-type"
+HOST "pubsub-host-adress"
+PORT "pubsub-port"
 `
 
 var rootCmd = &cobra.Command{
