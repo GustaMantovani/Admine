@@ -17,16 +17,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func main() {
-	lastLine, err := ReadLastContainerLine()
-	if err != nil {
-		fmt.Println("Erro:", err)
-		return
-	}
-
-	fmt.Println("Última linha do container:", lastLine)
-}
-
 func ReadLastContainerLine() (string, error) {
 	ctx := context.Background()
 
