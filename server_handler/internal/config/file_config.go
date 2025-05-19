@@ -13,6 +13,8 @@ type ConfigFile struct {
 	ConsumerChannels []string `yaml:"consumerChannels"`
 	SenderChannel    string   `yaml:"senderChannel"`
 	Pubsub           string   `yaml:"pubsub"`
+	Host             string   `yaml:"host"`
+	Port             string   `yaml:"port"`
 }
 
 // Return a ConfigFile. It takes the data from config file in "~/.config/admine/server.yaml"
