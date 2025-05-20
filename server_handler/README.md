@@ -11,6 +11,7 @@ serverName: "name-of-compose-service"
 composeDirectory: "/compose/absolute/path.yaml"
 host: "pubsub-host-adress"
 port: "pubsub-port"
+pubsub: "pubsub-type"
 senderChannel: "channel-that-responds"
 consummerChannels:
 - "channel1"
