@@ -1,8 +1,7 @@
 package models
 
 import (
-	"fmt"
-	"strings"
+	"encoding/json"
 )
 
 type Message struct {
@@ -18,5 +17,10 @@ func NewMessage(msg string, tags []string) Message {
 }
 
 func (msg Message) ToString() string {
-	return fmt.Sprintf("{tags:[%s], message:%s}", strings.Join(msg.Tags, ", "), msg.Msg)
+
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return "{}"
+	}
+	return string(bytes)
 }
