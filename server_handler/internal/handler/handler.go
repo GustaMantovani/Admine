@@ -32,6 +32,7 @@ func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
 func serverUp(ps pubsub.PubSubInterface) {
 	minecraftserver.StartServerCompose()
 	ps.SendMessage("Starting server", c.SenderChannel)
+	docker.WaitForBuildAndStart()
 	msg := models.NewMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), []string{"server_up"})
 	ps.SendMessage(msg.ToString(), c.SenderChannel)
 	log.Println("Server up")
