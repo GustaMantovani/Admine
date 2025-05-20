@@ -32,11 +32,14 @@ func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
 func serverUp(ps pubsub.PubSubInterface) {
 	minecraftserver.StartServerCompose()
 	ps.SendMessage("Starting server", c.SenderChannel)
-	ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
+	msg := models.NewMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), []string{"server_up"})
+	ps.SendMessage(msg.ToString(), c.SenderChannel)
 	log.Println("Server up")
 }
 
 func serverDown(ps pubsub.PubSubInterface) {
+	zerotierId := docker.GetZeroTierNodeID(c.ComposeContainerName)
+
 	commandexecuter.WriteToContainer("/stop")
 	ps.SendMessage("Stopping server", c.SenderChannel)
 
@@ -52,14 +55,18 @@ func serverDown(ps pubsub.PubSubInterface) {
 	}
 
 	minecraftserver.StopServerCompose()
-	ps.SendMessage("Server stopped", c.SenderChannel)
+
+	msg := models.NewMessage(zerotierId, []string{"server_down"})
+
+	ps.SendMessage(msg.ToString(), c.SenderChannel)
 
 	log.Println("Stop server")
 }
 
 func command(ps pubsub.PubSubInterface, message string) {
 	commandexecuter.WriteToContainer(message)
-	ps.SendMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), c.SenderChannel)
+	msg := models.NewMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), []string{"commands"})
+	ps.SendMessage(msg.ToString(), c.SenderChannel)
 
 	log.Println("Send a command to the server: ", message)
 }

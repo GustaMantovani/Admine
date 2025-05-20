@@ -10,7 +10,8 @@ import (
 
 var shortDescription = "Up minecraft server from a docker compose file."
 
-var longDescription = `Up minecraft server from a docker compose file.
+var longDescription = `
+Up minecraft server from a docker compose file.
 The compose file must be specified in a YAML file in ~/.config/admine/server.yaml or in environment variables.
 If the env vars is not fully set, then the file is used to configure the handler.
 
