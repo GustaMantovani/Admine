@@ -1,15 +1,18 @@
-package internal
+package commandexecuter
 
 import (
 	"context"
 	"fmt"
 	"io"
+	"server_handler/internal/config"
+
+	"slices"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
-func WriteToContainerByName(containerName, input string) error {
+func WriteToContainer(input string) error {
 	ctx := context.Background()
 
 	// Cria o cliente Docker
@@ -24,19 +27,20 @@ func WriteToContainerByName(containerName, input string) error {
 		return err
 	}
 
+	containerName := config.GetInstance().ComposeContainerName
+
 	// Obtém o ID do container pelo nome
 	var containerID string
 	for _, container := range containers {
-		for _, name := range container.Names {
-			if name == "/"+containerName { // Os nomes incluem a barra inicial
-				containerID = container.ID
-				break
-			}
+		if slices.Contains(container.Names, "/"+containerName) { // Os nomes incluem a barra inicial
+			containerID = container.ID
 		}
 	}
+
 	if containerID == "" {
-		return fmt.Errorf("container '%s' não encontrado", containerName)
+		return fmt.Errorf("container '%s' not found", containerName)
 	}
+
 	fmt.Println(containerID)
 
 	// Anexa ao stdin do container
@@ -52,6 +56,7 @@ func WriteToContainerByName(containerName, input string) error {
 	defer hijackedResp.Close()
 
 	// Escreve no stdin
+	input = input + "\n"
 	_, err = io.WriteString(hijackedResp.Conn, input)
 	if err != nil {
 		return err
