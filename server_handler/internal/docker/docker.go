@@ -24,7 +24,7 @@ var c = config.GetInstance()
 func ReadLastContainerLine() (string, error) {
 	ctx := context.Background()
 
-	// Cliente Docker
+	// Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return "", err
@@ -33,15 +33,15 @@ func ReadLastContainerLine() (string, error) {
 
 	containerName := c.ComposeContainerName
 
-	// Procura o container pelo nome
+	// Search container by name
 	containerID := getContainerId(containerName, cli)
 
-	// Captura os logs
+	// Catch logs
 	out, err := cli.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: false,
 		Timestamps: false,
-		Tail:       "1", // Lê apenas a última linha
+		Tail:       "1", // Read last line
 	})
 
 	if err != nil {
@@ -50,8 +50,8 @@ func ReadLastContainerLine() (string, error) {
 
 	defer out.Close()
 
-	// Docker logs vêm com um cabeçalho de 8 bytes por stream
-	// Precisamos pular esse cabeçalho para obter o conteúdo real
+	// Docker logs comes with a 8 bytes header in strem
+	// Needs skip this header
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, out)
 	if err != nil {
@@ -89,21 +89,21 @@ func WaitForBuildAndStart() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	// Criar cliente Docker
+	// Create Docker client
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
-		log.Fatalf("Erro ao criar cliente Docker: %v", err)
+		log.Fatalf("error creating Docker client: %v", err)
 	}
 
-	containerName := c.ComposeContainerName // Substitua pelo nome do seu container
+	containerName := c.ComposeContainerName
 
-	// Verificar se o container existe
+	// Verifys if container exists
 	_, err = cli.ContainerInspect(ctx, containerName)
 	if err != nil {
-		log.Fatalf("Container não encontrado: %v", err)
+		log.Fatalf("Container not found: %v", err)
 	}
 
 	err = waitForContainerStart(cli, containerName)
@@ -111,7 +111,7 @@ func WaitForBuildAndStart() {
 		log.Fatalf("Erro: %v", err)
 	}
 
-	log.Println("Container está rodando com sucesso!")
+	log.Println("Container is up")
 }
 
 func getContainerId(containerName string, cli *client.Client) string {
@@ -129,7 +129,6 @@ func getContainerId(containerName string, cli *client.Client) string {
 	}
 
 	if containerID == "" {
-		// return "", fmt.Errorf("container '%s' not found", containerName)
 		return ""
 	}
 
@@ -138,13 +137,12 @@ func getContainerId(containerName string, cli *client.Client) string {
 
 func waitForContainerStart(cli *client.Client, containerName string) error {
 	ctx := context.Background()
-	// filter := filters.NewArgs(filters.Arg("name", containerName))
 
 	for {
-		// Listar containers (incluindo os que não estão running)
+		// List container (stopped containers too)
 		containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 		if err != nil {
-			return fmt.Errorf("erro ao listar containers: %v", err)
+			return fmt.Errorf("error listing containers: %v", err)
 		}
 
 		if len(containers) > 0 {
@@ -154,9 +152,20 @@ func waitForContainerStart(cli *client.Client, containerName string) error {
 			}
 			log.Printf("Container status: %s\n", container.State)
 		} else {
-			log.Println("Container não encontrado, aguardando...")
+			log.Println("Container not found, waiting...")
 		}
 
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func VerifyIfContainerExists() bool {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+
+	_, err = cli.ContainerInspect(context.Background(), c.ComposeContainerName)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
