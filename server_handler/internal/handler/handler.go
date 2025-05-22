@@ -65,6 +65,11 @@ func serverDown(ps pubsub.PubSubInterface) {
 }
 
 func command(ps pubsub.PubSubInterface, message string) {
+	if docker.VerifyIfContainerExists() {
+		log.Println("Container server donts exists")
+		return
+	}
+
 	commandexecuter.WriteToContainer(message)
 	msg := models.NewMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), []string{"commands"})
 	ps.SendMessage(msg.ToString(), c.SenderChannel)
