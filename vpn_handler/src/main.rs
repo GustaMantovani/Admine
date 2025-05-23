@@ -10,7 +10,6 @@ use handle::Handle;
 use log::{error, info};
 use log4rs;
 use std::env;
-use std::path::PathBuf;
 use config::Config;
 
 #[tokio::main]

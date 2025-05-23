@@ -1,7 +1,7 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use super::vpn::{MemberVpnAuthStatus, MemberVpnStatus, TVpnClient};
+use super::vpn::TVpnClient;
 use crate::errors::VpnError;
 use crate::vpn::zerotier::apis::configuration::Configuration;
 use crate::vpn::zerotier::apis::network_member_api::{
@@ -32,33 +32,6 @@ impl TVpnClient for ZerotierVpn {
             }
             Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
         };
-    }
-
-    async fn member_vpn_status(&self, member_id: String) -> Result<MemberVpnStatus, VpnError> {
-        match get_network_member(&self.config, &self.network_id, &member_id).await {
-            Ok(_) => {
-                return Ok(MemberVpnStatus::Unknown);
-            }
-            Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
-        };
-    }
-
-    async fn member_vpn_auth_status(
-        &self,
-        member_id: String,
-    ) -> Result<MemberVpnAuthStatus, VpnError> {
-        let member = match get_network_member(&self.config, &self.network_id, &member_id).await {
-            Ok(m) => m,
-            Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
-        };
-
-        if let Some(ref config) = member.config {
-            if let Some(Some(true)) = config.authorized {
-                return Ok(MemberVpnAuthStatus::Authenticated);
-            }
-        }
-
-        Ok(MemberVpnAuthStatus::NotAuthenticated)
     }
 
     async fn get_member_ips_in_vpn(&self, member_id: String) -> Result<Vec<IpAddr>, VpnError> {

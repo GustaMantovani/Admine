@@ -1,9 +1,9 @@
 use crate::models::admine_message::AdmineMessage;
 use crate::persistence::{
-    factories::{StoreFactory, StoreType},
+    factories::StoreFactory,
     key_value_store::KeyValueStore,
 };
-use crate::pub_sub::factories::{PubSubFactory, PubSubType};
+use crate::pub_sub::factories::PubSubFactory;
 use crate::pub_sub::pub_sub::PubSubProvider;
 use crate::vpn::{
     factories::{VpnFactory, VpnType},
@@ -12,13 +12,11 @@ use crate::vpn::{
 use crate::config::{Config, RetryConfig};
 use dotenvy::dotenv;
 use log::{error, info, warn};
-use std::env;
 use std::fmt;
-use std::str::FromStr;
 use std::sync::Arc;
 use tokio::spawn;
 use tokio::sync::{mpsc, Mutex};
-use tokio::time::{sleep, Duration};
+use tokio::time::sleep;
 
 /// Structure holding channel names.
 #[derive(Debug, Clone)]

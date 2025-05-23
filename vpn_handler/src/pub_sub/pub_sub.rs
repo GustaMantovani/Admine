@@ -2,7 +2,6 @@ use crate::errors::PubSubError;
 
 pub trait TSubscriber {
     fn subscribe(&mut self, topics: Vec<String>) -> Result<(), PubSubError>;
-    fn unsubscribe(&mut self, topic: String) -> Result<(), PubSubError>;
     fn listen_until_to_ricieve_message(&mut self) -> Result<(String, String), PubSubError>; // Return a tuple with message payload and channel name
 }
 
