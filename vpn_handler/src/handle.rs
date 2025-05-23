@@ -8,7 +8,7 @@ use crate::vpn::{
     vpn::TVpnClient,
 };
 use dotenvy::dotenv;
-use log::{error, info, warn};
+use log::{error, info};
 use std::fmt;
 use std::sync::Arc;
 use tokio::spawn;
@@ -48,11 +48,11 @@ impl Handle {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         dotenv().ok();
 
-        // Carregar configuração
+        // Load configuration
         let config = Config::load()?;
         let config_clone = config.clone();
 
-        // Criar cliente VPN
+        // Create VPN client
         let vpn = VpnFactory::create_vpn(
             VpnType::Zerotier,
             config.vpn.api_url.clone(),
@@ -61,7 +61,7 @@ impl Handle {
         )
         .map_err(|e| {
             error!(
-                "Erro ao criar cliente VPN com URL API: {}, Chave API: {}, ID da Rede: {}: {}",
+                "Error creating VPN client with API URL: {}, API Key: {}, Network ID: {}, Error: {}",
                 config.vpn.api_url.clone(),
                 config.vpn.api_key.clone(),
                 config.vpn.network_id.clone(),
@@ -70,37 +70,37 @@ impl Handle {
             e
         })?;
 
-        // Criar instâncias de publisher e listener
+        // Create publisher and listener instances
         let pub_sub_publisher =
-            PubSubFactory::create_pubsub_instance(config.pubsub.tipo.clone(), &config.pubsub.url)
+            PubSubFactory::create_pubsub_instance(config.pubsub.pubsub_type.clone(), &config.pubsub.url)
                 .map_err(|e| {
                 error!(
-                    "Erro ao criar publisher PubSub com tipo: {}, URL Redis: {}: {}",
-                    config.pubsub.tipo, config.pubsub.url, e
+                    "Error creating PubSub publisher with type: {}, Redis URL: {}: {}",
+                    config.pubsub.pubsub_type, config.pubsub.url, e
                 );
                 e
             })?;
 
         let mut pub_sub_listener =
-            PubSubFactory::create_pubsub_instance(config.pubsub.tipo.clone(), &config.pubsub.url)
+            PubSubFactory::create_pubsub_instance(config.pubsub.pubsub_type.clone(), &config.pubsub.url)
                 .map_err(|e| {
                 error!(
-                    "Erro ao criar listener PubSub com URL Redis: {}: {}",
+                    "Error creating PubSub listener with Redis URL: {}: {}",
                     config.pubsub.url, e
                 );
                 e
             })?;
 
-        // Inscrever listener nos canais
+        // Subscribe listener to channels
         pub_sub_listener.subscribe(vec![
             config.channels.server_channel.clone(),
             config.channels.command_channel.clone(),
         ])?;
 
-        // Criar instância de banco de dados
-        let db = StoreFactory::create_store_instance(config.store.tipo.clone(), &config.store.path)
+        // Create database instance
+        let db = StoreFactory::create_store_instance(config.store.store_type.clone(), &config.store.path)
             .map_err(|e| {
-                error!("Erro ao criar instância de armazenamento: {}", e);
+                error!("Error creating storage instance: {}", e);
                 e
             })?;
 
@@ -113,7 +113,7 @@ impl Handle {
         let retry_config = config_clone.retry_config();
 
         info!(
-            "Handle criado com sucesso com canais: {:?} e configuração de retry: {:?}",
+            "Handle created successfully with channels: {:?} and retry config: {:?}",
             admine_channels_map, retry_config
         );
 
@@ -251,11 +251,11 @@ impl Handle {
 
         // Main loop to listen for incoming messages.
         loop {
-            info!("Waiting for a new message...");
+        info!("Waiting for a new message...");
 
             let raw_message = {
                 let mut listener = self.pub_sub_listener.lock().await;
-                match listener.listen_until_to_ricieve_message() {
+                match listener.listen_until_receive_message() {
                     Ok(msg) => {
                         info!("Message received: {:?}", msg);
                         msg
@@ -281,7 +281,6 @@ impl Handle {
             );
 
             match raw_message.1.as_str() {
-                // For messages from the server channel with "server_up" tag, enqueue for ingestion.
                 s if s == self.admine_channels_map.server_channel => {
                     if admine_message.tags.contains(&"server_up".to_string()) {
                         if let Err(e) = tx.send(Arc::new(admine_message)).await {
@@ -289,7 +288,6 @@ impl Handle {
                         }
                     }
                 }
-                // For messages from the command channel with "auth_member" tag, process in a separate task.
                 s if s == self.admine_channels_map.command_channel => {
                     if admine_message.tags.contains(&"auth_member".to_string()) {
                         // Clone fields for the command task.
@@ -333,8 +331,8 @@ impl Handle {
                         });
                     }
                 }
-                other => {
-                    warn!("Unsupported channel: {}", other);
+                _ => {
+                    info!("Unsupported channel: {}", raw_message.1);
                 }
             }
         }

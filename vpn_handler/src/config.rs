@@ -13,7 +13,7 @@ use crate::pub_sub::factories::PubSubType;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PubSubConfig {
     pub url: String,
-    pub tipo: PubSubType,
+    pub pubsub_type: PubSubType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,7 +35,7 @@ pub struct ChannelsConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoreConfig {
     pub path: String,
-    pub tipo: StoreType,
+    pub store_type: StoreType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,11 +48,11 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
-        // Tenta carregar do arquivo de configuração primeiro
+        // Try to load from config file first
         let home_dir = match dirs::home_dir() {
             Some(path) => path,
             None => {
-                error!("Não foi possível determinar o diretório home do usuário");
+                error!("Could not determine user's home directory");
                 return Self::load_from_env();
             }
         };
@@ -62,62 +62,62 @@ impl Config {
         if config_path.exists() {
             match Self::load_from_file(&config_path) {
                 Ok(config) => {
-                    info!("Configuração carregada do arquivo: {:?}", config_path);
+                    info!("Configuration loaded from file: {:?}", config_path);
                     return Ok(config);
                 }
                 Err(e) => {
-                    error!("Erro ao carregar configuração do arquivo: {}", e);
-                    // Se falhar, tenta carregar do ambiente
+                    error!("Error loading configuration from file: {}", e);
+                    // If it fails, try to load from environment
                 }
             }
         }
 
-        // Se não conseguir carregar do arquivo, carrega do ambiente
-        info!("Arquivo de configuração não encontrado, carregando do ambiente");
+        // If not found, load from environment
+        info!("Configuration file not found, loading from environment");
         Self::load_from_env()
     }
 
     pub fn load_from_env() -> Result<Self, Box<dyn std::error::Error>> {
-        // Carrega variáveis do arquivo .env, se existir
+        // Load variables from .env file if it exists
         dotenv().ok();
 
-        // Helper para obter variáveis de ambiente
-        fn obter_var_env(nome: &str) -> Result<String, Box<dyn std::error::Error>> {
-            env::var(nome).map_err(|_| {
-                let mensagem = format!("Variável de ambiente não encontrada: {}", nome);
-                error!("{}", mensagem);
-                mensagem.into()
+        // Helper to get environment variables
+        fn get_env_var(name: &str) -> Result<String, Box<dyn std::error::Error>> {
+            env::var(name).map_err(|_| {
+                let message = format!("Environment variable not found: {}", name);
+                error!("{}", message);
+                message.into()
             })
         }
 
-        // Configuração do PubSub
+        // PubSub configuration
         let pubsub = PubSubConfig {
-            url: obter_var_env("PUBSUB_URL")?,
-            tipo: PubSubType::from_str(&obter_var_env("PUBSUB_TYPE")?)
-                .map_err(|_| "Tipo de PubSub não suportado")?,
+            url: get_env_var("PUBSUB_URL")?,
+            pubsub_type: PubSubType::from_str(&get_env_var("PUBSUB_TYPE")?)
+                .map_err(|_| "Unsupported PubSub type")?,
         };
 
-        // Configuração da VPN
+        // VPN configuration
         let vpn = VpnConfig {
-            api_url: obter_var_env("VPN_API_URL")?,
-            api_key: obter_var_env("VPN_API_KEY")?,
-            network_id: obter_var_env("VPN_NETWORK_ID")?,
-            retry_attempts: obter_var_env("VPN_RETRY_ATTEMPTS")?.parse()?,
-            retry_delay_ms: obter_var_env("VPN_RETRY_DELAY_MS")?.parse()?,
+            api_url: get_env_var("VPN_API_URL")?,
+            api_key: get_env_var("VPN_API_KEY")?,
+            network_id: get_env_var("VPN_NETWORK_ID")?,
+            retry_attempts: get_env_var("VPN_RETRY_ATTEMPTS")?.parse()?,
+            retry_delay_ms: get_env_var("VPN_RETRY_DELAY_MS")?.parse()?,
         };
 
-        // Configuração dos canais
+        // Channels configuration
         let channels = ChannelsConfig {
-            server_channel: obter_var_env("SERVER_CHANNEL")?,
-            command_channel: obter_var_env("COMMAND_CHANNEL")?,
-            vpn_channel: obter_var_env("VPN_CHANNEL")?,
+            server_channel: get_env_var("SERVER_CHANNEL")?,
+            command_channel: get_env_var("COMMAND_CHANNEL")?,
+            vpn_channel: get_env_var("VPN_CHANNEL")?,
         };
 
-        // Configuração do armazenamento
+        // Store configuration
         let store = StoreConfig {
-            path: obter_var_env("DB_PATH")?,
-            tipo: StoreType::from_str(&obter_var_env("STORE_TYPE")?)
-                .map_err(|_| "Tipo de armazenamento não suportado")?,
+            path: get_env_var("DB_PATH")?,
+            store_type: StoreType::from_str(&get_env_var("STORE_TYPE")?)
+                .map_err(|_| "Unsupported store type")?,
         };
 
         Ok(Config {
@@ -135,7 +135,7 @@ impl Config {
     }
 
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), Box<dyn std::error::Error>> {
-        // Garantir que o diretório exista
+        // Ensure the directory exists
         if let Some(parent) = path.as_ref().parent() {
             fs::create_dir_all(parent)?;
         }

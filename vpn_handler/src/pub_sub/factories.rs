@@ -43,3 +43,18 @@ impl PubSubFactory {
         }
     }
 }
+
+pub struct PubSubConfig {
+    pub url: String,
+    pub pubsub_type: PubSubType,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum StoreType {
+    Sled,
+}
+
+pub struct StoreConfig {
+    pub path: String,
+    pub store_type: StoreType,
+}
