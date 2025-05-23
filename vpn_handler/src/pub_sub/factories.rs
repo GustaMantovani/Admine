@@ -2,12 +2,22 @@ use crate::errors::PubSubError;
 use crate::pub_sub::pub_sub::PubSubProvider;
 use crate::pub_sub::redis_pubsub::RedisPubSub;
 use std::str::FromStr;
+use serde::{Serialize, Deserialize};
+use std::fmt;
 
 pub type DynPubSub = Box<dyn PubSubProvider>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PubSubType {
     Redis,
+}
+
+impl fmt::Display for PubSubType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PubSubType::Redis => write!(f, "Redis"),
+        }
+    }
 }
 
 impl FromStr for PubSubType {

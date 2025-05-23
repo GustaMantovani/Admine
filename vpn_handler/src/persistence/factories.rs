@@ -1,12 +1,22 @@
 use crate::persistence::key_value_store::KeyValueStore;
 use crate::persistence::sled_store::SledStore;
 use std::str::FromStr;
+use serde::{Serialize, Deserialize};
+use std::fmt;
 
 pub type DynKeyValueStore = Box<dyn KeyValueStore + Send + Sync>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum StoreType {
     Sled,
+}
+
+impl fmt::Display for StoreType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            StoreType::Sled => write!(f, "Sled"),
+        }
+    }
 }
 
 impl FromStr for StoreType {
