@@ -1,14 +1,14 @@
 use dotenvy::dotenv;
 use log::{error, info};
-use std::env;
-use std::str::FromStr;
-use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
+use std::time::Duration;
 
-use crate::pub_sub::factories::PubSubType;
 use crate::persistence::factories::StoreType;
+use crate::pub_sub::factories::PubSubType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PubSubConfig {
@@ -56,9 +56,9 @@ impl Config {
                 return Self::load_from_env();
             }
         };
-        
+
         let config_path = home_dir.join(".config/vpn_handler/config.json");
-        
+
         if config_path.exists() {
             match Self::load_from_file(&config_path) {
                 Ok(config) => {
@@ -71,7 +71,7 @@ impl Config {
                 }
             }
         }
-        
+
         // Se não conseguir carregar do arquivo, carrega do ambiente
         info!("Arquivo de configuração não encontrado, carregando do ambiente");
         Self::load_from_env()
@@ -127,19 +127,19 @@ impl Config {
             store,
         })
     }
-    
+
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         let config_content = fs::read_to_string(path)?;
         let config: Config = serde_json::from_str(&config_content)?;
         Ok(config)
     }
-    
+
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), Box<dyn std::error::Error>> {
         // Garantir que o diretório exista
         if let Some(parent) = path.as_ref().parent() {
             fs::create_dir_all(parent)?;
         }
-        
+
         let config_json = serde_json::to_string_pretty(self)?;
         fs::write(path, config_json)?;
         Ok(())

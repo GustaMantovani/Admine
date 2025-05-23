@@ -1,8 +1,8 @@
 use crate::persistence::key_value_store::KeyValueStore;
 use crate::persistence::sled_store::SledStore;
-use std::str::FromStr;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::str::FromStr;
 
 pub type DynKeyValueStore = Box<dyn KeyValueStore + Send + Sync>;
 

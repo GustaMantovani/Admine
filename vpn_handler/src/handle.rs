@@ -1,15 +1,12 @@
+use crate::config::{Config, RetryConfig};
 use crate::models::admine_message::AdmineMessage;
-use crate::persistence::{
-    factories::StoreFactory,
-    key_value_store::KeyValueStore,
-};
+use crate::persistence::{factories::StoreFactory, key_value_store::KeyValueStore};
 use crate::pub_sub::factories::PubSubFactory;
 use crate::pub_sub::pub_sub::PubSubProvider;
 use crate::vpn::{
     factories::{VpnFactory, VpnType},
     vpn::TVpnClient,
 };
-use crate::config::{Config, RetryConfig};
 use dotenvy::dotenv;
 use log::{error, info, warn};
 use std::fmt;
@@ -54,7 +51,7 @@ impl Handle {
         // Carregar configuração
         let config = Config::load()?;
         let config_clone = config.clone();
-        
+
         // Criar cliente VPN
         let vpn = VpnFactory::create_vpn(
             VpnType::Zerotier,
@@ -74,44 +71,38 @@ impl Handle {
         })?;
 
         // Criar instâncias de publisher e listener
-        let pub_sub_publisher = PubSubFactory::create_pubsub_instance(
-            config.pubsub.tipo.clone(),
-            &config.pubsub.url
-        )
-        .map_err(|e| {
-            error!(
-                "Erro ao criar publisher PubSub com tipo: {}, URL Redis: {}: {}",
-                config.pubsub.tipo, config.pubsub.url, e
-            );
-            e
-        })?;
-        
-        let mut pub_sub_listener = PubSubFactory::create_pubsub_instance(
-            config.pubsub.tipo.clone(),
-            &config.pubsub.url
-        )
-        .map_err(|e| {
-            error!(
-                "Erro ao criar listener PubSub com URL Redis: {}: {}",
-                config.pubsub.url, e
-            );
-            e
-        })?;
+        let pub_sub_publisher =
+            PubSubFactory::create_pubsub_instance(config.pubsub.tipo.clone(), &config.pubsub.url)
+                .map_err(|e| {
+                error!(
+                    "Erro ao criar publisher PubSub com tipo: {}, URL Redis: {}: {}",
+                    config.pubsub.tipo, config.pubsub.url, e
+                );
+                e
+            })?;
+
+        let mut pub_sub_listener =
+            PubSubFactory::create_pubsub_instance(config.pubsub.tipo.clone(), &config.pubsub.url)
+                .map_err(|e| {
+                error!(
+                    "Erro ao criar listener PubSub com URL Redis: {}: {}",
+                    config.pubsub.url, e
+                );
+                e
+            })?;
 
         // Inscrever listener nos canais
         pub_sub_listener.subscribe(vec![
             config.channels.server_channel.clone(),
-            config.channels.command_channel.clone()
+            config.channels.command_channel.clone(),
         ])?;
 
         // Criar instância de banco de dados
-        let db = StoreFactory::create_store_instance(
-            config.store.tipo.clone(),
-            &config.store.path
-        ).map_err(|e| {
-            error!("Erro ao criar instância de armazenamento: {}", e);
-            e
-        })?;
+        let db = StoreFactory::create_store_instance(config.store.tipo.clone(), &config.store.path)
+            .map_err(|e| {
+                error!("Erro ao criar instância de armazenamento: {}", e);
+                e
+            })?;
 
         let admine_channels_map = AdmineChannelsMap {
             server_channel: config.channels.server_channel,
