@@ -77,6 +77,16 @@ func serverUp(ps pubsub.PubSubInterface) {
 
 func serverDown(ps pubsub.PubSubInterface) {
 
+	if !docker.VerifyIfContainerExists() {
+		log.Println("Container does not exist, cannot stop server")
+		return
+	}
+	
+	if !docker.IsContainerRunning() {
+		log.Println("Container is not running, cannot stop server")
+		return
+	}
+	
 	log.Println("Sending stop command to minecraft server...")
 	err := commandexecuter.WriteToContainer("/stop")
 	if err != nil {
@@ -84,6 +94,7 @@ func serverDown(ps pubsub.PubSubInterface) {
 	}
 
 	log.Println("Waiting for server to save all dimensions...")
+	
 	finished := false
 	for !finished {
 		msg, err := docker.ReadLastContainerLine()
