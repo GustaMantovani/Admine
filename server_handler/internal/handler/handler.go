@@ -100,6 +100,13 @@ func serverDown(ps pubsub.PubSubInterface) {
 		msg, err := docker.ReadLastContainerLine()
 		if err != nil {
 			log.Printf("Error reading container log: %v", err)
+
+			if docker.IsContainerRunning() {
+				log.Println("Container is still running, but error occurred while reading logs")
+			} else {
+				log.Println("Container is not running, stopping the process")
+				return
+			}
 		}
 		if strings.Contains(msg, "All dimensions are saved") {
 			log.Println("Server has saved all dimensions, proceeding with shutdown")
