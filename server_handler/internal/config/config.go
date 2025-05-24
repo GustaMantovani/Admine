@@ -20,23 +20,25 @@ var instance *config
 var once sync.Once
 
 /*
-Get the Singleton instance of the server configuration.
+GetInstance returns the Singleton instance of the server configuration.
 
 Checks whether it is possible to fetch data from a configuration file
 or environment variables. If not, it closes the program.
 */
 func GetInstance() *config {
 	once.Do(func() {
+		log.Println("Initializing configuration...")
 		instance = &config{}
 		configFile, err := GetConfigFileData()
 
 		if err != nil {
-			log.Println("Could not fetch data from configuration file. Error: ", err.Error())
+			log.Printf("Could not fetch data from configuration file. Error: %v", err)
 
 			if !isEnvSetAndSetConfig(instance) {
-				log.Fatalln("Coult not fetch data from env vars too. Closing program.")
+				log.Fatalln("Could not fetch data from environment variables either. Closing program.")
 			}
 
+			log.Println("Using environment variables for configuration")
 			return
 		}
 
@@ -52,6 +54,8 @@ func GetInstance() *config {
 			Host:                 configFile.Host,
 			Port:                 configFile.Port,
 		}
+
+		log.Printf("Configuration initialized from file: %+v", instance)
 	})
 
 	return instance

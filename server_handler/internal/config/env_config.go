@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// Set a Config variable and if any value is an empty string returns false, because the config is not full set
+// isEnvSetAndSetConfig sets a Config variable and returns false if any value is an empty string,
+// because the config is not fully set
 func isEnvSetAndSetConfig(config *config) bool {
 	var channels []string
 
@@ -22,11 +23,13 @@ func isEnvSetAndSetConfig(config *config) bool {
 	config.Host = os.Getenv("HOST")
 	config.Port = os.Getenv("PORT")
 
-	log.Println(config)
+	log.Printf("Environment configuration loaded: %+v", config)
 
 	if config.ComposeContainerName == "" || config.ComposeAbsPath == "" || len(config.ConsumerChannel) == 0 || config.SenderChannel == "" || config.Pubsub == "" || config.Host == "" || config.Port == "" {
+		log.Println("Environment configuration is incomplete")
 		return false
 	}
 
+	log.Println("Environment configuration is complete")
 	return true
 }

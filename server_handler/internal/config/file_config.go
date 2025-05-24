@@ -17,16 +17,17 @@ type ConfigFile struct {
 	Port             string   `yaml:"port"`
 }
 
-// Return a ConfigFile. It takes the data from config file in "~/.config/admine/server.yaml"
+// GetConfigFileData returns a ConfigFile. It takes the data from config file in "~/.config/admine/server.yaml"
 func GetConfigFileData() (ConfigFile, error) {
 	var configFile ConfigFile
 
 	configFilePath := getConfigFilePath()
+	log.Printf("Reading config file from: %s", configFilePath)
 
 	file, err := os.Open(configFilePath)
 
 	if err != nil {
-		log.Println("error opening config file: ", err.Error())
+		log.Printf("Error opening config file: %v", err)
 		return configFile, err
 	}
 
@@ -35,25 +36,27 @@ func GetConfigFileData() (ConfigFile, error) {
 	err = decoder.Decode(&configFile)
 
 	if err != nil {
-		log.Println("error decoding config file: ", err.Error())
+		log.Printf("Error decoding config file: %v", err)
 		return configFile, err
 	}
 
 	file.Close()
+	log.Printf("Successfully loaded config file: %+v", configFile)
 
 	return configFile, nil
 }
 
-// Return the yaml config file in user home directory
+// getConfigFilePath returns the yaml config file path in user home directory
 func getConfigFilePath() string {
 	home, err := os.UserHomeDir()
 
 	if err != nil {
-		log.Println("Error finding home user directory: ", err.Error())
+		log.Printf("Error finding user home directory: %v", err)
 		return ""
 	}
 
 	configFilePath := home + "/.config/admine/server.yaml"
+	log.Printf("Config file path: %s", configFilePath)
 
 	return configFilePath
 }

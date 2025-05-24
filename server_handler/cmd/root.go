@@ -2,36 +2,37 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"server_handler/cmd/queue"
 
 	"github.com/spf13/cobra"
 )
 
-var shortDescription = "Up minecraft server from a docker compose file."
+var shortDescription = "Start minecraft server from a docker compose file."
 
 var longDescription = `
-Up minecraft server from a docker compose file.
+Start minecraft server from a docker compose file.
 The compose file must be specified in a YAML file in ~/.config/admine/server.yaml or in environment variables.
-If the env vars is not fully set, then the file is used to configure the handler.
+If the environment variables are not fully set, then the file is used to configure the handler.
 
-server.yaml content
+server.yaml content:
 serverName: "name-of-the-service-in-the-compose-file"
 composeDirectory: "/compose/absolute/path.yaml"
-host: "pubsub-host-adress"
+host: "pubsub-host-address"
 port: "pubsub-port"
 senderChannel: "channel"
 consumerChannel:
 - "channel1"
 - "channel2"
 
-env vars:
+Environment variables:
 SERVER_NAME "channel"
 COMPOSE_DIRECTORY "/path"
 CONSUMER_CHANNEL "channel1:channel2"
 SENDER_CHANNEL "channel"
 PUBSUB "pubsub-type"
-HOST "pubsub-host-adress"
+HOST "pubsub-host-address"
 PORT "pubsub-port"
 `
 
@@ -40,9 +41,10 @@ var rootCmd = &cobra.Command{
 	Short: shortDescription,
 	Long:  longDescription,
 	Run: func(cmd *cobra.Command, args []string) {
+		log.Println("Starting Admine server handler...")
 		go queue.RunListenQueue()
-		for {
-		}
+		// Keep the main goroutine alive
+		select {}
 	},
 }
 
