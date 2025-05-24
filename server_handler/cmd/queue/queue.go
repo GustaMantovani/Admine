@@ -12,8 +12,7 @@ import (
 RunListenQueue starts listening to pubsub for commands
 */
 func RunListenQueue() {
-	config := config.GetInstance()
-	log.Printf("Starting queue listener. Consumer channels: %v", config.ConsumerChannel)
+	log.Println("Starting queue listener on channels:", config.GetInstance().ConsumerChannel)
 	listenCommands()
 }
 
@@ -26,17 +25,15 @@ func listenCommands() {
 	ps := pubsub.PubSubFactoryCreate()
 
 	mc := make(chan models.Message)
-	log.Println("Starting pubsub listener and command processor...")
 
 	go ps.ListenForMessages(c.ConsumerChannel, mc)
 
 	for msg := range mc {
-		log.Printf("Received message: %+v", msg)
+		log.Printf("Received message with tags: %v", msg.Tags)
 		if len(msg.Tags) > 0 {
-			log.Printf("Processing message with tag: %s", msg.Tags[0])
 			err := handler.ManageCommand(msg, ps)
 			if err != nil {
-				log.Printf("Error processing command: %v", err)
+				log.Printf("Error handling command: %v", err)
 			}
 		} else {
 			log.Println("Received message with no tags, ignoring")

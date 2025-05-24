@@ -33,7 +33,6 @@ func ReadLastContainerLine() (string, error) {
 	defer cli.Close()
 
 	containerName := c.ComposeContainerName
-	log.Printf("Reading last container line from: %s", containerName)
 
 	// Search container by name
 	containerID := getContainerId(containerName, cli)
@@ -43,7 +42,7 @@ func ReadLastContainerLine() (string, error) {
 	}
 
 	// Get logs
-	log.Printf("Fetching logs from container: %s", containerID)
+	// log.Printf("Fetching logs from container: %s", containerID)
 	out, err := cli.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: false,
@@ -78,32 +77,30 @@ func ReadLastContainerLine() (string, error) {
 	return "", fmt.Errorf("no lines found")
 }
 
-func GetZeroTierNodeID(containerName string) string {
-	log.Printf("Getting ZeroTier Node ID from container: %s", containerName)
+func GetZeroTierNodeID(containerName string) (string, error) {
+	commandArgs := []string{"docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info"}
+	log.Printf("[ZeroTier] Executing: %v", commandArgs)
 
-	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
+	cmd := exec.Command(commandArgs[0], commandArgs[1:]...)
 	output, err := cmd.CombinedOutput()
+	outputStr := string(output)
 
 	if err != nil {
-		log.Printf("Failed to get ZeroTier Node ID: %v", err)
-		panic(err)
+		log.Printf("[ZeroTier] Command failed: %v | Output: %s", err, outputStr)
+		return "", fmt.Errorf("failed to execute zerotier-cli info: %w", err)
 	}
-
-	outputStr := string(output)
-	log.Printf("ZeroTier CLI output: %s", outputStr)
 
 	parts := strings.Split(outputStr, " ")
 	if len(parts) < 3 {
-		log.Printf("Unexpected ZeroTier CLI output format: %s", outputStr)
-		panic("Invalid ZeroTier CLI output format")
+		log.Printf("[ZeroTier] Unexpected output: %s", outputStr)
+		return "", fmt.Errorf("invalid ZeroTier CLI output format: expected at least 3 parts, got %d", len(parts))
 	}
 
-	nodeID := parts[2]
-	log.Printf("Retrieved ZeroTier Node ID: %s", nodeID)
-	return nodeID
+	nodeID := strings.TrimSpace(parts[2])
+	return nodeID, nil
 }
 
-func WaitForBuildAndStart() {
+func WaitForBuildAndStart() error {
 	log.Println("Waiting for container to build and start...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -114,28 +111,33 @@ func WaitForBuildAndStart() {
 		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
-		log.Fatalf("Error creating Docker client: %v", err)
+		log.Printf("Error creating Docker client: %v", err)
+		return fmt.Errorf("error creating Docker client: %w", err)
 	}
 
 	containerName := c.ComposeContainerName
 	log.Printf("Waiting for container: %s", containerName)
 
-	// Verifys if container exists
-	_, err = cli.ContainerInspect(ctx, containerName)
-	if err != nil {
-		log.Fatalf("Container not found after start: %v", err)
-	}
-
 	err = waitForContainerStart(cli, containerName)
 	if err != nil {
-		log.Fatalf("Erro: %v", err)
+		log.Printf("Container start wait failed: %v", err)
+		return fmt.Errorf("container start wait failed: %w", err)
 	}
 
-	log.Println("Container is up")
+	// Verify if container exists
+	_, err = cli.ContainerInspect(ctx, containerName)
+	if err != nil {
+		log.Printf("Container not found after start: %v", err)
+		return fmt.Errorf("container not found after start: %w", err)
+	}
+
+	// log.Printf("Container %s is up and running", containerName)
+	log.Println("Container is up and running")
+	return nil
 }
 
 func getContainerId(containerName string, cli *client.Client) string {
-	log.Printf("Searching for container with name: %s", containerName)
+	// log.Printf("Searching for container with name: %s", containerName)
 
 	containers, err := cli.ContainerList(context.Background(), container.ListOptions{All: true})
 	if err != nil {
@@ -147,7 +149,7 @@ func getContainerId(containerName string, cli *client.Client) string {
 	for _, c := range containers {
 		if slices.Contains(c.Names, "/"+containerName) {
 			containerID = c.ID
-			log.Printf("Found container %s with ID: %s", containerName, containerID)
+			// log.Printf("Found container %s with ID: %s", containerName, containerID)
 			break
 		}
 	}
@@ -174,13 +176,13 @@ func waitForContainerStart(cli *client.Client, containerName string) error {
 
 		if len(containers) > 0 {
 			container := containers[0]
-			log.Printf("Container status: %s", container.State)
+			// log.Printf("Container status: %s", container.State)
 			if container.State == "running" {
 				log.Printf("Container %s is now running", containerName)
 				return nil
 			}
 		} else {
-			log.Println("Container not found, waiting...")
+			// log.Println("Container not found, waiting...")
 		}
 
 		time.Sleep(1 * time.Second)
@@ -207,4 +209,30 @@ func VerifyIfContainerExists() bool {
 	}
 
 	return exists
+}
+
+func IsContainerRunning() bool {
+	log.Printf("Checking if container %s is running", c.ComposeContainerName)
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Printf("Failed to create Docker client: %v", err)
+		return false
+	}
+	defer cli.Close()
+
+	containerInfo, err := cli.ContainerInspect(context.Background(), c.ComposeContainerName)
+	if err != nil {
+		log.Printf("Container %s not found: %v", c.ComposeContainerName, err)
+		return false
+	}
+
+	isRunning := containerInfo.State.Running
+	if isRunning {
+		log.Printf("Container %s is running", c.ComposeContainerName)
+	} else {
+		log.Printf("Container %s exists but is not running (status: %s)", c.ComposeContainerName, containerInfo.State.Status)
+	}
+
+	return isRunning
 }

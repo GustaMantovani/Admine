@@ -14,8 +14,8 @@ import (
 )
 
 func WriteToContainer(input string) error {
+	log.Printf("Executing command in container: %s", input)
 	ctx := context.Background()
-	log.Printf("Writing command to container: %s", input)
 
 	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -32,7 +32,6 @@ func WriteToContainer(input string) error {
 	}
 
 	containerName := config.GetInstance().ComposeContainerName
-	log.Printf("Looking for container: %s", containerName)
 
 	// Get container ID by name
 	var containerID string
@@ -48,10 +47,7 @@ func WriteToContainer(input string) error {
 		return fmt.Errorf("container '%s' not found", containerName)
 	}
 
-	log.Printf("Found container with ID: %s", containerID)
-
 	// Attach to container stdin
-	log.Println("Attaching to container stdin...")
 	hijackedResp, err := cli.ContainerAttach(ctx, containerID, container.AttachOptions{
 		Stream: true,
 		Stdin:  true,
@@ -66,7 +62,6 @@ func WriteToContainer(input string) error {
 
 	// Write to stdin
 	input = input + "\n"
-	log.Printf("Writing command to stdin: %s", input)
 	_, err = io.WriteString(hijackedResp.Conn, input)
 	if err != nil {
 		log.Printf("Failed to write to stdin: %v", err)
@@ -82,6 +77,6 @@ func WriteToContainer(input string) error {
 		}
 	}
 
-	log.Printf("Successfully executed command: %s", input)
+	log.Printf("Command '%s' executed successfully", input)
 	return nil
 }
