@@ -24,6 +24,8 @@ class RedisPubSubServiceProvider(PubSubService):
         self.__pubsub = self.__client.pubsub()
         self.__client.ping()
         self._logger.info(f"Redis client initialized at {host}:{port}")
+        for channel in self.subscribed_channels:
+            self.__pubsub.subscribe(channel)
 
     def send_message(self, message: AdmineMessage):
         self._logger.debug(
@@ -37,7 +39,7 @@ class RedisPubSubServiceProvider(PubSubService):
 
     async def listen_message(self, callback_function):
         self._logger.debug(f"Listening to channels: {', '.join(self.subscribed_channels)}")
-        self.__pubsub.subscribe("teste")
+        
         
         # Create a task to check for messages
         while True:

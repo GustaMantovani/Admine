@@ -20,8 +20,8 @@ class PubSubServiceFactory:
             logging=logging,
             host=config.get("redis.connectionstring").split(":")[0],
             port=int(config.get("redis.connectionstring").split(":")[1]),
-            subscribed_channels=config.get("redis.subscribedchannels", []),
-            producer_channels=config.get("redis.producerchannels", ["teste"]),
+            subscribed_channels=config.get("redis.subscribedchannels", ["server_channel","vpn_channel"]),
+            producer_channels=config.get("redis.producerchannels", ["command_channel"]),
         )
     }
 

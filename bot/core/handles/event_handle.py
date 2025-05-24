@@ -43,9 +43,12 @@ class EventHandle:
             f"Server has started with message: {event.message}"
         )
 
-    def __server_stop(self, event: AdmineMessage):
+    async def __server_stop(self, event: AdmineMessage):
         self.__logger.debug(
             f"Handler: Server has stopped with message: {event.message}"
+        )
+        await self.__notify_all(
+            f"Server has stopped with message: {event.message}"
         )
 
     async def __notification(self, event: AdmineMessage):
