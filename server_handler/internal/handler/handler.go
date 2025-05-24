@@ -65,8 +65,8 @@ func serverDown(ps pubsub.PubSubInterface) {
 }
 
 func command(ps pubsub.PubSubInterface, message string) {
-	if docker.VerifyIfContainerExists() {
-		log.Println("Container server donts exists")
+	if !docker.VerifyIfContainerExists() {
+		log.Println("Container server dont exists")
 		return
 	}
 
