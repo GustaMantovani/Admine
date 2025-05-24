@@ -9,17 +9,16 @@ import (
 )
 
 /*
-Start to listen a pubsub for commands
+RunListenQueue starts listening to pubsub for commands
 */
 func RunListenQueue() {
-	log.Println("Running queue. Consumer channel: ", config.GetInstance().ConsumerChannel)
+	log.Println("Starting queue listener on channels:", config.GetInstance().ConsumerChannel)
 	listenCommands()
 }
 
 /*
-Define two threads.
-
-One for listen the pubsub and other to send commands to handler.
+listenCommands defines two goroutines:
+One to listen to the pubsub and another to send commands to the handler.
 */
 func listenCommands() {
 	c := config.GetInstance()
@@ -30,10 +29,14 @@ func listenCommands() {
 	go ps.ListenForMessages(c.ConsumerChannel, mc)
 
 	for msg := range mc {
-		log.Println(msg)
+		log.Printf("Received message with tags: %v", msg.Tags)
 		if len(msg.Tags) > 0 {
-			log.Println(msg.Tags[0])
-			handler.ManageCommand(msg, ps)
+			err := handler.ManageCommand(msg, ps)
+			if err != nil {
+				log.Printf("Error handling command: %v", err)
+			}
+		} else {
+			log.Println("Received message with no tags, ignoring")
 		}
 	}
 }
