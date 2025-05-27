@@ -3,6 +3,7 @@ use crate::vpn::vpn::TVpnClient;
 use crate::vpn::zerotier::apis::configuration::Configuration;
 use crate::vpn::zerotier_vpn::ZerotierVpn;
 
+#[derive(Clone, Debug)]
 pub enum VpnType {
     Zerotier,
 }

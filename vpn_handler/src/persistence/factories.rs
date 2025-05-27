@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 pub type DynKeyValueStore = Box<dyn KeyValueStore + Send + Sync>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum StoreType {
     Sled,
 }

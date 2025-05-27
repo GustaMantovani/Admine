@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 pub type DynPubSub = Box<dyn PubSubProvider>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum PubSubType {
     Redis,
 }
