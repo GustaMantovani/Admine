@@ -1,3 +1,4 @@
+mod config;
 mod errors;
 mod handle;
 mod models;

@@ -1,48 +1,14 @@
+use crate::config::{AdmineChannelsMap, Config, RetryConfig};
 use crate::models::admine_message::AdmineMessage;
-use crate::persistence::{
-    factories::{StoreFactory, StoreType},
-    key_value_store::KeyValueStore,
-};
-use crate::pub_sub::factories::{PubSubFactory, PubSubType};
+use crate::persistence::{factories::StoreFactory, key_value_store::KeyValueStore};
+use crate::pub_sub::factories::PubSubFactory;
 use crate::pub_sub::pub_sub::PubSubProvider;
-use crate::vpn::{
-    factories::{VpnFactory, VpnType},
-    vpn::TVpnClient,
-};
-use dotenvy::dotenv;
+use crate::vpn::{factories::VpnFactory, vpn::TVpnClient};
 use log::{error, info, warn};
-use std::env;
-use std::fmt;
-use std::str::FromStr;
 use std::sync::Arc;
 use tokio::spawn;
 use tokio::sync::{mpsc, Mutex};
-use tokio::time::{sleep, Duration};
-
-/// Structure holding channel names.
-#[derive(Debug, Clone)]
-struct AdmineChannelsMap {
-    server_channel: String,
-    command_channel: String,
-    vpn_channel: String,
-}
-
-impl fmt::Display for AdmineChannelsMap {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "AdmineChannelsMap {{ server_channel: {}, command_channel: {}, vpn_channel: {} }}",
-            self.server_channel, self.command_channel, self.vpn_channel
-        )
-    }
-}
-
-/// Configuration for retry logic.
-#[derive(Debug, Clone)]
-pub struct RetryConfig {
-    pub attempts: usize,
-    pub delay: Duration,
-}
+use tokio::time::sleep;
 
 /// Main handle structure.
 pub struct Handle {
@@ -57,101 +23,71 @@ pub struct Handle {
 impl Handle {
     /// Initializes the Handle by loading configuration from environment variables.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        dotenv().ok();
+        // Carrega a configuração
+        let config = Config::load()?;
 
-        fn fetch_env_var(var_name: &str) -> Result<String, Box<dyn std::error::Error>> {
-            env::var(var_name).map_err(|_| {
-                let msg = format!("Missing environment variable: {}", var_name);
-                error!("{}", msg);
-                msg.into()
-            })
-        }
-
-        // Load configuration values.
-        let pubsub_url = fetch_env_var("PUBSUB_URL")?;
-        let pubsub_type = fetch_env_var("PUBSUB_TYPE")?;
-        let api_url = fetch_env_var("VPN_API_URL")?;
-        let api_key = fetch_env_var("VPN_API_KEY")?;
-        let network_id = fetch_env_var("VPN_NETWORK_ID")?;
-        let server_channel = fetch_env_var("SERVER_CHANNEL")?;
-        let command_channel = fetch_env_var("COMMAND_CHANNEL")?;
-        let vpn_channel = fetch_env_var("VPN_CHANNEL")?;
-        let db_path = fetch_env_var("DB_PATH")?;
-        let store_type = fetch_env_var("STORE_TYPE")?;
-        let retry_attempts = fetch_env_var("VPN_RETRY_ATTEMPTS")?;
-        let retry_delay_ms = fetch_env_var("VPN_RETRY_DELAY_MS")?;
-
-        // Create VPN client using cloned values to avoid move errors.
+        // Create VPN client using configuration
         let vpn = VpnFactory::create_vpn(
-            VpnType::Zerotier,
-            api_url.clone(),
-            api_key.clone(),
-            network_id.clone(),
+            config.vpn_config.vpn_type,
+            config.vpn_config.api_url.clone(),
+            config.vpn_config.api_key.clone(),
+            config.vpn_config.network_id.clone(),
         )
         .map_err(|e| {
             error!(
                 "Error creating VPN client with API URL: {}, API Key: {}, Network ID: {}: {}",
-                api_url.clone(),
-                api_key.clone(),
-                network_id.clone(),
+                config.vpn_config.api_url,
+                config.vpn_config.api_key,
+                config.vpn_config.network_id,
                 e
             );
             e
         })?;
 
-        // Parse PubSub type.
-        let pub_sub_type = PubSubType::from_str(&pubsub_type).map_err(|_| {
-            error!("Unsupported PubSub type: {}", pubsub_type);
-            "Unsupported PubSub type"
+        // Create publisher and listener instances
+        let pub_sub_publisher = PubSubFactory::create_pubsub_instance(
+            config.pub_sub_config.pub_sub_type.clone(),
+            &config.pub_sub_config.url,
+        )
+        .map_err(|e| {
+            error!(
+                "Error creating PubSub publisher with type: {:?}, URL: {}: {}",
+                config.pub_sub_config.pub_sub_type, config.pub_sub_config.url, e
+            );
+            e
         })?;
 
-        // Create publisher and listener instances.
-        let pub_sub_publisher =
-            PubSubFactory::create_pubsub_instance(pub_sub_type.clone(), &pubsub_url).map_err(
-                |e| {
-                    error!(
-                        "Error creating PubSub publisher with type: {}, Redis URL: {}: {}",
-                        pubsub_type, pubsub_url, e
-                    );
-                    e
-                },
-            )?;
-        let mut pub_sub_listener = PubSubFactory::create_pubsub_instance(pub_sub_type, &pubsub_url)
-            .map_err(|e| {
-                error!(
-                    "Error creating PubSub listener with Redis URL: {}: {}",
-                    pubsub_url, e
-                );
-                e
-            })?;
-
-        // Subscribe listener to channels.
-        pub_sub_listener.subscribe(vec![server_channel.clone(), command_channel.clone()])?;
-
-        // Parse store type and create DB instance.
-        let store_type_enum = StoreType::from_str(&store_type).map_err(|_| {
-            error!("Unsupported Store type: {}", store_type);
-            "Unsupported Store type"
+        let mut pub_sub_listener = PubSubFactory::create_pubsub_instance(
+            config.pub_sub_config.pub_sub_type,
+            &config.pub_sub_config.url,
+        )
+        .map_err(|e| {
+            error!(
+                "Error creating PubSub listener with URL: {}: {}",
+                config.pub_sub_config.url, e
+            );
+            e
         })?;
-        let db = StoreFactory::create_store_instance(store_type_enum, &db_path).map_err(|e| {
+
+        // Subscribe listener to channels
+        pub_sub_listener.subscribe(vec![
+            config.admine_channels_map.server_channel.clone(),
+            config.admine_channels_map.command_channel.clone(),
+        ])?;
+
+        // Create DB instance
+        let db = StoreFactory::create_store_instance(
+            config.db_config.store_type,
+            &config.db_config.path,
+        )
+        .map_err(|e| {
             error!("Error creating store instance: {}", e);
             e
         })?;
 
-        let admine_channels_map = AdmineChannelsMap {
-            server_channel,
-            command_channel,
-            vpn_channel,
-        };
-
-        let retry_config = RetryConfig {
-            attempts: retry_attempts.parse()?,
-            delay: Duration::from_millis(retry_delay_ms.parse()?),
-        };
-
         info!(
             "Handle created successfully with channels: {:?} and retry config: {:?}",
-            admine_channels_map, retry_config
+            config.admine_channels_map, config.retry_config
         );
 
         Ok(Self {
@@ -159,8 +95,8 @@ impl Handle {
             pub_sub_publisher: Arc::new(Mutex::new(pub_sub_publisher)),
             vpn: Arc::new(vpn),
             db,
-            admine_channels_map,
-            retry_config,
+            admine_channels_map: config.admine_channels_map,
+            retry_config: config.retry_config,
         })
     }
 
