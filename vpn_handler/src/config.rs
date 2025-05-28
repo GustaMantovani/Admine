@@ -1,5 +1,5 @@
-use crate::pub_sub::factories::PubSubType;
 use crate::persistence::factories::StoreType;
+use crate::pub_sub::factories::PubSubType;
 use crate::vpn::factories::VpnType;
 use dotenvy::dotenv;
 use log::error;
@@ -152,7 +152,7 @@ impl Config {
             attempts: retry_attempts.parse()?,
             delay: Duration::from_millis(retry_delay_ms.parse()?),
         };
-        
+
         let final_config = Config {
             pub_sub_config,
             vpn_config,
