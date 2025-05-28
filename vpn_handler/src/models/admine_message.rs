@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AdmineMessage {
@@ -14,5 +15,16 @@ impl AdmineMessage {
 
     pub fn from_json_string(json_str: &str) -> Result<AdmineMessage, serde_json::Error> {
         serde_json::from_str(json_str)
+    }
+}
+
+impl fmt::Display for AdmineMessage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "AdmineMessage {{ tags: [{}], message: \"{}\" }}",
+            self.tags.join(", "),
+            self.message
+        )
     }
 }

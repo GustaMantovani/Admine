@@ -134,6 +134,12 @@ impl Handle {
         spawn(async move {
             while let Some(ingest_message) = rx.recv().await {
                 info!("Processing ingestion message: {:?}", ingest_message);
+
+                if ingest_message.message.is_empty() {
+                    warn!("Received empty message, skipping.");
+                    continue;
+                }
+
                 let member_id = ingest_message.message.clone();
 
                 // Authenticate the member.
@@ -209,15 +215,18 @@ impl Handle {
                 };
 
                 // If an old ID exists, delete it.
-                if !old_member_id.is_empty() {
-                    if let Err(e) = ingestion_vpn.delete_member(old_member_id.clone()).await {
-                        error!("Error deleting old member {}: {}", old_member_id, e);
-                    }
-                }
 
-                // Save the new server member ID in persistence.
-                if let Err(e) = Self::update_server_id(&mut ingestion_db, &member_id).await {
-                    error!("Failed to update server member id: {}", e);
+                if old_member_id != member_id {
+                    if !old_member_id.is_empty() {
+                        if let Err(e) = ingestion_vpn.delete_member(old_member_id.clone()).await {
+                            error!("Error deleting old member {}: {}", old_member_id, e);
+                        }
+                    }
+
+                    // Save the new server member ID in persistence.
+                    if let Err(e) = Self::update_server_id(&mut ingestion_db, &member_id).await {
+                        error!("Failed to update server member id: {}", e);
+                    }
                 }
             }
         });
@@ -249,7 +258,7 @@ impl Handle {
             };
 
             info!(
-                "Processing message received on channel {}: {:?}",
+                "Processing message received on channel {}: {}",
                 raw_message.1, admine_message
             );
 
@@ -260,6 +269,8 @@ impl Handle {
                         if let Err(e) = tx.send(Arc::new(admine_message)).await {
                             error!("Error sending message to ingestion queue: {}", e);
                         }
+                    } else {
+                        warn!("No handle for this message in command channel.",);
                     }
                 }
                 // For messages from the command channel with "auth_member" tag, process in a separate task.
@@ -304,6 +315,8 @@ impl Handle {
                                 info!("Command channel message published successfully.");
                             }
                         });
+                    } else {
+                        warn!("No handle for this message in command channel.",);
                     }
                 }
                 other => {
