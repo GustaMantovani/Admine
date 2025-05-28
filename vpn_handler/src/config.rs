@@ -61,7 +61,7 @@ pub struct Config {
 }
 
 impl Config {
-    /// Carrega todas as configurações das variáveis de ambiente
+    /// Loads all configuration from environment variables
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
         dotenv().ok();
 
@@ -73,7 +73,7 @@ impl Config {
             })
         }
 
-        // Carrega todas as variáveis de ambiente
+        // Load all environment variables
         let pubsub_url = fetch_env_var("PUBSUB_URL")?;
         let pubsub_type = fetch_env_var("PUBSUB_TYPE")?;
         let api_url = fetch_env_var("VPN_API_URL")?;
@@ -87,7 +87,7 @@ impl Config {
         let retry_attempts = fetch_env_var("VPN_RETRY_ATTEMPTS")?;
         let retry_delay_ms = fetch_env_var("VPN_RETRY_DELAY_MS")?;
 
-        // Parse dos tipos de enum
+        // Parse enum types
         let pub_sub_type = PubSubType::from_str(&pubsub_type).map_err(|_| {
             error!("Unsupported PubSub type: {}", pubsub_type);
             "Unsupported PubSub type"
@@ -98,7 +98,7 @@ impl Config {
             "Unsupported Store type"
         })?;
 
-        // Criar as estruturas de configuração
+        // Create configuration structures
         let pub_sub_config = PubSubConfig {
             url: pubsub_url,
             pub_sub_type,
@@ -108,7 +108,7 @@ impl Config {
             api_url,
             api_key,
             network_id,
-            vpn_type: VpnType::Zerotier, // Por enquanto fixo como Zerotier
+            vpn_type: VpnType::Zerotier, // Currently fixed as Zerotier
         };
 
         let db_config = DbConfig {
