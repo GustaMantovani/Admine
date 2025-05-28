@@ -23,7 +23,7 @@ pub struct Handle {
 impl Handle {
     /// Initializes the Handle by loading configuration from environment variables.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        // Carrega a configuração
+        // Load configuration
         let config = Config::load()?;
 
         // Create VPN client using configuration
