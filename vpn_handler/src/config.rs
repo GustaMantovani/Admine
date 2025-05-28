@@ -3,6 +3,7 @@ use crate::persistence::factories::StoreType;
 use crate::vpn::factories::VpnType;
 use dotenvy::dotenv;
 use log::error;
+use log::info;
 use std::env;
 use std::fmt;
 use std::str::FromStr;
@@ -58,6 +59,31 @@ pub struct Config {
     pub db_config: DbConfig,
     pub admine_channels_map: AdmineChannelsMap,
     pub retry_config: RetryConfig,
+}
+
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Config {{\n\
+            \x20\x20pub_sub_config: PubSubConfig {{ url: {}, type: {:?} }},\n\
+            \x20\x20vpn_config: VpnConfig {{ api_url: {}, network_id: {}, type: {:?} }},\n\
+            \x20\x20db_config: DbConfig {{ path: {}, type: {:?} }},\n\
+            \x20\x20admine_channels_map: {},\n\
+            \x20\x20retry_config: RetryConfig {{ attempts: {}, delay: {:?} }}\n\
+            }}",
+            self.pub_sub_config.url,
+            self.pub_sub_config.pub_sub_type,
+            self.vpn_config.api_url,
+            self.vpn_config.network_id,
+            self.vpn_config.vpn_type,
+            self.db_config.path,
+            self.db_config.store_type,
+            self.admine_channels_map,
+            self.retry_config.attempts,
+            self.retry_config.delay
+        )
+    }
 }
 
 impl Config {
@@ -126,13 +152,17 @@ impl Config {
             attempts: retry_attempts.parse()?,
             delay: Duration::from_millis(retry_delay_ms.parse()?),
         };
-
-        Ok(Config {
+        
+        let final_config = Config {
             pub_sub_config,
             vpn_config,
             db_config,
             admine_channels_map,
             retry_config,
-        })
+        };
+
+        info!("Configuration loaded successfully: {}", final_config);
+
+        Ok(final_config)
     }
 }
