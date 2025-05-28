@@ -34,7 +34,7 @@ impl TSubscriber for RedisPubSub {
         Ok(())
     }
 
-    fn listen_until_to_ricieve_message(&mut self) -> Result<(String, String), PubSubError> {
+    fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError> {
         let mut pubsub = self.connection.as_pubsub();
 
         self.subscribed_topics.iter().for_each(|t| {

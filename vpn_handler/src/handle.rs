@@ -228,7 +228,7 @@ impl Handle {
 
             let raw_message = {
                 let mut listener = self.pub_sub_listener.lock().await;
-                match listener.listen_until_to_ricieve_message() {
+                match listener.listen_until_receive_message() {
                     Ok(msg) => {
                         info!("Message received: {:?}", msg);
                         msg
