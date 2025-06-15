@@ -1,12 +1,10 @@
 name: Rust VPN Handler CI
 
 on:
-  push:
-    paths:
-      - "vpn_handler/**"
   pull_request:
     paths:
       - "vpn_handler/**"
+  workflow_dispatch:
 
 jobs:
   build-and-test:

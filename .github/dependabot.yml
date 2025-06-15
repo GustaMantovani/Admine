@@ -12,4 +12,4 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/server_handler" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "monthly"

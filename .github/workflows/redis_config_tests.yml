@@ -1,15 +1,11 @@
 name: Redis Configuration CI
 
 on:
-  push:
-    paths:
-      - "redis_pubsub/docker-compose.yaml"
-      - "redis_pubsub/redis.conf"
-      - ".github/workflows/redis_config_tests.yml"
   pull_request:
     paths:
       - "redis_pubsub/docker-compose.yaml"
       - "redis_pubsub/redis.conf"
+  workflow_dispatch:
 
 jobs:
   validate-config:
