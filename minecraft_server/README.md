@@ -8,6 +8,7 @@ The following environment variables are used to configure the Docker build:
 
 ```bash
 export JAVA_VERSION=17
+export FORGE_VERSION=1.20.1-47.4.0
 export NETWORK_ID=a123b456c789
 ```
 
