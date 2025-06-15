@@ -5,17 +5,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  dependabot:
+  auto-approve:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'owner/my_repo'
+    if: github.actor == 'dependabot[bot]'
     steps:
-      - name: Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
+      - name: Auto-approve Dependabot PR
+        uses: hmarr/auto-approve-action@v4
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Approve a PR
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
