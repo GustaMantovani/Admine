@@ -5,7 +5,6 @@ services:
       args:
         JAVA_VERSION: ${JAVA_VERSION}
         FORGE_VERSION: ${FORGE_VERSION}
-        NETWORK_ID: ${NETWORK_ID}
     env_file:
       - .env
     ports:
