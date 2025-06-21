@@ -5,6 +5,7 @@ services:
       args:
         JAVA_VERSION: ${JAVA_VERSION}
         FORGE_VERSION: ${FORGE_VERSION}
+        MINECRAFT_VERSION: ${MINECRAFT_VERSION}
     env_file:
       - .env
     ports:

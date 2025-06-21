@@ -2,10 +2,26 @@ name: Build and Push Minecraft Server Image
 
 on:
   workflow_dispatch:
+    inputs:
+      minecraft_version:
+        description: 'Minecraft version'
+        required: false
+        default: '1.20.1'
+      forge_version:
+        description: 'Forge version'
+        required: false
+        default: '47.4.0'
+      java_version:
+        description: 'Java version'
+        required: false
+        default: '21'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/minecraft_server
+  MINECRAFT_VERSION: ${{ inputs.minecraft_version }}
+  FORGE_VERSION: ${{ inputs.forge_version }}
+  JAVA_VERSION: ${{ inputs.java_version }}
 
 jobs:
   build-and-push:
@@ -39,7 +55,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
-            type=raw,value=mc-${{ vars.FORGE_VERSION }}-java${{ vars.JAVA_VERSION }}
+            type=raw,value=mc-${{ vars.MINECRAFT_VERSION }}-forge${{ vars.FORGE_VERSION }}-java${{ vars.JAVA_VERSION }}-graalvm-zerotier
             type=sha,prefix={{date 'YYYYMMDD'}}-
 
       - name: Build and push Docker image
@@ -53,6 +69,7 @@ jobs:
           build-args: |
             JAVA_VERSION=${{ vars.JAVA_VERSION }}
             FORGE_VERSION=${{ vars.FORGE_VERSION }}
+            MINECRAFT_VERSION=${{ vars.MINECRAFT_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
