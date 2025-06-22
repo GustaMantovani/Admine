@@ -5,16 +5,13 @@ on:
     inputs:
       minecraft_version:
         description: 'Minecraft version'
-        required: false
-        default: '1.20.1'
+        required: true
       forge_version:
         description: 'Forge version'
-        required: false
-        default: '47.4.0'
+        required: true
       java_version:
         description: 'Java version'
-        required: false
-        default: '21'
+        required: true
 
 env:
   REGISTRY: ghcr.io
@@ -55,7 +52,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
-            type=raw,value=mc-${{ vars.MINECRAFT_VERSION }}-forge${{ vars.FORGE_VERSION }}-java${{ vars.JAVA_VERSION }}-graalvm-zerotier
+            type=raw,value=mc-${{ inputs.minecraft_version }}-forge${{ inputs.forge_version }}-java${{ inputs.java_version }}-graalvm-zerotier
             type=sha,prefix={{date 'YYYYMMDD'}}-
 
       - name: Build and push Docker image
@@ -67,9 +64,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            JAVA_VERSION=${{ vars.JAVA_VERSION }}
-            FORGE_VERSION=${{ vars.FORGE_VERSION }}
-            MINECRAFT_VERSION=${{ vars.MINECRAFT_VERSION }}
+            JAVA_VERSION=${{ inputs.java_version }}
+            FORGE_VERSION=${{ inputs.forge_version }}
+            MINECRAFT_VERSION=${{ inputs.minecraft_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
