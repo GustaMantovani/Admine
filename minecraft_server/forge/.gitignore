@@ -1,0 +1,5 @@
+mods/*.jar
+world
+.env
+data
+config
