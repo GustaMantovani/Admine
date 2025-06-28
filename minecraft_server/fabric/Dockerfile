@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-LABEL org.opencontainers.image.description DESCRIPTION="Minecraft Server with Fabric and GraalVM"
+LABEL org.opencontainers.image.description="Minecraft Server with Fabric and GraalVM"
 
 ARG JAVA_VERSION
 ARG FABRIC_VERSION
