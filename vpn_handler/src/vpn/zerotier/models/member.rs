@@ -64,7 +64,7 @@ pub struct Member {
         skip_serializing_if = "Option::is_none"
     )]
     pub description: Option<Option<String>>,
-    #[serde(rename = "config", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "etc", skip_serializing_if = "Option::is_none")]
     pub config: Option<Box<models::MemberConfig>>,
     /// Last seen time of the member (milliseconds since epoch).  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
     #[serde(

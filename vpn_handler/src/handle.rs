@@ -1,9 +1,9 @@
 use crate::config::{AdmineChannelsMap, Config, RetryConfig};
 use crate::models::admine_message::AdmineMessage;
-use crate::persistence::{factories::StoreFactory, key_value_store::KeyValueStore};
-use crate::pub_sub::factories::PubSubFactory;
+use crate::persistence::{key_value_storage_factory::StoreFactory, key_value_storage::KeyValueStore};
+use crate::pub_sub::pub_sub_factory::PubSubFactory;
 use crate::pub_sub::pub_sub::PubSubProvider;
-use crate::vpn::{factories::VpnFactory, vpn::TVpnClient};
+use crate::vpn::{vpn_factory::VpnFactory, vpn::TVpnClient};
 use log::{error, info, warn};
 use std::sync::Arc;
 use tokio::spawn;
@@ -86,7 +86,7 @@ impl Handle {
         })?;
 
         info!(
-            "Handle created successfully with channels: {:?} and retry config: {:?}",
+            "Handle created successfully with channels: {:?} and retry etc: {:?}",
             config.admine_channels_map, config.retry_config
         );
 

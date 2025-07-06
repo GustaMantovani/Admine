@@ -13,7 +13,7 @@ use log4rs;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger using configuration file.
-    log4rs::init_file("./config/log4rs.yaml", Default::default()).map_err(|e| {
+    log4rs::init_file("./etc/log4rs.yaml", Default::default()).map_err(|e| {
         error!("Error initializing logger: {}", e);
         e
     })?;

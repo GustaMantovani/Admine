@@ -1,6 +1,6 @@
-use crate::persistence::factories::StoreType;
-use crate::pub_sub::factories::PubSubType;
-use crate::vpn::factories::VpnType;
+use crate::persistence::key_value_storage_factory::StoreType;
+use crate::pub_sub::pub_sub_factory::PubSubType;
+use crate::vpn::vpn_factory::VpnType;
 use dotenvy::dotenv;
 use log::error;
 use log::info;
