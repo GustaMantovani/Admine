@@ -14,6 +14,7 @@ def main():
 
         # Cria a mensagem no formato JSON
         admine_message = {
+            "origin": "producer",
             "tags": tags,
             "message": message
         }

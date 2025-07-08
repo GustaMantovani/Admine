@@ -79,7 +79,7 @@ class Bot:
         self.__logger.info("Starting bot...")
 
         # Envia mensagem de inicialização no PubSub
-        message = AdmineMessage(["server_start"], "FUNCIONOU")
+        message = AdmineMessage("Bot",["server_start"], "FUNCIONOU")
         self.__pubsub_service.send_message(message)
 
         # Configura o callback para processar comandos do Discord

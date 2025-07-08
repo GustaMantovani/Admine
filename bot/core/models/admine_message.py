@@ -2,7 +2,8 @@ import json
 
 
 class AdmineMessage:
-    def __init__(self, tags: list[str], message: str):
+    def __init__(self, origin : str, tags: list[str], message: str):
+        self.origin = origin
         self.tags = tags
         self.message = message
 
@@ -12,4 +13,4 @@ class AdmineMessage:
         return cls(**data)
 
     def from_object_to_json(self):
-        return json.dumps({"tags": self.tags, "message": self.message})
+        return json.dumps({"orgin": self.origin, "tags": self.tags, "message": self.message})

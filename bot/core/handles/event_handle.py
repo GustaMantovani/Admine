@@ -15,9 +15,10 @@ class EventHandle:
         )
 
         self.__HANDLES: Dict[str, Callable[[AdmineMessage], None]] = {
-            "server_start": self.__server_start,
-            "server_stop": self.__server_stop,
+            "server_on": self.__server_on,
+            "server_off": self.__server_off,
             "notification": self.__notification,
+            "new_server_ips": self.__new_server_ips,
         }
 
     async def handle_event(self, event: AdmineMessage):
@@ -35,20 +36,28 @@ class EventHandle:
         for message_service in self.__message_services:
             await message_service.send_message(notification)
 
-    async def __server_start(self, event: AdmineMessage):
+    async def __server_on(self, event: AdmineMessage):
         self.__logger.debug(
             f"Handler: Server has started with message: {event.message}"
         )
         await self.__notify_all(
             f"Server has started with message: {event.message}"
         )
-
-    async def __server_stop(self, event: AdmineMessage):
+    
+    async def __server_off(self, event: AdmineMessage):
         self.__logger.debug(
             f"Handler: Server has stopped with message: {event.message}"
         )
         await self.__notify_all(
             f"Server has stopped with message: {event.message}"
+        )
+    
+    async def __new_server_ips(self, event: AdmineMessage):
+        self.__logger.debug(
+            f"Handler: Received new server IPs: {event.message}"
+        )
+        await self.__notify_all(
+            f"Received new server IPs: {event.message}"
         )
 
     async def __notification(self, event: AdmineMessage):

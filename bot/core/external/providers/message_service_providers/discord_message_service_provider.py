@@ -32,20 +32,20 @@ class _DiscordClient(commands.Bot):
         self._logger.info("Setting up Discord client commands.")
 
         #Command to start the server!
-        @self.tree.command(name="up", description="Command to start the Minecraft Server!")
-        async def up(interaction: discord.Interaction):
+        @self.tree.command(name="on", description="Command to start the Minecraft Server!")
+        async def on(interaction: discord.Interaction):
             self._logger.debug(
-                f"Received 'up' command. Callback function: {self.command_handle_function_callback}"
+                f"Received 'on' command. Callback function: {self.command_handle_function_callback}"
             )
             if self.command_handle_function_callback is not None:
-                self._logger.info("Calling the command handle callback with 'up'.")
-                self.command_handle_function_callback("up")
+                self._logger.info("Calling the command handle callback with 'on'.")
+                self.command_handle_function_callback("on")
                 await interaction.response.send_message(
                     "Request to start the Minecraft server received!"
                 )
-                self._logger.info("Sent confirmation message for 'up' command.")
+                self._logger.info("Sent confirmation message for 'on' command.")
             else:
-                self._logger.warning("Callback function not set for 'up' command.")
+                self._logger.warning("Callback function not set for 'on' command.")
                 await interaction.response.send_message(
                     "No processor available for this command."
                 )

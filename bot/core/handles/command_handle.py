@@ -30,9 +30,9 @@ class CommandHandle:
         self.__minecraft_info_service = minecraft_info_service
 
         self.__HANDLES: Dict[str, Callable[[List[str]], None]] = {
-            "up": self.__server_up,
+            "on": self.__server_on,
             "off": self.__server_off,
-            "restart": self.__server_restart,
+            "restart": self.__restart,
             "auth": self.__auth_member,
             "command": self.__command,
             "info": self.__info,
@@ -67,43 +67,43 @@ class CommandHandle:
             self.__logger.warning(f"Unknown command: {command}")
             return False
 
-    def __server_up(self, args: List[str]):
+    def __server_on(self, args: List[str]):
         self.__logger.debug(f"Starting server with args: {args}")
-        message = AdmineMessage(["server_up"], " ")
+        message = AdmineMessage("Bot",["server_on"], " ")
         self.__pubsub_service.send_message(message)
 
     #@admin_command
     def __server_off(self, args: List[str]):
         self.__logger.debug(f"Stopping server with args: {args}")
-        message = AdmineMessage(["server_off"], " ")
+        message = AdmineMessage("Bot",["server_off"], " ")
         self.__pubsub_service.send_message(message)
 
     #@admin_command
-    def __server_restart(self, args: List[str]):
+    def __restart(self, args: List[str]):
         self.__logger.debug(f"Restarting server with args: {args}")
-        message = AdmineMessage(["server_restart"], " ")
+        message = AdmineMessage("Bot",["restart"], " ")
         self.__pubsub_service.send_message(message)
 
     
     def __auth_member(self, args: List[str]):
         self.__logger.debug(f"Authorizing members with args: {args}")
-        message = AdmineMessage(["auth_member"], args[0])
+        message = AdmineMessage("Bot",["auth_member"], args[0])
         self.__pubsub_service.send_message(message)
 
     #@admin_command
     def __command(self, args: List[str]):
         self.__logger.debug(f"Execute a command in Minecraft with args: {args}")
-        message = AdmineMessage(["command"], args[0])
+        message = AdmineMessage("Bot",["command"], args[0])
         self.__pubsub_service.send_message(message)
 
     @admin_command
     def __info(self, args: List[str]):
         self.__logger.debug(f"Getting info off the server with args: {args}")
-        message = AdmineMessage(["info"], " ")
+        message = AdmineMessage("Bot",["info"], " ")
         self.__pubsub_service.send_message(message)
 
     @admin_command
     def __status(self, args: List[str]):
         self.__logger.debug(f"Getting status off the server with args: {args}")
-        message = AdmineMessage(["status"], " ")
+        message = AdmineMessage("Bot",["status"], " ")
         self.__pubsub_service.send_message(message)
