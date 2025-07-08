@@ -1,4 +1,4 @@
 /target
 .env
-/sled
+/etc/sled
 zerotier_handler.log

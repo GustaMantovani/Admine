@@ -1,3 +1,4 @@
+use std::error;
 mod config;
 mod errors;
 mod handle;
@@ -11,7 +12,7 @@ use log::{error, info};
 use log4rs;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn error::Error>> {
     // Initialize logger using configuration file.
     log4rs::init_file("./etc/log4rs.yaml", Default::default()).map_err(|e| {
         error!("Error initializing logger: {}", e);
