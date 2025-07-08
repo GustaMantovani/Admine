@@ -1,6 +1,3 @@
-use std::net::IpAddr;
-use std::str::FromStr;
-
 use super::vpn::TVpnClient;
 use crate::errors::VpnError;
 use crate::vpn::zerotier::apis::configuration::Configuration;
@@ -8,6 +5,8 @@ use crate::vpn::zerotier::apis::network_member_api::{
     delete_network_member, get_network_member, update_network_member,
 };
 use async_trait::async_trait;
+use std::net::IpAddr;
+use std::str::FromStr;
 
 pub struct ZerotierVpn {
     config: Configuration,

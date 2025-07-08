@@ -1,9 +1,11 @@
 use crate::config::{AdmineChannelsMap, Config, RetryConfig};
 use crate::models::admine_message::AdmineMessage;
-use crate::persistence::{key_value_storage_factory::StoreFactory, key_value_storage::KeyValueStore};
-use crate::pub_sub::pub_sub_factory::PubSubFactory;
+use crate::persistence::{
+    key_value_storage::KeyValueStore, key_value_storage_factory::StoreFactory,
+};
 use crate::pub_sub::pub_sub::PubSubProvider;
-use crate::vpn::{vpn_factory::VpnFactory, vpn::TVpnClient};
+use crate::pub_sub::pub_sub_factory::PubSubFactory;
+use crate::vpn::{vpn::TVpnClient, vpn_factory::VpnFactory};
 use log::{error, info, warn};
 use std::sync::Arc;
 use tokio::spawn;
