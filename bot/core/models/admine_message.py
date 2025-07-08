@@ -13,4 +13,4 @@ class AdmineMessage:
         return cls(**data)
 
     def from_object_to_json(self):
-        return json.dumps({"orgin": self.origin, "tags": self.tags, "message": self.message})
+        return json.dumps({"origin": self.origin, "tags": self.tags, "message": self.message})
