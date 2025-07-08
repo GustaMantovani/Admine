@@ -1,5 +1,4 @@
 use std::net::IpAddr;
-
 use crate::errors::VpnError;
 use async_trait::async_trait;
 

@@ -1,4 +1,3 @@
-use std::error;
 mod config;
 mod errors;
 mod handle;
@@ -6,10 +5,10 @@ mod models;
 mod persistence;
 mod pub_sub;
 mod vpn;
-
 use handle::Handle;
 use log::{error, info};
 use log4rs;
+use std::error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn error::Error>> {
