@@ -54,6 +54,7 @@ pub struct RetryConfig {
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    pub self_origin_name: String,
     pub pub_sub_config: PubSubConfig,
     pub vpn_config: VpnConfig,
     pub db_config: DbConfig,
@@ -100,6 +101,7 @@ impl Config {
         }
 
         // Load all environment variables
+        let self_origin_name = fetch_env_var("SELF_ORIGIN_NAME")?;
         let pubsub_url = fetch_env_var("PUBSUB_URL")?;
         let pubsub_type = fetch_env_var("PUBSUB_TYPE")?;
         let api_url = fetch_env_var("VPN_API_URL")?;
@@ -154,6 +156,7 @@ impl Config {
         };
 
         let final_config = Config {
+            self_origin_name,
             pub_sub_config,
             vpn_config,
             db_config,

@@ -1,6 +1,6 @@
-use std::net::IpAddr;
 use crate::errors::VpnError;
 use async_trait::async_trait;
+use std::net::IpAddr;
 
 #[async_trait]
 pub trait TVpnClient {

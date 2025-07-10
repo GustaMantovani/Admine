@@ -14,6 +14,7 @@ use tokio::time::sleep;
 
 /// Main handle structure.
 pub struct Handle {
+    self_origin_name: String,
     pub_sub_listener: Arc<Mutex<Box<dyn PubSubProvider>>>,
     pub_sub_publisher: Arc<Mutex<Box<dyn PubSubProvider>>>,
     vpn: Arc<Box<dyn TVpnClient + Send + Sync>>,
@@ -93,6 +94,7 @@ impl Handle {
         );
 
         Ok(Self {
+            self_origin_name: config.self_origin_name,
             pub_sub_listener: Arc::new(Mutex::new(pub_sub_listener)),
             pub_sub_publisher: Arc::new(Mutex::new(pub_sub_publisher)),
             vpn: Arc::new(vpn),
@@ -125,13 +127,26 @@ impl Handle {
 
         info!("Spawning task to process ingestion messages");
 
+        // Extract all needed fields from self before any moves
+        let self_origin_name = self.self_origin_name;
+        let pub_sub_listener = self.pub_sub_listener;
+        let pub_sub_publisher = self.pub_sub_publisher;
+        let vpn = self.vpn;
+        let db = self.db;
+        let admine_channels_map = self.admine_channels_map;
+        let retry_config = self.retry_config;
+
         // Clone fields needed for the ingestion task.
-        let ingestion_vpn = Arc::clone(&self.vpn);
-        let ingestion_pubsub = Arc::clone(&self.pub_sub_publisher);
-        let ingestion_vpn_channel = self.admine_channels_map.vpn_channel.clone();
-        let ingestion_retry_config = self.retry_config.clone();
+        let ingestion_vpn = Arc::clone(&vpn);
+        let ingestion_pubsub = Arc::clone(&pub_sub_publisher);
+        let ingestion_vpn_channel = admine_channels_map.vpn_channel.clone();
+        let ingestion_retry_config = retry_config.clone();
+        let ingestion_self_origin_name = self_origin_name.clone();
+        // Clone for command task usage later
+        let command_channels_map = admine_channels_map.clone();
+        let command_self_origin_name = self_origin_name.clone();
         // Make the DB mutable so we can perform update operations.
-        let mut ingestion_db = self.db;
+        let mut ingestion_db = db;
 
         spawn(async move {
             while let Some(ingest_message) = rx.recv().await {
@@ -176,6 +191,7 @@ impl Handle {
 
                 // Prepare the message for PubSub publication.
                 let pubsub_message = AdmineMessage {
+                    origin: ingestion_self_origin_name.clone(),
                     tags: vec![String::from("new_server_up")],
                     message: member_ips
                         .iter()
@@ -238,7 +254,7 @@ impl Handle {
             info!("Waiting for a new message...");
 
             let raw_message = {
-                let mut listener = self.pub_sub_listener.lock().await;
+                let mut listener = pub_sub_listener.lock().await;
                 match listener.listen_until_receive_message() {
                     Ok(msg) => {
                         info!("Message received: {:?}", msg);
@@ -266,7 +282,7 @@ impl Handle {
 
             match raw_message.1.as_str() {
                 // For messages from the server channel with "server_up" tag, enqueue for ingestion.
-                s if s == self.admine_channels_map.server_channel => {
+                s if s == command_channels_map.server_channel => {
                     if admine_message.tags.contains(&"server_up".to_string()) {
                         if let Err(e) = tx.send(Arc::new(admine_message)).await {
                             error!("Error sending message to ingestion queue: {}", e);
@@ -276,13 +292,14 @@ impl Handle {
                     }
                 }
                 // For messages from the command channel with "auth_member" tag, process in a separate task.
-                s if s == self.admine_channels_map.command_channel => {
+                s if s == command_channels_map.command_channel => {
                     if admine_message.tags.contains(&"auth_member".to_string()) {
                         // Clone fields for the command task.
-                        let command_vpn = Arc::clone(&self.vpn);
-                        let command_pubsub = Arc::clone(&self.pub_sub_publisher);
-                        let command_vpn_channel = self.admine_channels_map.vpn_channel.clone();
+                        let command_vpn = Arc::clone(&vpn);
+                        let command_pubsub = Arc::clone(&pub_sub_publisher);
+                        let command_vpn_channel = command_channels_map.vpn_channel.clone();
                         let member_id = admine_message.message.clone();
+                        let task_self_origin_name = command_self_origin_name.clone();
 
                         tokio::spawn(async move {
                             if let Err(e) = command_vpn.auth_member(member_id.clone(), None).await {
@@ -292,6 +309,7 @@ impl Handle {
                             info!("Member {} authenticated successfully.", member_id);
 
                             let command_message = AdmineMessage {
+                                origin: task_self_origin_name,
                                 tags: vec![String::from("auth_member_success")],
                                 message: member_id.clone(),
                             };
