@@ -2,3 +2,4 @@
 .env
 /etc/sled
 zerotier_handler.log
+.idea
