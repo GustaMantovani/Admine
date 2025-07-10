@@ -64,3 +64,13 @@ class MinecraftServerStatus:
             "onlinePlayers": self.online_players,
             "tps": self.tps,
         }
+    
+    def __str__(self):
+        return (
+            f"Status do Servidor: {self.status.value}\n"
+            f"Saúde: {self.health.value}\n"
+            f"Descrição: {self.description}\n"
+            f"Uptime: {self.uptime}\n"
+            f"Jogadores Online: {self.online_players}\n"
+            f"TPS: {self.tps}"
+        )

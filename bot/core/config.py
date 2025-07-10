@@ -27,7 +27,7 @@ class Config:
             "providers": {
                 "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
                 "pubsub": os.getenv("PROVIDERS_PUBSUB", "REDIS"),
-                "minecraft": os.getenv("PROVIDERS_MINECRAFT", "REST"),
+                "minecraft": os.getenv("PROVIDERS_MINECRAFT", "SERVER_HANDLER_API"),
             },
             "discord": {
                 "token": os.getenv("DISCORD_TOKEN"),
@@ -40,7 +40,7 @@ class Config:
             },
             "minecraft": {
                 "connectionstring": os.getenv(
-                    "MINECRAFT_CONNECTION_STRING", "localhost:8080"
+                    "MINECRAFT_CONNECTION_STRING", "http://localhost:8080"
                 ),
                 "token": os.getenv("MINECRAFT_TOKEN", ""),
             },

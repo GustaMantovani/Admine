@@ -9,12 +9,22 @@ from core.external.abstractions.minecraft_server_info_service import (
 from core.external.providers.minecraft_server_info_service_providers.minecraft_server_info_service_provider_type import (
     MinecraftInfoServiceProviderType,
 )
+from core.external.providers.minecraft_server_info_service_providers.server_handler_api_minecraft_server_info_service_provider import (
+    ServerHandlerApiMinecraftServerInfoServiceProvider,
+)
 
 
 class MinecraftInfoServiceFactory:
     __PROVIDER_FACTORIES: Dict[
         MinecraftInfoServiceProviderType, Callable[[Logger, Config], Any]
-    ] = {MinecraftInfoServiceProviderType.REST: lambda logging, config: None}
+    ] = {
+        MinecraftInfoServiceProviderType.REST: lambda logging, config: None,
+        MinecraftInfoServiceProviderType.SERVER_HANDLER_API: lambda logging, config: ServerHandlerApiMinecraftServerInfoServiceProvider(
+            logging,
+            config.get("minecraft.connectionstring", "http://localhost:8080"),
+            config.get("minecraft.token", ""),
+        ),
+    }
 
     @staticmethod
     def create(

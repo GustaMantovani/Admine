@@ -16,3 +16,7 @@ class MinecraftServerInfoService(ABC):
     @abstractmethod
     def get_info(self) -> MinecraftServerInfo:
         pass
+
+    @abstractmethod
+    def command(self, command: str) -> str:
+        pass
