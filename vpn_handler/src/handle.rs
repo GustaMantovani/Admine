@@ -144,7 +144,6 @@ impl Handle {
         let ingestion_self_origin_name = self_origin_name.clone();
         // Clone for command task usage later
         let command_channels_map = admine_channels_map.clone();
-        let command_self_origin_name = self_origin_name.clone();
         // Make the DB mutable so we can perform update operations.
         let mut ingestion_db = db;
 
@@ -283,63 +282,14 @@ impl Handle {
             match raw_message.1.as_str() {
                 // For messages from the server channel with "server_up" tag, enqueue for ingestion.
                 s if s == command_channels_map.server_channel => {
-                    if admine_message.tags.contains(&"server_up".to_string()) {
+                    if admine_message.tags.contains(&"server_on".to_string()) && admine_message.origin == "bot" {
                         if let Err(e) = tx.send(Arc::new(admine_message)).await {
                             error!("Error sending message to ingestion queue: {}", e);
                         }
                     } else {
                         warn!("No handle for this message in command channel.",);
                     }
-                }
-                // For messages from the command channel with "auth_member" tag, process in a separate task.
-                s if s == command_channels_map.command_channel => {
-                    if admine_message.tags.contains(&"auth_member".to_string()) {
-                        // Clone fields for the command task.
-                        let command_vpn = Arc::clone(&vpn);
-                        let command_pubsub = Arc::clone(&pub_sub_publisher);
-                        let command_vpn_channel = command_channels_map.vpn_channel.clone();
-                        let member_id = admine_message.message.clone();
-                        let task_self_origin_name = command_self_origin_name.clone();
-
-                        tokio::spawn(async move {
-                            if let Err(e) = command_vpn.auth_member(member_id.clone(), None).await {
-                                error!("Error authenticating member {}: {}", member_id, e);
-                                return;
-                            }
-                            info!("Member {} authenticated successfully.", member_id);
-
-                            let command_message = AdmineMessage {
-                                origin: task_self_origin_name,
-                                tags: vec![String::from("auth_member_success")],
-                                message: member_id.clone(),
-                            };
-
-                            let command_pubsub_msg = match command_message.to_json_string() {
-                                Ok(msg) => msg,
-                                Err(e) => {
-                                    error!(
-                                        "Error serializing message for member {}: {}",
-                                        member_id, e
-                                    );
-                                    return;
-                                }
-                            };
-
-                            let mut publisher = command_pubsub.lock().await;
-                            info!("Publishing command channel message: {}", command_pubsub_msg);
-                            if let Err(e) =
-                                publisher.publish(command_vpn_channel.clone(), command_pubsub_msg)
-                            {
-                                error!("Error publishing command channel message: {}", e);
-                            } else {
-                                info!("Command channel message published successfully.");
-                            }
-                        });
-                    } else {
-                        warn!("No handle for this message in command channel.",);
-                    }
-                }
-                other => {
+                }other => {
                     warn!("Unsupported channel: {}", other);
                 }
             }
