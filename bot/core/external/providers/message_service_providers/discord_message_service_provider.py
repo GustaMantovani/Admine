@@ -39,7 +39,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'on'.")
-                self.command_handle_function_callback("on")
+                await self.command_handle_function_callback("on")
                 await interaction.response.send_message(
                     "Request to start the Minecraft server received!"
                 )
@@ -58,7 +58,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'off'.")
-                self.command_handle_function_callback("off")
+                await self.command_handle_function_callback("off")
                 await interaction.response.send_message(
                     "Request to take down the Minecraft server received!"
                 )
@@ -77,7 +77,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'restart'.")
-                self.command_handle_function_callback("restart")
+                await self.command_handle_function_callback("restart")
                 await interaction.response.send_message(
                     "Request to restart the Minecraft server received!"
                 )
@@ -96,7 +96,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'auth'.")
-                self.command_handle_function_callback("auth", [vpn_id])
+                await self.command_handle_function_callback("auth", [vpn_id])
                 await interaction.response.send_message(
                     "Request to authorizing a member in the Minecraft server received!"
                 )
@@ -115,9 +115,10 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'command'.")
-                self.command_handle_function_callback("command", [mine_command])
+            
+                response = await self.command_handle_function_callback("command", [mine_command])
                 await interaction.response.send_message(
-                    "Request to do a command in the Minecraft server received!"
+                    response
                 )
                 self._logger.info("Sent confirmation message for 'command' command.")
             else:
@@ -135,9 +136,9 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'info'.")
                 self.command_handle_function_callback("info")
-                await interaction.response.send_message(
-                    "Request to get info off the Minecraft server received!"
-                )
+                response = await self.command_handle_function_callback("info")
+                
+                await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'info' command.")
             else:
                 self._logger.warning("Callback function not set for 'info' command.")
@@ -153,10 +154,9 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'status'.")
-                self.command_handle_function_callback("status")
-                await interaction.response.send_message(
-                    "Request to get a status off the Minecraft server received!"
-                )
+                response = await self.command_handle_function_callback("status")
+                
+                await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'status' command.")
             else:
                 self._logger.warning("Callback function not set for 'status' command.")
@@ -173,7 +173,7 @@ class _DiscordClient(commands.Bot):
         channel = await self.fetch_channel(channel_id)
         self._logger.debug(f"Channel found: {channel}")
         if channel is None:
-            self._logger.error(f"Channel with ID {channel_id} not found.")
+            self._logger.warning(f"Channel with ID {channel_id} not found.")
             return
         self._logger.debug(f"Sending message to channel {channel_id}: {message}")
         await channel.send(message)

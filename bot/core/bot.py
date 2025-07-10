@@ -47,7 +47,7 @@ class Bot:
         
 
         # Minecraft Info Service Provider
-        minecraft_provider_str = self.__config.get("providers.minecraft", "REST")
+        minecraft_provider_str = self.__config.get("providers.minecraft", "SERVER_HANDLER_API")
         minecraft_provider_type = MinecraftInfoServiceProviderType[
             minecraft_provider_str
         ]

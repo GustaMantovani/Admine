@@ -39,7 +39,7 @@ class CommandHandle:
             "status": self.__status,
         }
 
-    def process_command(
+    async def process_command(
             self,
             command: str,
             args: Optional[List[str]] = None,
@@ -61,49 +61,55 @@ class CommandHandle:
                 self.__logger.info(
                     f"Admin command {command} authorized for user {user_id}"
                 )
-            handler(args)
-            return True
+            response = await handler(args)
+            return response
         else:
             self.__logger.warning(f"Unknown command: {command}")
             return False
 
-    def __server_on(self, args: List[str]):
+    async def __server_on(self, args: List[str]):
         self.__logger.debug(f"Starting server with args: {args}")
         message = AdmineMessage("Bot",["server_on"], " ")
         self.__pubsub_service.send_message(message)
 
     #@admin_command
-    def __server_off(self, args: List[str]):
+    async def __server_off(self, args: List[str]):
         self.__logger.debug(f"Stopping server with args: {args}")
         message = AdmineMessage("Bot",["server_off"], " ")
         self.__pubsub_service.send_message(message)
 
     #@admin_command
-    def __restart(self, args: List[str]):
+    async def __restart(self, args: List[str]):
         self.__logger.debug(f"Restarting server with args: {args}")
         message = AdmineMessage("Bot",["restart"], " ")
         self.__pubsub_service.send_message(message)
 
     
-    def __auth_member(self, args: List[str]):
+    async def __auth_member(self, args: List[str]):
         self.__logger.debug(f"Authorizing members with args: {args}")
         message = AdmineMessage("Bot",["auth_member"], args[0])
         self.__pubsub_service.send_message(message)
 
     #@admin_command
-    def __command(self, args: List[str]):
+    async def __command(self, args: List[str]):
         self.__logger.debug(f"Execute a command in Minecraft with args: {args}")
-        message = AdmineMessage("Bot",["command"], args[0])
-        self.__pubsub_service.send_message(message)
+        try:
+            return await self.__minecraft_info_service.command(" ".join(args))
+        except Exception as e:
+            return "Error executing command"
 
-    @admin_command
-    def __info(self, args: List[str]):
+    #@admin_command
+    async def __info(self, args: List[str]):
         self.__logger.debug(f"Getting info off the server with args: {args}")
-        message = AdmineMessage("Bot",["info"], " ")
-        self.__pubsub_service.send_message(message)
+        try:
+            return await self.__minecraft_info_service.get_info()
+        except Exception as e:
+            return "Error getting server info"
 
-    @admin_command
-    def __status(self, args: List[str]):
+    #@admin_command
+    async def __status(self, args: List[str]):
         self.__logger.debug(f"Getting status off the server with args: {args}")
-        message = AdmineMessage("Bot",["status"], " ")
-        self.__pubsub_service.send_message(message)
+        try:
+            return await self.__minecraft_info_service.get_status()
+        except Exception as e:
+            return "Error getting server status"
