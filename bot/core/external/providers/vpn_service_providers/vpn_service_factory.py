@@ -21,8 +21,8 @@ class VpnServiceFactory:
         VpnServiceProviderType.REST: lambda logging, config: None,
         VpnServiceProviderType.VPN_API: lambda logging, config: ApiVpnServiceProviders(
             logging,
-            config.get("minecraft.connectionstring", "http://localhost:9090"),
-            config.get("minecraft.token", ""),
+            config.get("vpn.connectionstring", "http://localhost:9090"),
+            config.get("vpn.token", ""),
         ),
     }
 

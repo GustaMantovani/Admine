@@ -20,6 +20,15 @@ from core.external.providers.pubsub_service_providers.pubsub_service_factory imp
 from core.external.providers.pubsub_service_providers.pubsub_service_provider_type import (
     PubSubServiceProviderType,
 )
+
+from core.external.providers.vpn_service_providers.vpn_service_provider_type import (
+    VpnServiceProviderType,
+)
+
+from core.external.providers.vpn_service_providers.vpn_service_factory import (
+    VpnServiceFactory,
+)
+
 from core.handles.command_handle import CommandHandle
 from core.handles.event_handle import EventHandle
 from core.models.admine_message import AdmineMessage
@@ -57,9 +66,23 @@ class Bot:
         self.__logger.info(
             f"{minecraft_provider_str} minecraft info service provider initialized."
         )
+        
+        # Vpn Service Provider
+        vpn_provider_str = self.__config.get("providers.vpn", "VPN_API")
+        vpn_provider_type = VpnServiceProviderType[
+            vpn_provider_str
+        ]
+        self.__vpn_service = VpnServiceFactory.create(
+            self.__logger, vpn_provider_type, self.__config
+        )
+        self.__logger.info(
+            f"{vpn_provider_str} vpn provider initialized."
+        )
+
 
         self.__command_handle = CommandHandle(
-            self.__logger, self.__pubsub_service, self.__minecraft_info_service
+            self.__logger, self.__pubsub_service, self.__minecraft_info_service,
+            self.__vpn_service
         )
         self.__event_handle = EventHandle(self.__logger, self.__message_services)
 

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+
 class AuthRequest(BaseModel):
     member_id: str
 
@@ -10,7 +11,7 @@ class AuthRequest(BaseModel):
 @app.get("/server-ip")
 async def get_server_ip():
     try:
-        return {"server_ip": "123.123.123.123"}
+        return {"payload":{"server_ip": "123.123.123.123"}}
     except Exception:
         raise HTTPException(status_code=500, detail={"message": "error"})
 
@@ -18,9 +19,9 @@ async def get_server_ip():
 @app.post("/auth-member")
 async def auth_member(request: AuthRequest):
     try:
-        if request.member_id != "valid_member":
-            return {"message": "member not found"}
-        return {"message": "authenticated"}
+        if request.member_id != "123456":
+            return {"payload":{"message": "member not found"}}
+        return {"payload":{"message": "authenticated"}}
     except Exception:
         raise HTTPException(status_code=500, detail={"message": "error"})
 
@@ -28,11 +29,14 @@ async def auth_member(request: AuthRequest):
 @app.get("/vpn-id")
 async def get_vpn_id():
     try:
-        return {"vpn_id": "af;dfj;lkj1jk5132l4k5"}
+        return {"payload":{"vpn_id": "af;dfj;lkj1jk5132l4k5"}}
     except Exception:
         raise HTTPException(status_code=500, detail={"message": "error"})
 
 
-if name == "main":
+
+
+
+if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=9090)
+    uvicorn.run(app, host="127.0.0.1", port=9090)
