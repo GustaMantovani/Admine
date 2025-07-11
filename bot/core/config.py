@@ -28,6 +28,7 @@ class Config:
                 "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
                 "pubsub": os.getenv("PROVIDERS_PUBSUB", "REDIS"),
                 "minecraft": os.getenv("PROVIDERS_MINECRAFT", "SERVER_HANDLER_API"),
+                "vpn":os.getenv("PROVIDERS_VPN", "VPN_API"),
             },
             "discord": {
                 "token": os.getenv("DISCORD_TOKEN"),
@@ -44,6 +45,12 @@ class Config:
                     "MINECRAFT_CONNECTION_STRING", "http://localhost:3000"
                 ),
                 "token": os.getenv("MINECRAFT_TOKEN", ""),
+            },
+            "vpn": {
+                "connectionstring": os.getenv(
+                    "VPN_CONNECTION_STRING", "http://localhost:9090"
+                ),
+                "token": os.getenv("VPN_TOKEN", ""),
             },
         }
 

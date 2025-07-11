@@ -52,3 +52,10 @@ class MinecraftInfoServiceFactoryException(Exception):
     ):
         self.provider_type = provider_type
         super().__init__(f"{message}: {provider_type}")
+
+class VpnServiceFactoryException(Exception):
+    def __init__(
+            self, provider_type, message="Failed to create Vpn info service provider"
+    ):
+        self.provider_type = provider_type
+        super().__init__(f"{message}: {provider_type}")
