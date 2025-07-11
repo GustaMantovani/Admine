@@ -10,7 +10,7 @@ pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
         .bind((host, port))?
         .workers(1)
         .run();
-    
+
     let handle = server.handle();
     Ok((server, handle))
 }

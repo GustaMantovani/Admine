@@ -1,6 +1,7 @@
+use zerotier_central_api::apis::configuration::Configuration;
+
 use crate::errors::VpnError;
 use crate::vpn::vpn::TVpnClient;
-use crate::vpn::zerotier::apis::configuration::Configuration;
 use crate::vpn::zerotier_vpn::ZerotierVpn;
 
 #[derive(Clone, Debug)]
@@ -18,10 +19,16 @@ impl VpnFactory {
         network_id: String,
     ) -> Result<Box<dyn TVpnClient + Send + Sync>, VpnError> {
         match vpn_type {
-            VpnType::Zerotier => Ok(Box::new(ZerotierVpn::new(
-                Configuration::new(api_url, api_key),
-                network_id,
-            ))),
+            VpnType::Zerotier => {
+                let mut config = Configuration::new();
+                config.base_path = api_url;
+                config.api_key = Some(zerotier_central_api::apis::configuration::ApiKey {
+                    prefix: None,
+                    key: api_key,
+                });
+
+                Ok(Box::new(ZerotierVpn::new(config, network_id)))
+            }
         }
     }
 }

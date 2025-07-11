@@ -6,9 +6,9 @@ mod persistence;
 mod pub_sub;
 mod vpn;
 use crate::{api::server, config::Config};
+use actix_web::rt;
 use log::{error, info};
 use std::error;
-use actix_web::rt;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn error::Error>> {
@@ -24,13 +24,10 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
     Config::instance();
 
     let (actix_server, server_handle) = server::create_server()?;
-    
+
     rt::spawn(actix_server);
 
-    print!("adsfklasdafasdfasd");
-
     tokio::signal::ctrl_c().await?;
-
     server_handle.stop(true).await;
 
     Ok(())

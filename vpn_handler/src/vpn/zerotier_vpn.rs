@@ -1,12 +1,12 @@
 use super::vpn::TVpnClient;
 use crate::errors::VpnError;
-use crate::vpn::zerotier::apis::configuration::Configuration;
-use crate::vpn::zerotier::apis::network_member_api::{
-    delete_network_member, get_network_member, update_network_member,
-};
 use async_trait::async_trait;
 use std::net::IpAddr;
 use std::str::FromStr;
+use zerotier_central_api::apis::configuration::Configuration;
+use zerotier_central_api::apis::network_member_api::{
+    delete_network_member, get_network_member, update_network_member,
+};
 
 pub struct ZerotierVpn {
     config: Configuration,
@@ -39,16 +39,14 @@ impl TVpnClient for ZerotierVpn {
             Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
         };
 
-        if let Some(Some(ip_assignments)) = member
-            .config
-            .as_ref()
-            .and_then(|config| config.ip_assignments.as_ref())
-        {
-            if !ip_assignments.is_empty() {
-                return Ok(ip_assignments
-                    .iter()
-                    .filter_map(|ip| IpAddr::from_str(ip).ok())
-                    .collect());
+        if let Some(config) = member.config {
+            if let Some(ip_assignments) = config.ip_assignments {
+                if !ip_assignments.is_empty() {
+                    return Ok(ip_assignments
+                        .iter()
+                        .filter_map(|ip| IpAddr::from_str(ip).ok())
+                        .collect());
+                }
             }
         }
 
@@ -66,18 +64,19 @@ impl TVpnClient for ZerotierVpn {
             Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
         };
 
+        // Check if already authorized
         if let Some(ref config) = member.config {
-            if let Some(Some(true)) = config.authorized {
+            if let Some(true) = config.authorized {
                 return Ok(());
             }
         }
 
         // Set authorization
         if let Some(mut member_config) = member.config {
-            member_config.authorized = Some(Some(true));
+            member_config.authorized = Some(true);
             member.config = Some(member_config);
 
-            if let Some(Some(node_id)) = member.node_id.clone() {
+            if let Some(node_id) = member.node_id.clone() {
                 match update_network_member(
                     &self.config,
                     &self.network_id,
