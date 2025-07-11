@@ -31,7 +31,8 @@ class Config:
             },
             "discord": {
                 "token": os.getenv("DISCORD_TOKEN"),
-                "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc"),
+                "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX","!mc"),
+                "administrators": os.getenv("DISCORD_ADMINISTRATORS", "").split(","),
             },
             "redis": {
                 "connectionstring": os.getenv(
@@ -40,7 +41,7 @@ class Config:
             },
             "minecraft": {
                 "connectionstring": os.getenv(
-                    "MINECRAFT_CONNECTION_STRING", "http://localhost:8080"
+                    "MINECRAFT_CONNECTION_STRING", "http://localhost:3000"
                 ),
                 "token": os.getenv("MINECRAFT_TOKEN", ""),
             },
