@@ -27,6 +27,8 @@ impl VpnFactory {
                     key: api_key,
                 });
 
+                print!("{:?}", config);
+
                 Ok(Box::new(ZerotierVpn::new(config, network_id)))
             }
         }

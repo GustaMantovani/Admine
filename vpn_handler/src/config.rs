@@ -310,7 +310,7 @@ impl Config {
             retry_config,
         };
 
-        info!("Configuration loaded successfully: {}", final_config);
+        // info!("Configuration loaded successfully: {}", final_config);
 
         Ok(final_config)
     }

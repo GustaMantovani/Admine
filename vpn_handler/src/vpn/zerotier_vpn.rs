@@ -5,7 +5,7 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use zerotier_central_api::apis::configuration::Configuration;
 use zerotier_central_api::apis::network_member_api::{
-    delete_network_member, get_network_member, update_network_member,
+    delete_network_member, get_network_member, update_network_member, get_network_member_list
 };
 
 pub struct ZerotierVpn {
@@ -16,6 +16,14 @@ pub struct ZerotierVpn {
 impl ZerotierVpn {
     pub fn new(config: Configuration, network_id: String) -> Self {
         Self { config, network_id }
+    }
+
+    pub async fn get_all(&self){
+        //print!("{:?}", get_network_member_list(&self.config, &self.network_id).await.unwrap());
+        match get_network_member_list(&self.config, &self.network_id).await {
+            Ok(a) =>  print!("{:?}", a),
+            Err(e) => print!("{}", e)
+        }
     }
 }
 
@@ -58,6 +66,8 @@ impl TVpnClient for ZerotierVpn {
         member_id: String,
         _member_token: Option<String>,
     ) -> Result<(), VpnError> {
+        print!("{}", &self.network_id);
+        print!("{:?}", &self.config);
         let mut member = match get_network_member(&self.config, &self.network_id, &member_id).await
         {
             Ok(m) => m,
