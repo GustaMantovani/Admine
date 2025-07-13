@@ -38,3 +38,7 @@ func OpenLogFile(name string) {
 func CloseLogFile() {
 	logFile.Close()
 }
+
+func GetLogFile() *os.File {
+	return logFile
+}
