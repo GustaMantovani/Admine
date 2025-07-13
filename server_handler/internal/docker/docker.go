@@ -154,9 +154,9 @@ func waitForContainerStart(cli *client.Client, containerName string) error {
 			if container.State == "running" {
 				return nil
 			}
-			log.Printf("Container status: %s\n", container.State)
+			config.GetLogger().Info("container status: " + container.State)
 		} else {
-			log.Println("Container não encontrado, aguardando...")
+			config.GetLogger().Warn("container not found, waiting...")
 		}
 
 		time.Sleep(1 * time.Second)
