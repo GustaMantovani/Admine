@@ -1,7 +1,6 @@
 package minecraftserver
 
 import (
-	"fmt"
 	"server_handler/internal/config"
 
 	"github.com/harrim91/docker-compose-go/client"
@@ -25,13 +24,13 @@ func StartServerCompose() error {
 	upCh, err := compose.Up(&client.UpOptions{Detach: false}, config.GetLogFile())
 
 	if err != nil {
-		return fmt.Errorf("error starting compose: %w", err)
+		return err
 	}
 
 	err = <-upCh
 
 	if err != nil {
-		return fmt.Errorf("error in compose: %w", err)
+		return err
 	}
 
 	return nil
