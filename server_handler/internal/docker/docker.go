@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os/exec"
 	"strings"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"slices"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 )
 
@@ -140,14 +140,17 @@ func getContainerId(containerName string, cli *client.Client) (string, error) {
 
 func waitForContainerStart(cli *client.Client, containerName string) error {
 	ctx := context.Background()
-	// filter := filters.NewArgs(filters.Arg("name", containerName))
+	filter := filters.NewArgs(filters.Arg("name", containerName))
 
 	for {
 		// Listar containers (incluindo os que não estão running)
-		containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
+		containers, err := cli.ContainerList(ctx, container.ListOptions{Filters: filter})
 		if err != nil {
-			return fmt.Errorf("erro ao listar containers: %v", err)
+			return fmt.Errorf("error listing containers: %v", err)
 		}
+
+		config.GetLogger().Info(containers[len(containers)-1].Names[0])
+		config.GetLogger().Info(containers[0].Names[0])
 
 		if len(containers) > 0 {
 			container := containers[0]
