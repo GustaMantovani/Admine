@@ -79,7 +79,13 @@ func serverDown(ps pubsub.PubSubInterface) {
 		}
 	}
 
-	minecraftserver.StopServerCompose()
+	err = minecraftserver.StopServerCompose()
+	if err != nil {
+		config.GetLogger().Warn("Error stopping server: " + err.Error())
+		msg := models.NewMessage("Error stopping server", []string{"server_down"})
+		ps.SendMessage(msg.ToString(), c.SenderChannel)
+		return
+	}
 
 	msg := models.NewMessage(zerotierId, []string{"server_down"})
 
