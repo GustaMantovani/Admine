@@ -11,9 +11,8 @@ import (
 	"strings"
 )
 
-var c = config.GetInstance()
-
 func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
+	var c = config.GetInstance()
 	if msg.Tags[0] == "server_up" {
 		serverUp(ps)
 	} else if msg.Tags[0] == "server_down" {
@@ -30,6 +29,7 @@ func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
 }
 
 func serverUp(ps pubsub.PubSubInterface) {
+	var c = config.GetInstance()
 	err := minecraftserver.StartServerCompose()
 	if err != nil {
 		config.GetLogger().Error("error starting server compose: " + err.Error())
@@ -54,6 +54,7 @@ func serverUp(ps pubsub.PubSubInterface) {
 }
 
 func serverDown(ps pubsub.PubSubInterface) {
+	var c = config.GetInstance()
 	zerotierId, err := docker.GetZeroTierNodeID(c.ComposeContainerName)
 
 	if err != nil {
@@ -88,6 +89,7 @@ func serverDown(ps pubsub.PubSubInterface) {
 }
 
 func command(ps pubsub.PubSubInterface, message string) {
+	var c = config.GetInstance()
 	commandexecuter.WriteToContainer(message)
 
 	zeroTierID, err := docker.GetZeroTierNodeID(c.ComposeContainerName)
