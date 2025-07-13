@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"os"
 	"path"
 	"sync"
 )
@@ -31,10 +31,13 @@ func GetInstance() *config {
 		configFile, err := GetConfigFileData()
 
 		if err != nil {
-			log.Println("Could not fetch data from configuration file. Error: ", err.Error())
+			GetLogger().Warn("Could not fetch data from configuration file: " + err.Error())
 
-			if !isEnvSetAndSetConfig(instance) {
-				log.Fatalln("Coult not fetch data from env vars too. Closing program.")
+			_, err := isEnvSetAndSetConfig(instance)
+			if err != nil {
+				GetLogger().Warn("Could not fetch data from env vars too: " + err.Error())
+				GetLogger().Warn("Closing app because its not configured")
+				os.Exit(1)
 			}
 
 			return

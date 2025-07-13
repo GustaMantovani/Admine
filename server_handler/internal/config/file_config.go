@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 
 	yaml "gopkg.in/yaml.v3"
@@ -21,12 +20,15 @@ type ConfigFile struct {
 func GetConfigFileData() (ConfigFile, error) {
 	var configFile ConfigFile
 
-	configFilePath := getConfigFilePath()
+	configFilePath, err := getConfigFilePath()
+
+	if err != nil {
+		return configFile, err
+	}
 
 	file, err := os.Open(configFilePath)
 
 	if err != nil {
-		log.Println("error opening config file: ", err.Error())
 		return configFile, err
 	}
 
@@ -35,7 +37,6 @@ func GetConfigFileData() (ConfigFile, error) {
 	err = decoder.Decode(&configFile)
 
 	if err != nil {
-		log.Println("error decoding config file: ", err.Error())
 		return configFile, err
 	}
 
@@ -45,15 +46,14 @@ func GetConfigFileData() (ConfigFile, error) {
 }
 
 // Return the yaml config file in user home directory
-func getConfigFilePath() string {
+func getConfigFilePath() (string, error) {
 	home, err := os.UserHomeDir()
 
 	if err != nil {
-		log.Println("Error finding home user directory: ", err.Error())
-		return ""
+		return "", err
 	}
 
 	configFilePath := home + "/.config/admine/server.yaml"
 
-	return configFilePath
+	return configFilePath, nil
 }
