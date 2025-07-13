@@ -34,7 +34,10 @@ func ReadLastContainerLine() (string, error) {
 	containerName := c.ComposeContainerName
 
 	// Procura o container pelo nome
-	containerID := getContainerId(containerName, cli)
+	containerID, err := getContainerId(containerName, cli)
+	if err != nil {
+		return "", err
+	}
 
 	// Captura os logs
 	out, err := cli.ContainerLogs(ctx, containerID, container.LogsOptions{
@@ -70,22 +73,22 @@ func ReadLastContainerLine() (string, error) {
 	return "", fmt.Errorf("no lines found")
 }
 
-func GetZeroTierNodeID(containerName string) string {
+func GetZeroTierNodeID(containerName string) (string, error) {
 	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	outputStr := string(output)
 
 	parts := strings.Split(outputStr, " ")
 
-	return parts[2]
+	return parts[2], nil
 }
 
-func WaitForBuildAndStart() {
+func WaitForBuildAndStart() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -95,7 +98,7 @@ func WaitForBuildAndStart() {
 		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
-		log.Fatalf("Erro ao criar cliente Docker: %v", err)
+		return err
 	}
 
 	containerName := c.ComposeContainerName // Substitua pelo nome do seu container
@@ -103,22 +106,22 @@ func WaitForBuildAndStart() {
 	// Verificar se o container existe
 	_, err = cli.ContainerInspect(ctx, containerName)
 	if err != nil {
-		log.Fatalf("Container não encontrado: %v", err)
+		return err
 	}
 
 	err = waitForContainerStart(cli, containerName)
 	if err != nil {
-		log.Fatalf("Erro: %v", err)
+		return err
 	}
 
-	log.Println("Container está rodando com sucesso!")
+	return nil
 }
 
-func getContainerId(containerName string, cli *client.Client) string {
+func getContainerId(containerName string, cli *client.Client) (string, error) {
 
 	containers, err := cli.ContainerList(context.Background(), container.ListOptions{All: true})
 	if err != nil {
-		return ""
+		return "", err
 	}
 
 	var containerID string
@@ -129,11 +132,10 @@ func getContainerId(containerName string, cli *client.Client) string {
 	}
 
 	if containerID == "" {
-		// return "", fmt.Errorf("container '%s' not found", containerName)
-		return ""
+		return "", fmt.Errorf("container '%s' not found", containerName)
 	}
 
-	return containerID
+	return containerID, nil
 }
 
 func waitForContainerStart(cli *client.Client, containerName string) error {
