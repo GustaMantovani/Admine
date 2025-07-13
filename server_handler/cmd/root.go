@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"server_handler/cmd/queue"
 	"server_handler/internal/config"
