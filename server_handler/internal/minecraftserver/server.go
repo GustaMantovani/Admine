@@ -2,7 +2,6 @@ package minecraftserver
 
 import (
 	"fmt"
-	"log"
 	"server_handler/internal/config"
 
 	"github.com/harrim91/docker-compose-go/client"
@@ -39,18 +38,20 @@ func StartServerCompose() error {
 }
 
 // Parar o servidor
-func StopServerCompose() {
+func StopServerCompose() error {
 	compose := configureCompose()
 
 	downCh, err := compose.Down(&client.DownOptions{}, nil)
 
 	if err != nil {
-		log.Fatal("error stopping compose: ", err.Error())
+		return err
 	}
 
 	err = <-downCh
 
 	if err != nil {
-		log.Fatal("error in compose: ", err.Error())
+		return err
 	}
+
+	return nil
 }
