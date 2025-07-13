@@ -23,7 +23,7 @@ func configureCompose() *client.ComposeClient {
 func StartServerCompose() error {
 	compose := configureCompose()
 
-	upCh, err := compose.Up(&client.UpOptions{Detach: true}, nil)
+	upCh, err := compose.Up(&client.UpOptions{Detach: false}, config.GetLogFile())
 
 	if err != nil {
 		return fmt.Errorf("error starting compose: %w", err)
