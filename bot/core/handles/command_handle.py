@@ -6,6 +6,10 @@ import json
 from core.external.abstractions.minecraft_server_info_service import (
     MinecraftServerInfoService,
 )
+
+from core.external.abstractions.vpn_service import (VpnService,)
+
+
 from core.external.abstractions.pubsub_service import PubSubService
 from core.models.admine_message import AdmineMessage
 from core.config import Config
@@ -26,10 +30,12 @@ class CommandHandle:
             logging: Logger,
             pubsub_service: PubSubService,
             minecraft_info_service: MinecraftServerInfoService,
+            vpn_service:VpnService,
     ):
         self.__logger = logging
         self.__pubsub_service = pubsub_service
         self.__minecraft_info_service = minecraft_info_service
+        self.__vpn_service = vpn_service
 
         self.__HANDLES: Dict[str, Callable[[List[str]], None]] = {
             "on": self.__server_on,
@@ -40,6 +46,8 @@ class CommandHandle:
             "info": self.__info,
             "status": self.__status,
             "adm": self.__turn_admin,
+            "vpn_id": self.__vpn_id,
+            "server_ip": self.__server_ip,
         }
 
     async def process_command(
@@ -92,8 +100,10 @@ class CommandHandle:
     
     async def __auth_member(self, args: List[str], administrators: List[str]):
         self.__logger.debug(f"Authorizing members with args: {args}")
-        message = AdmineMessage("Bot",["auth_member"], args[0])
-        self.__pubsub_service.send_message(message)
+        try:
+            return await self.__vpn_service.auth_member(" ".join(args))
+        except Exception as e:
+            return "Error authorize member!"
 
     @admin_command
     async def __command(self, args: List[str], administrators: List[str]):
@@ -119,6 +129,22 @@ class CommandHandle:
         except Exception as e:
             return "Error getting server status"
         
+    async def __vpn_id(self, args: List[str], administrators: List[str]):
+        self.__logger.debug(f"Getting vpn id off the server with args: {args}")
+        try:
+            return await self.__vpn_service.get_vpn_id()
+        except Exception as e:
+            return "Error getting vpn id"
+        
+
+    async def __server_ip(self, args: List[str], administrators: List[str]):
+        self.__logger.debug(f"Getting server ip the server with args: {args}")
+        try:
+            return await self.__vpn_service.get_server_ip()
+        except Exception as e:
+            return "Error getting server ip"    
+
+
     @admin_command
     async def __turn_admin(self, args: List[str], administrators: List[str]):
         self.__logger.debug(f"Adicionando administrador com args: {args}")

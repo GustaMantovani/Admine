@@ -117,10 +117,10 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'auth'.")
-                await self.command_handle_function_callback("auth", [vpn_id], str(interaction.user.id), self._adminstrators)
-                await interaction.response.send_message(
-                    "Request to authorizing a member in the Minecraft server received!"
-                )
+                self.command_handle_function_callback("auth",[vpn_id] ,str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("auth")
+                
+                await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'auth' command.")
             else:
                 self._logger.warning("Callback function not set for 'auth' command.")
@@ -128,6 +128,43 @@ class _DiscordClient(commands.Bot):
                     "No processor available for this command."
                 )
         
+        @self.tree.command(name="vpn_id", description="Command to send the vpn id in the server")
+        async def vpn_id(interaction: discord.Interaction):
+            self._logger.debug(
+                f"Received 'vpn_id' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'vpn_id'.")
+
+                response = await self.command_handle_function_callback("vpn_id",[] ,str(interaction.user.id), self._adminstrators)
+                
+                await interaction.response.send_message(response)
+                self._logger.info("Sent confirmation message for 'vpn_id' command.")
+            else:
+                self._logger.warning("Callback function not set for 'vpn_id' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
+
+        @self.tree.command(name="server_ip", description="Command to get the server's ip")
+        async def server_ip(interaction: discord.Interaction):
+            self._logger.debug(
+                f"Received 'server_ip' command. Callback function: {self.command_handle_function_callback}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info("Calling the command handle callback with 'server_ip'.")
+                
+                response = await self.command_handle_function_callback("server_ip",[] ,str(interaction.user.id), self._adminstrators)
+                
+                await interaction.response.send_message(response)
+                self._logger.info("Sent confirmation message for 'server_ip' command.")
+            else:
+                self._logger.warning("Callback function not set for 'server_ip' command.")
+                await interaction.response.send_message(
+                    "No processor available for this command."
+                )
+
         #Command to do a minecraft command in the server!   
         @self.tree.command(name="command", description="Command to do minecraft_command in the server")
         async def command(interaction: discord.Interaction, mine_command:str):
@@ -156,8 +193,8 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'info'.")
-                self.command_handle_function_callback("info",[] ,str(interaction.user.id), self._adminstrators)
-                response = await self.command_handle_function_callback("info")
+                
+                response = await self.command_handle_function_callback("info",[] ,str(interaction.user.id), self._adminstrators)
                 
                 await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'info' command.")
