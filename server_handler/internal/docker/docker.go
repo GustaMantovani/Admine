@@ -19,9 +19,8 @@ import (
 	"github.com/docker/docker/client"
 )
 
-var c = config.GetInstance()
-
 func ReadLastContainerLine() (string, error) {
+	var c = config.GetInstance()
 	ctx := context.Background()
 
 	// Cliente Docker
@@ -89,6 +88,7 @@ func GetZeroTierNodeID(containerName string) (string, error) {
 }
 
 func WaitForBuildAndStart() error {
+	var c = config.GetInstance()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
