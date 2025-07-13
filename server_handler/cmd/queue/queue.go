@@ -6,13 +6,14 @@ import (
 	"server_handler/internal/handler"
 	"server_handler/internal/models"
 	"server_handler/internal/pubsub"
+	"strings"
 )
 
 /*
 Start to listen a pubsub for commands
 */
 func RunListenQueue() {
-	log.Println("Running queue. Consumer channel: ", config.GetInstance().ConsumerChannel)
+	config.GetLogger().Info("Running queue. Consumer channel: [" + strings.Join(config.GetInstance().ConsumerChannel, " ") + "]")
 	listenCommands()
 }
 
