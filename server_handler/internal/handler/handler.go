@@ -33,6 +33,7 @@ func serverUp(ps pubsub.PubSubInterface) {
 	err := minecraftserver.StartServerCompose()
 	if err != nil {
 		config.GetLogger().Error("error starting server compose: " + err.Error())
+		return
 	}
 
 	ps.SendMessage("Starting server", c.SenderChannel)
