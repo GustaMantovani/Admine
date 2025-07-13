@@ -36,7 +36,11 @@ func serverUp(ps pubsub.PubSubInterface) {
 	}
 
 	ps.SendMessage("Starting server", c.SenderChannel)
-	docker.WaitForBuildAndStart()
+	err = docker.WaitForBuildAndStart()
+	if err != nil {
+		config.GetLogger().Error("Error during build and start of the container: " + err.Error())
+
+	}
 
 	zeroTierID, err := docker.GetZeroTierNodeID(c.ComposeContainerName)
 	if err != nil {
