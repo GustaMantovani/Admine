@@ -14,8 +14,7 @@ async def main():
     logger = CustomLogger(logger_name="Admine Bot", log_file="/tmp/bot.log")
 
     try:
-        config = Config()
-        bot = Bot(logger.get_logger(), config)
+        bot = Bot(logger.get_logger())
         await bot.start()
     except Exception as e:
         logger.get_logger().error(f"Unexpected error: {e}\n{traceback.format_exc()}")

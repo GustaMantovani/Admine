@@ -73,32 +73,32 @@ class CommandHandle:
                     f"Admin command {command} authorized for user {user_id}"
                 )
 
-            response = await handler(args, administrators=administrators)
+            response = await handler(args)
             return response
         else:
             self.__logger.warning(f"Unknown command: {command}")
             return "Unknown command"
     
     @admin_command
-    async def __server_on(self, args: List[str], administrators: List[str]):
+    async def __server_on(self, args: List[str]):
         self.__logger.debug(f"Starting server with args: {args}")
         message = AdmineMessage("Bot",["server_on"], " ")
         self.__pubsub_service.send_message(message)
 
     @admin_command
-    async def __server_off(self, args: List[str], administrators: List[str]):
+    async def __server_off(self, args: List[str]):
         self.__logger.debug(f"Stopping server with args: {args}")
         message = AdmineMessage("Bot",["server_off"], " ")
         self.__pubsub_service.send_message(message)
 
     @admin_command
-    async def __restart(self, args: List[str], administrators: List[str]):
+    async def __restart(self, args: List[str]):
         self.__logger.debug(f"Restarting server with args: {args}")
         message = AdmineMessage("Bot",["restart"], " ")
         self.__pubsub_service.send_message(message)
 
     
-    async def __auth_member(self, args: List[str], administrators: List[str]):
+    async def __auth_member(self, args: List[str]):
         self.__logger.debug(f"Authorizing members with args: {args}")
         try:
             return await self.__vpn_service.auth_member(" ".join(args))
@@ -106,7 +106,7 @@ class CommandHandle:
             return "Error authorize member!"
 
     @admin_command
-    async def __command(self, args: List[str], administrators: List[str]):
+    async def __command(self, args: List[str]):
         self.__logger.debug(f"Execute a command in Minecraft with args: {args}")
         try:
             return await self.__minecraft_info_service.command(" ".join(args))
@@ -114,7 +114,7 @@ class CommandHandle:
             return "Error executing command"
 
     #@admin_command
-    async def __info(self, args: List[str], administrators: List[str]):
+    async def __info(self, args: List[str]):
         self.__logger.debug(f"Getting info off the server with args: {args}")
         try:
             return await self.__minecraft_info_service.get_info()
@@ -122,14 +122,14 @@ class CommandHandle:
             return "Error getting server info"
 
     #admin_command
-    async def __status(self, args: List[str], administrators: List[str]):
+    async def __status(self, args: List[str]):
         self.__logger.debug(f"Getting status off the server with args: {args}")
         try:
             return await self.__minecraft_info_service.get_status()
         except Exception as e:
             return "Error getting server status"
         
-    async def __vpn_id(self, args: List[str], administrators: List[str]):
+    async def __vpn_id(self, args: List[str]):
         self.__logger.debug(f"Getting vpn id off the server with args: {args}")
         try:
             return await self.__vpn_service.get_vpn_id()
@@ -137,7 +137,7 @@ class CommandHandle:
             return "Error getting vpn id"
         
 
-    async def __server_ip(self, args: List[str], administrators: List[str]):
+    async def __server_ip(self, args: List[str]):
         self.__logger.debug(f"Getting server ip the server with args: {args}")
         try:
             return await self.__vpn_service.get_server_ip()
@@ -146,29 +146,27 @@ class CommandHandle:
 
 
     @admin_command
-    async def __turn_admin(self, args: List[str], administrators: List[str]):
+    async def __turn_admin(self, args: List[str]):
         self.__logger.debug(f"Adicionando administrador com args: {args}")
         if not args or not args[0]:
             return "Nenhum ID de usuário informado para tornar administrador."
         
         user_id = str(args[0])
         user_mention = args[1]
-
+        config = Config()
+        
+        administrators: list[str] = config.get("discord.administrators", [])
          # Atualiza a lista de administradores do próprio objeto
         if user_id in administrators:
             return f"{user_mention} is already an administrator."
+        
         administrators.append(user_id)
         
-        config = Config()
-        admins:list[str] = config._Config__config["discord"].get("administrators", [])
-        
-        admins.append(user_id)
-        config._Config__config["discord"]["administrators"] = admins
         # Salva no arquivo config.json
         
-        with open("config.json", "w") as f:
+        with open("bot/config.json", "w") as f:
             json.dump(config._Config__config, f, indent=4)
 
         self.__logger.info(f"Usuário {user_id} adicionado como administrador.")
-        return f"{user_mention} agora é administrador."
+        return f"{user_mention} is now an administrator."
         

@@ -117,8 +117,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'auth'.")
-                self.command_handle_function_callback("auth",[vpn_id] ,str(interaction.user.id), self._adminstrators)
-                response = await self.command_handle_function_callback("auth")
+                response = await self.command_handle_function_callback("auth",[vpn_id] ,str(interaction.user.id), self._adminstrators)
                 
                 await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'auth' command.")

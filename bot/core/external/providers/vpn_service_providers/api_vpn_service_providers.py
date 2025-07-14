@@ -36,28 +36,28 @@ class ApiVpnServiceProviders(VpnService):
             response = await asyncio.to_thread(requests.get, url, headers=headers, timeout=5)
             response.raise_for_status()
             resp_payload = response.json().get("payload", {})
-            self.__logger.debug(f"/vpn_id respond receive : {resp_payload.get("vpn_id")}")
+            self.__logger.debug(f"/vpn_id respond receive : {resp_payload.get('vpn_id')}")
             return resp_payload.get("vpn_id", "Request to get the VPN's ID received!")
         except Exception as e:
             self.__logger.warning(f"Error to find the Vpn's ID: {e}")
             raise
 
 
-    async def auth_member(self, command: str) -> str:
+    async def auth_member(self, member_id: str) -> str:
         url = f"{self.api_url}/auth-member"
         headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
         } if self.token else {"Content-Type": "application/json"}
-        payload = {"command": command}
-        self.__logger.info(f"Sending the id's members: {command}")
+        payload = {"member_id": member_id}
+        self.__logger.info(f"Sending the id's members: {member_id}")
         self.__logger.debug(f"POST {url} | Headers: {headers} | Payload: {payload}")
         try:
             response = await asyncio.to_thread(requests.post, url, json=payload, headers=headers, timeout=5)
             response.raise_for_status()
             resp_payload = response.json().get("payload", {})
             self.__logger.debug(f"/auth-member respond receive: {resp_payload}")
-            return "Request to authorizing a member in the Minecraft server received!"
+            return resp_payload.get("message", "Request to authorizing a member in the Minecraft server received!")
         except Exception as e:
             self.__logger.warning(f"Error to authorize the ID's member! {e}")
             raise

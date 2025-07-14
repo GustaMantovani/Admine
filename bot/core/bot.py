@@ -38,9 +38,9 @@ import asyncio
 
 
 class Bot:
-    def __init__(self, logger: Logger, config: Config):
+    def __init__(self, logger: Logger):
         self.__logger = logger
-        self.__config = config
+        self.__config = Config()
         self.__message_services : List[MessageService] = []
         self.__pubsub_service : PubSubService
 

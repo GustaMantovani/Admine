@@ -6,10 +6,21 @@ from core.exceptions import ConfigError, ConfigFileError
 
 
 class Config:
-    def __init__(self, config_file: str = "config.json"):
+    _instance = None
+
+    def __new__(cls, config_file: str = "bot/config.json"):
+        if cls._instance is None:
+            cls._instance = super(Config, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self, config_file: str = "bot/config.json"):
+        if self._initialized:
+            return
         self.__config = self.__load_from_json(config_file) or self.__load_from_env()
         if not self.__config:
             raise ConfigError("Failed to load configuration from file or environment")
+        self._initialized = True
 
     def __load_from_json(self, config_file: str) -> Optional[Dict[str, Any]]:
         if os.path.exists(config_file):
@@ -67,3 +78,4 @@ class Config:
             if value is None:
                 return default
         return value
+
