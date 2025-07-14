@@ -6,10 +6,16 @@ pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
     let host = config.api_config().host();
     let port = *config.api_config().port();
 
-    let server = HttpServer::new(|| App::new().service(services::hello))
-        .bind((host, port))?
-        .workers(1)
-        .run();
+    let server = HttpServer::new(|| {
+        App::new()
+            .service(services::status)
+            .service(services::server_ip)
+            .service(services::auth_member)
+            .service(services::vpn_id)
+    })
+    .bind((host, port))?
+    .workers(1)
+    .run();
 
     let handle = server.handle();
     Ok((server, handle))

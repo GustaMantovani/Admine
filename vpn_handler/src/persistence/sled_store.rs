@@ -13,7 +13,7 @@ impl SledStore {
 }
 
 impl KeyValueStore for SledStore {
-    fn set(&mut self, key: String, value: String) -> Result<(), String> {
+    fn set(&self, key: String, value: String) -> Result<(), String> {
         self.db
             .insert(key, value.into_bytes())
             .map_err(|e| e.to_string())?;

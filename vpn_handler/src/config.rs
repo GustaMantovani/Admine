@@ -3,7 +3,6 @@ use crate::pub_sub::pub_sub_factory::PubSubType;
 use crate::vpn::vpn_factory::VpnType;
 use dotenvy::dotenv;
 use log::error;
-use log::info;
 use std::env;
 use std::fmt;
 use std::str::FromStr;
@@ -262,6 +261,7 @@ impl Config {
         let server_channel = fetch_env_var("SERVER_CHANNEL")?;
         let command_channel = fetch_env_var("COMMAND_CHANNEL")?;
         let vpn_channel = fetch_env_var("VPN_CHANNEL")?;
+        let vpn_type = fetch_env_var("VPN_TYPE")?;
         let db_path = fetch_env_var("DB_PATH")?;
         let store_type = fetch_env_var("STORE_TYPE")?;
         let retry_attempts = fetch_env_var("VPN_RETRY_ATTEMPTS")?;
@@ -287,7 +287,7 @@ impl Config {
             api_url,
             api_key,
             network_id,
-            VpnType::Zerotier, // Currently fixed as Zerotier
+            VpnType::PublicIp
         );
 
         let db_config = DbConfig::new(db_path, store_type_enum);
