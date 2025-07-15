@@ -12,7 +12,11 @@ async fn status() -> impl Responder {
 
 #[get("/server-ip")]
 pub async fn server_ip() -> impl Responder {
-    match AppContext::instance().vpn_client().get_member_ips_in_vpn(String::from("a41a6f919c")).await {
+    match AppContext::instance()
+        .vpn_client()
+        .get_member_ips_in_vpn(String::from("a41a6f919c"))
+        .await
+    {
         Ok(ip) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ip }),
         Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
             message: "error".to_string(),

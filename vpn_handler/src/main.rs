@@ -6,10 +6,7 @@ mod models;
 mod persistence;
 mod pub_sub;
 mod vpn;
-use crate::{
-    api::server,
-    app_context::AppContext,
-};
+use crate::{api::server, app_context::AppContext};
 use actix_web::rt;
 use log::{error, info};
 use std::error;
