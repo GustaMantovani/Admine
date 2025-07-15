@@ -53,4 +53,15 @@ impl AppContext {
     pub fn vpn_client(&self) -> &Box<dyn TVpnClient + Send + Sync> {
         &self.vpn_client
     }
+
+    // Métodos de storage
+    pub fn set_storage(&self, key: String, value: String) -> Result<(), String> {
+        let guard = self.storage.lock().unwrap();
+        guard.set(key, value)
+    }
+
+    pub fn get_storage(&self, key: &str) -> Result<Option<String>, String> {
+        let guard = self.storage.lock().unwrap();
+        guard.get(key)
+    }
 }

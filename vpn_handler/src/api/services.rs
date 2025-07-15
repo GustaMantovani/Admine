@@ -1,8 +1,6 @@
 use crate::{
     app_context::AppContext,
     models::api_models::{AuthMemberRequest, ErrorResponse, ServerIpResponse, VpnIdResponse},
-    persistence::key_value_storage::get_global,
-    vpn::vpn_factory::VpnFactory,
 };
 use actix_web::{get, post, web, HttpResponse, Responder};
 use log::{error, info};
