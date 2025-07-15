@@ -22,17 +22,7 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
     info!("Starting the application.");
 
     info!("Loading configuration...");
-    let context = AppContext::instance();
-
-    // Teste do storage singleton
-    info!("Testando storage singleton...");
-    context.set_storage("teste".to_string(), "valor_teste".to_string())?;
-
-    if let Some(valor) = context.get_storage("teste")? {
-        info!("✅ Storage funcionando! Valor recuperado: {}", valor);
-    } else {
-        error!("❌ Storage não funcionou!");
-    }
+    let _context = AppContext::instance();
 
     let (actix_server, server_handle) = server::create_server()?;
 

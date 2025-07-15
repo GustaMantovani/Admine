@@ -14,14 +14,14 @@ static APP_CONTEXT: OnceLock<AppContext> = OnceLock::new();
 
 impl AppContext {
     fn new() -> Result<Self, String> {
-        // Inicialização ordenada de componentes
+        // Ordered component initialization
         let config = Config::new()?;
         let storage = StoreFactory::create_store_instance(
             config.db_config().store_type().clone(),
             config.db_config().path(),
         )?;
 
-        // Criar VPN client baseado na configuração
+        // Create VPN client based on configuration
         let vpn_client = VpnFactory::create_vpn(
             config.vpn_config().vpn_type().clone(),
             config.vpn_config().api_url().to_string(),
@@ -41,7 +41,7 @@ impl AppContext {
         APP_CONTEXT.get_or_init(|| Self::new().expect("Failed to initialize application context"))
     }
 
-    // Acessores para os componentes
+    // Component accessors
     pub fn config(&self) -> &Config {
         &self.config
     }
@@ -54,7 +54,7 @@ impl AppContext {
         &self.vpn_client
     }
 
-    // Métodos de storage
+    // Storage methods
     pub fn set_storage(&self, key: String, value: String) -> Result<(), String> {
         let guard = self.storage.lock().unwrap();
         guard.set(key, value)
