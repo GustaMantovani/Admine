@@ -5,7 +5,7 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use zerotier_central_api::apis::configuration::Configuration;
 use zerotier_central_api::apis::network_member_api::{
-    delete_network_member, get_network_member, update_network_member
+    delete_network_member, get_network_member, update_network_member,
 };
 
 pub struct ZerotierVpn {

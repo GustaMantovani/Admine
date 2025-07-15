@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -7,7 +9,7 @@ pub struct AuthMemberRequest {
 
 #[derive(Serialize)]
 pub struct ServerIpResponse {
-    pub server_ip: String,
+    pub server_ips: Vec<IpAddr>,
 }
 
 #[derive(Serialize)]

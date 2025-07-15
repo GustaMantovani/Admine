@@ -8,7 +8,7 @@ use crate::vpn::zerotier_vpn::ZerotierVpn;
 #[derive(Clone, Debug)]
 pub enum VpnType {
     Zerotier,
-    PublicIp
+    PublicIp,
 }
 
 pub struct VpnFactory;
@@ -34,9 +34,7 @@ impl VpnFactory {
                 Ok(Box::new(ZerotierVpn::new(config, network_id)))
             }
 
-            VpnType::PublicIp => {
-                Ok(Box::new(PublicIp::new()))
-            }
+            VpnType::PublicIp => Ok(Box::new(PublicIp::new())),
         }
     }
 }

@@ -1,8 +1,8 @@
-use crate::{api::services, config::Config};
+use crate::{api::services, app_context::AppContext};
 use actix_web::{dev::Server, dev::ServerHandle, App, HttpServer};
 
 pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
-    let config = Config::instance();
+    let config = AppContext::instance().config();
     let host = config.api_config().host();
     let port = *config.api_config().port();
 

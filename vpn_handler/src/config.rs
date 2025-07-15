@@ -6,7 +6,6 @@ use log::error;
 use std::env;
 use std::fmt;
 use std::str::FromStr;
-use std::sync::OnceLock;
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
@@ -233,19 +232,15 @@ impl fmt::Display for Config {
     }
 }
 
-// Global singleton instance
-static CONFIG: OnceLock<Config> = OnceLock::new();
-
 impl Config {
     /// Loads all configuration from environment variables
-    fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new() -> Result<Self, String> {
         dotenv().ok();
 
-        fn fetch_env_var(var_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        fn fetch_env_var(var_name: &str) -> Result<String, String> {
             env::var(var_name).map_err(|_| {
                 let msg = format!("Missing environment variable: {}", var_name);
-                error!("{}", msg);
-                msg.into()
+                msg
             })
         }
 
@@ -267,7 +262,10 @@ impl Config {
         let retry_attempts = fetch_env_var("VPN_RETRY_ATTEMPTS")?;
         let retry_delay_ms = fetch_env_var("VPN_RETRY_DELAY_MS")?;
 
-        let api_config = ApiConfig::new(api_host, u16::from_str(&api_port)?);
+        let api_config = ApiConfig::new(
+            api_host,
+            u16::from_str(&api_port).map_err(|e| e.to_string())?,
+        );
 
         // Parse enum types
         let pub_sub_type = PubSubType::from_str(&pubsub_type).map_err(|_| {
@@ -283,12 +281,7 @@ impl Config {
         // Create configuration structures
         let pub_sub_config = PubSubConfig::new(pubsub_url, pub_sub_type);
 
-        let vpn_config = VpnConfig::new(
-            api_url,
-            api_key,
-            network_id,
-            VpnType::PublicIp
-        );
+        let vpn_config = VpnConfig::new(api_url, api_key, network_id, VpnType::PublicIp);
 
         let db_config = DbConfig::new(db_path, store_type_enum);
 
@@ -296,8 +289,14 @@ impl Config {
             AdmineChannelsMap::new(server_channel, command_channel, vpn_channel);
 
         let retry_config = RetryConfig::new(
-            retry_attempts.parse()?,
-            Duration::from_millis(retry_delay_ms.parse()?),
+            retry_attempts
+                .parse()
+                .map_err(|e: std::num::ParseIntError| e.to_string())?,
+            Duration::from_millis(
+                retry_delay_ms
+                    .parse()
+                    .map_err(|e: std::num::ParseIntError| e.to_string())?,
+            ),
         );
 
         let final_config = Config {
@@ -313,9 +312,5 @@ impl Config {
         // info!("Configuration loaded successfully: {}", final_config);
 
         Ok(final_config)
-    }
-
-    pub fn instance() -> &'static Config {
-        CONFIG.get_or_init(|| Self::new().expect("Failed to load configuration"))
     }
 }
