@@ -8,11 +8,11 @@ mod pub_sub;
 mod vpn;
 use crate::{api::server, app_context::AppContext};
 use actix_web::rt;
+use anyhow::Result;
 use log::{error, info};
-use std::error;
 
 #[actix_web::main]
-async fn main() -> Result<(), Box<dyn error::Error>> {
+async fn main() -> Result<()> {
     // Initialize logger using configuration file.
     log4rs::init_file("./etc/log4rs.yaml", Default::default()).map_err(|e| {
         error!("Error initializing logger: {}", e);

@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::persistence::key_value_storage_factory::{DynKeyValueStore, StoreFactory};
 use crate::vpn::vpn::TVpnClient;
 use crate::vpn::vpn_factory::VpnFactory;
+use anyhow::Result;
 use std::sync::{Mutex, OnceLock};
 
 pub struct AppContext {
@@ -13,22 +14,23 @@ pub struct AppContext {
 static APP_CONTEXT: OnceLock<AppContext> = OnceLock::new();
 
 impl AppContext {
-    fn new() -> Result<Self, String> {
+    fn new() -> Result<Self> {
         // Ordered component initialization
         let config = Config::new()?;
         let storage = StoreFactory::create_store_instance(
-            config.db_config().store_type().clone(),
-            config.db_config().path(),
-        )?;
+            config.db_config.store_type.clone(),
+            &config.db_config.path,
+        )
+        .map_err(|e| anyhow::anyhow!("Failed to create storage: {}", e))?;
 
         // Create VPN client based on configuration
         let vpn_client = VpnFactory::create_vpn(
-            config.vpn_config().vpn_type().clone(),
-            config.vpn_config().api_url().to_string(),
-            config.vpn_config().api_key().to_string(),
-            config.vpn_config().network_id().to_string(),
+            config.vpn_config.vpn_type.clone(),
+            config.vpn_config.api_url.clone(),
+            config.vpn_config.api_key.clone(),
+            config.vpn_config.network_id.clone(),
         )
-        .map_err(|e| format!("Failed to create VPN client: {:?}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to create VPN client: {:?}", e))?;
 
         Ok(Self {
             config,

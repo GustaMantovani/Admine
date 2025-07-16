@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use strum::EnumString;
 use zerotier_central_api::apis::configuration::Configuration;
 
@@ -6,7 +7,7 @@ use crate::vpn::public_ip::PublicIp;
 use crate::vpn::vpn::TVpnClient;
 use crate::vpn::zerotier_vpn::ZerotierVpn;
 
-#[derive(Clone, Debug, EnumString)]
+#[derive(Clone, Debug, EnumString, Deserialize)]
 pub enum VpnType {
     Zerotier,
     PublicIp,
