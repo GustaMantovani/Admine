@@ -18,7 +18,7 @@ pub async fn server_ip() -> impl Responder {
         .await
     {
         Ok(ip) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ip }),
-        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
+        Err(_) => HttpResponse::InternalServerError().json(ErrorResponse {
             message: "error".to_string(),
         }),
     }

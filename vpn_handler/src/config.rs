@@ -3,6 +3,7 @@ use crate::pub_sub::pub_sub_factory::PubSubType;
 use crate::vpn::vpn_factory::VpnType;
 use dotenvy::dotenv;
 use log::error;
+use log::info;
 use std::env;
 use std::fmt;
 use std::str::FromStr;
@@ -268,20 +269,25 @@ impl Config {
         );
 
         // Parse enum types
-        let pub_sub_type = PubSubType::from_str(&pubsub_type).map_err(|_| {
+        let pub_sub_type = pubsub_type.parse().map_err(|_| {
             error!("Unsupported PubSub type: {}", pubsub_type);
             "Unsupported PubSub type"
         })?;
 
-        let store_type_enum = StoreType::from_str(&store_type).map_err(|_| {
+        let store_type_enum = store_type.parse().map_err(|_| {
             error!("Unsupported Store type: {}", store_type);
             "Unsupported Store type"
+        })?;
+
+        let vpn_type_enum = vpn_type.parse().map_err(|_| {
+            error!("Unsupported VPN type: {}", vpn_type);
+            "Unsupported VPN type"
         })?;
 
         // Create configuration structures
         let pub_sub_config = PubSubConfig::new(pubsub_url, pub_sub_type);
 
-        let vpn_config = VpnConfig::new(api_url, api_key, network_id, VpnType::PublicIp);
+        let vpn_config = VpnConfig::new(api_url, api_key, network_id, vpn_type_enum);
 
         let db_config = DbConfig::new(db_path, store_type_enum);
 
@@ -309,7 +315,7 @@ impl Config {
             retry_config,
         };
 
-        // info!("Configuration loaded successfully: {}", final_config);
+        info!("Configuration loaded successfully: {}", final_config);
 
         Ok(final_config)
     }

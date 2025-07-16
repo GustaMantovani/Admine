@@ -1,3 +1,4 @@
+use strum::EnumString;
 use zerotier_central_api::apis::configuration::Configuration;
 
 use crate::errors::VpnError;
@@ -5,7 +6,7 @@ use crate::vpn::public_ip::PublicIp;
 use crate::vpn::vpn::TVpnClient;
 use crate::vpn::zerotier_vpn::ZerotierVpn;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, EnumString)]
 pub enum VpnType {
     Zerotier,
     PublicIp,
