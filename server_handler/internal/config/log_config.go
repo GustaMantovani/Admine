@@ -4,6 +4,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -23,9 +24,11 @@ func CreateLogger() {
 	})
 }
 
-func OpenLogFile(name string) {
+func OpenLogFile() {
+	logDir := verifyLogDir()
+
 	onceOpenFile.Do(func() {
-		file, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		file, err := os.OpenFile(logDir+"/server_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
 			log.Println("Erro ao criar arquivo de log")
 		}
@@ -41,4 +44,22 @@ func CloseLogFile() {
 
 func GetLogFile() *os.File {
 	return logFile
+}
+
+func verifyLogDir() string {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal("Error getting home dir. Verify if $HOME env var is set.", err.Error())
+	}
+
+	admineStateDir := filepath.Join(homedir, ".local", "state", "admine")
+
+	if _, err := os.Stat(admineStateDir); os.IsNotExist(err) {
+		err := os.MkdirAll(admineStateDir, 0755)
+		if err != nil {
+			log.Fatal("Error creating admine state dir: ", err.Error())
+		}
+	}
+
+	return admineStateDir
 }
