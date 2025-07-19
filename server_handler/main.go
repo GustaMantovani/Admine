@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	config.OpenLogFile("app.log")
+	config.OpenLogFile()
 	config.CreateLogger()
 	config.GetLogger().Info("========= STARTING APP ===========")
 	cmd.Execute()
