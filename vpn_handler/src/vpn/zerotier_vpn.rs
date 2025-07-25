@@ -34,18 +34,21 @@ impl TVpnClient for ZerotierVpn {
     }
 
     async fn get_member_ips_in_vpn(&self, member_id: String) -> Result<Vec<IpAddr>, VpnError> {
-        let member = match get_network_member(&self.config, &self.network_id, &member_id).await {
-            Ok(m) => m,
-            Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
-        };
+        if member_id.len() > 0 {
+            let member = match get_network_member(&self.config, &self.network_id, &member_id).await
+            {
+                Ok(m) => m,
+                Err(e) => return Err(VpnError::MemberNotFoundError(e.to_string())),
+            };
 
-        if let Some(config) = member.config {
-            if let Some(ip_assignments) = config.ip_assignments {
-                if !ip_assignments.is_empty() {
-                    return Ok(ip_assignments
-                        .iter()
-                        .filter_map(|ip| IpAddr::from_str(ip).ok())
-                        .collect());
+            if let Some(config) = member.config {
+                if let Some(ip_assignments) = config.ip_assignments {
+                    if !ip_assignments.is_empty() {
+                        return Ok(ip_assignments
+                            .iter()
+                            .filter_map(|ip| IpAddr::from_str(ip).ok())
+                            .collect());
+                    }
                 }
             }
         }

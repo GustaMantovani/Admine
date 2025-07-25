@@ -3,7 +3,7 @@ use crate::{
     models::api_models::{AuthMemberRequest, ErrorResponse, ServerIpResponse, VpnIdResponse},
 };
 use actix_web::{get, post, web, HttpResponse, Responder};
-use log::{error, info};
+use log::info;
 
 #[get("/status")]
 async fn status() -> impl Responder {
@@ -12,14 +12,19 @@ async fn status() -> impl Responder {
 
 #[get("/server-ip")]
 pub async fn server_ip() -> impl Responder {
+    let server_vpn_id = AppContext::instance()
+        .storage()
+        .get("server_vpn_id")
+        .unwrap_or("".to_string());
+
     match AppContext::instance()
         .vpn_client()
-        .get_member_ips_in_vpn(String::from("a41a6f919c"))
+        .get_member_ips_in_vpn(server_vpn_id)
         .await
     {
-        Ok(ip) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ip }),
-        Err(_) => HttpResponse::InternalServerError().json(ErrorResponse {
-            message: "error".to_string(),
+        Ok(ips) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ips }),
+        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
+            message: e.to_string(),
         }),
     }
 }
@@ -32,17 +37,9 @@ pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Resp
 
     match vpn.auth_member(member_data.member_id.clone(), None).await {
         Ok(_) => HttpResponse::Ok().finish(),
-        Err(e) => {
-            error!("Failed to authorize member: {}", e);
-            if e.to_string().contains("not found") {
-                return HttpResponse::NotFound().json(ErrorResponse {
-                    message: "member not found".to_string(),
-                });
-            }
-            HttpResponse::InternalServerError().json(ErrorResponse {
-                message: "error".to_string(),
-            })
-        }
+        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
+            message: e.to_string(),
+        }),
     }
 }
 
