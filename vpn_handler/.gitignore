@@ -1,5 +1,5 @@
 /target
-.env
 /etc/sled
 zerotier_handler.log
 .idea
+vpn_handler_config.toml

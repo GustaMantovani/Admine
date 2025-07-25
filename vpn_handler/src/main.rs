@@ -9,7 +9,7 @@ mod vpn;
 use crate::{api::server, app_context::AppContext};
 use actix_web::rt;
 use anyhow::Result;
-use log::{error, info};
+use log::{debug, error, info};
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -21,8 +21,11 @@ async fn main() -> Result<()> {
 
     info!("Starting the application.");
 
-    info!("Loading configuration...");
+    info!("Loading application context...");
     let _context = AppContext::instance();
+
+    info!("Application context load sucefully!");
+    debug!("{:?}", AppContext::instance().config());
 
     let (actix_server, server_handle) = server::create_server()?;
 
