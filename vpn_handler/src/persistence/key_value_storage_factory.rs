@@ -1,9 +1,7 @@
-use crate::persistence::key_value_storage::KeyValueStore;
+use crate::persistence::key_value_storage::DynKeyValueStore;
 use crate::persistence::sled_store::SledStore;
 use serde::Deserialize;
 use strum::EnumString;
-
-pub type DynKeyValueStore = Box<dyn KeyValueStore + Send + Sync>;
 
 #[derive(Clone, Debug, PartialEq, EnumString, Deserialize)]
 pub enum StoreType {

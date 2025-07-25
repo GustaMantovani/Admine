@@ -1,27 +1,26 @@
 use crate::config::Config;
-use crate::persistence::key_value_storage_factory::{DynKeyValueStore, StoreFactory};
+use crate::persistence::key_value_storage::DynKeyValueStore;
+use crate::persistence::key_value_storage_factory::StoreFactory;
 use crate::vpn::vpn::TVpnClient;
 use crate::vpn::vpn_factory::VpnFactory;
-use anyhow::Result;
 use std::sync::{Mutex, OnceLock};
 
 pub struct AppContext {
     config: Config,
-    storage: Mutex<DynKeyValueStore>,
+    storage: DynKeyValueStore,
     vpn_client: Box<dyn TVpnClient + Send + Sync>,
 }
 
 static APP_CONTEXT: OnceLock<AppContext> = OnceLock::new();
 
 impl AppContext {
-    fn new() -> Result<Self> {
+    fn new() -> Result<Self, String> {
         // Ordered component initialization
-        let config = Config::new()?;
+        let config = Config::new().map_err(|e| format!("Failed to load config: {}", e))?;
         let storage = StoreFactory::create_store_instance(
             config.db_config.store_type.clone(),
             &config.db_config.path,
-        )
-        .map_err(|e| anyhow::anyhow!("Failed to create storage: {}", e))?;
+        )?;
 
         // Create VPN client based on configuration
         let vpn_client = VpnFactory::create_vpn(
@@ -30,11 +29,11 @@ impl AppContext {
             config.vpn_config.api_key.clone(),
             config.vpn_config.network_id.clone(),
         )
-        .map_err(|e| anyhow::anyhow!("Failed to create VPN client: {:?}", e))?;
+        .map_err(|e| format!("Failed to create VPN client: {:?}", e))?;
 
         Ok(Self {
             config,
-            storage: Mutex::new(storage),
+            storage,
             vpn_client,
         })
     }
@@ -48,22 +47,11 @@ impl AppContext {
         &self.config
     }
 
-    pub fn storage(&self) -> &Mutex<DynKeyValueStore> {
+    pub fn storage(&self) -> &DynKeyValueStore {
         &self.storage
     }
 
     pub fn vpn_client(&self) -> &Box<dyn TVpnClient + Send + Sync> {
         &self.vpn_client
-    }
-
-    // Storage methods
-    pub fn set_storage(&self, key: String, value: String) -> Result<(), String> {
-        let guard = self.storage.lock().unwrap();
-        guard.set(key, value)
-    }
-
-    pub fn get_storage(&self, key: &str) -> Result<Option<String>, String> {
-        let guard = self.storage.lock().unwrap();
-        guard.get(key)
     }
 }

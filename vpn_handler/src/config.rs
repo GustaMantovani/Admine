@@ -1,7 +1,6 @@
 use crate::persistence::key_value_storage_factory::StoreType;
 use crate::pub_sub::pub_sub_factory::PubSubType;
 use crate::vpn::vpn_factory::VpnType;
-use anyhow::{Ok, Result};
 use serde::Deserialize;
 use std::time::Duration;
 
@@ -56,7 +55,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Self> {
+    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string("./vpn_handler_config.toml")?;
         Ok(toml::from_str(&content)?)
     }
