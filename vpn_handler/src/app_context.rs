@@ -3,7 +3,7 @@ use crate::persistence::key_value_storage::DynKeyValueStore;
 use crate::persistence::key_value_storage_factory::StoreFactory;
 use crate::vpn::vpn::TVpnClient;
 use crate::vpn::vpn_factory::VpnFactory;
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 
 pub struct AppContext {
     config: Config,
