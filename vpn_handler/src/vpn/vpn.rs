@@ -2,6 +2,8 @@ use crate::errors::VpnError;
 use async_trait::async_trait;
 use std::net::IpAddr;
 
+pub type DynVpn = Box<dyn TVpnClient + Send + Sync>;
+
 #[async_trait]
 pub trait TVpnClient {
     async fn auth_member(

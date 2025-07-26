@@ -1,5 +1,7 @@
 use crate::errors::PubSubError;
 
+pub type DynPubSub = Box<dyn PubSubProvider>;
+
 pub trait TSubscriber {
     fn subscribe(&mut self, topics: Vec<String>) -> Result<(), PubSubError>;
     fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError>; // Return a tuple with message payload and channel name

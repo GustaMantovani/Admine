@@ -1,11 +1,9 @@
 use serde::Deserialize;
 use strum::EnumString;
 use zerotier_central_api::apis::configuration::Configuration;
-
-use crate::app_context::AppContext;
 use crate::errors::VpnError;
 use crate::vpn::public_ip::PublicIp;
-use crate::vpn::vpn::TVpnClient;
+use crate::vpn::vpn::{DynVpn, TVpnClient};
 use crate::vpn::zerotier_vpn::ZerotierVpn;
 
 #[derive(Clone, Debug, EnumString, Deserialize)]
@@ -22,7 +20,7 @@ impl VpnFactory {
         api_url: String,
         api_key: String,
         network_id: String,
-    ) -> Result<Box<dyn TVpnClient + Send + Sync>, VpnError> {
+    ) -> Result<DynVpn, VpnError> {
         match vpn_type {
             VpnType::Zerotier => {
                 let mut config = Configuration::new();
