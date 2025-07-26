@@ -1,10 +1,10 @@
+use crate::errors::VpnError;
+use crate::vpn::public_ip::PublicIp;
+use crate::vpn::vpn::DynVpn;
+use crate::vpn::zerotier_vpn::ZerotierVpn;
 use serde::Deserialize;
 use strum::EnumString;
 use zerotier_central_api::apis::configuration::Configuration;
-use crate::errors::VpnError;
-use crate::vpn::public_ip::PublicIp;
-use crate::vpn::vpn::{DynVpn, TVpnClient};
-use crate::vpn::zerotier_vpn::ZerotierVpn;
 
 #[derive(Clone, Debug, EnumString, Deserialize)]
 pub enum VpnType {

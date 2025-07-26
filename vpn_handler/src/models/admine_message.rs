@@ -1,21 +1,29 @@
+use crate::app_context::AppContext;
+use getset::{Getters, MutGetters, Setters};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Getters, Setters, MutGetters)]
 pub struct AdmineMessage {
-    pub origin: String,
-    pub tags: Vec<String>,
-    pub message: String,
+    #[getset(get = "pub", set = "pub")]
+    origin: String,
+
+    #[getset(get = "pub", set = "pub", get_mut = "pub")]
+    tags: Vec<String>,
+
+    #[getset(get = "pub", set = "pub")]
+    message: String,
 }
 
-impl fmt::Display for AdmineMessage {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "AdmineMessage {{ origin: \"{}\", tags: [{}], message: \"{}\" }}",
-            self.origin,
-            self.tags.join(", "),
-            self.message
-        )
+impl AdmineMessage {
+    pub fn new(tags: Vec<String>, message: String) -> Self {
+        Self {
+            origin: AppContext::instance().config().self_origin_name.clone(),
+            tags,
+            message,
+        }
+    }
+
+    pub fn has_tag(&self, tag: &str) -> bool {
+        self.tags.contains(&tag.to_string())
     }
 }

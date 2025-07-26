@@ -13,25 +13,25 @@ fn map_error_to_http_response(error: VpnError) -> HttpResponse {
             HttpResponse::NotFound().json(ErrorResponse {
                 message: error.to_string(),
             })
-        },
+        }
         VpnError::DeletionError(_) => {
             error!("Failed to delete member: {}", error);
             HttpResponse::InternalServerError().json(ErrorResponse {
                 message: error.to_string(),
             })
-        },
+        }
         VpnError::MemberUpdateError(_) => {
             error!("Failed to update/authorize member: {}", error);
             HttpResponse::InternalServerError().json(ErrorResponse {
                 message: error.to_string(),
             })
-        },
+        }
         VpnError::InternalError(_) => {
             error!("Internal VPN error: {}", error);
             HttpResponse::InternalServerError().json(ErrorResponse {
                 message: error.to_string(),
             })
-        },
+        }
     }
 }
 
@@ -62,11 +62,14 @@ pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Resp
         Ok(_) => {
             info!("Member {} authorized successfully", member_data.member_id);
             HttpResponse::NoContent().finish()
-        },
+        }
         Err(vpn_error) => {
-            error!("Failed to authorize member {}: {}", member_data.member_id, vpn_error);
+            error!(
+                "Failed to authorize member {}: {}",
+                member_data.member_id, vpn_error
+            );
             map_error_to_http_response(vpn_error)
-        },
+        }
     }
 }
 
