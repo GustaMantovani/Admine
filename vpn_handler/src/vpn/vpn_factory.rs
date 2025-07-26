@@ -2,6 +2,7 @@ use serde::Deserialize;
 use strum::EnumString;
 use zerotier_central_api::apis::configuration::Configuration;
 
+use crate::app_context::AppContext;
 use crate::errors::VpnError;
 use crate::vpn::public_ip::PublicIp;
 use crate::vpn::vpn::TVpnClient;
@@ -28,8 +29,10 @@ impl VpnFactory {
                 config.base_path = api_url;
                 config.api_key = Some(zerotier_central_api::apis::configuration::ApiKey {
                     prefix: None,
-                    key: api_key,
+                    key: api_key.clone(),
                 });
+
+                config.bearer_access_token = Some(api_key.clone());
 
                 print!("{:?}", config);
 

@@ -8,22 +8,28 @@ use log::{error, info};
 
 fn map_error_to_http_response(error: VpnError) -> HttpResponse {
     match error {
-        VpnError::MemberNotFoundError(vpn_error) => {
-            error!("Member not found: {}", vpn_error);
+        VpnError::MemberNotFoundError(_) => {
+            error!("Member not found: {}", error);
             HttpResponse::NotFound().json(ErrorResponse {
-                message: vpn_error.to_string(),
+                message: error.to_string(),
             })
         },
-        VpnError::DeletionError(vpn_error) => {
-            error!("Failed to delete member: {}", vpn_error);
-            HttpResponse::UnprocessableEntity().json(ErrorResponse {
-                message: vpn_error.to_string(),
+        VpnError::DeletionError(_) => {
+            error!("Failed to delete member: {}", error);
+            HttpResponse::InternalServerError().json(ErrorResponse {
+                message: error.to_string(),
             })
         },
-        VpnError::MemberUpdateError(vpn_error) => {
-            error!("Failed to update/authorize member: {}", vpn_error);
-            HttpResponse::UnprocessableEntity().json(ErrorResponse {
-                message: vpn_error.to_string(),
+        VpnError::MemberUpdateError(_) => {
+            error!("Failed to update/authorize member: {}", error);
+            HttpResponse::InternalServerError().json(ErrorResponse {
+                message: error.to_string(),
+            })
+        },
+        VpnError::InternalError(_) => {
+            error!("Internal VPN error: {}", error);
+            HttpResponse::InternalServerError().json(ErrorResponse {
+                message: error.to_string(),
             })
         },
     }

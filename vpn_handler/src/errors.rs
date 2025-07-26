@@ -16,4 +16,7 @@ pub enum VpnError {
 
     #[error("Authorization error: {0}")]
     MemberUpdateError(String),
+
+    #[error("Internal VPN error: {0}")]
+    InternalError(String),
 }
