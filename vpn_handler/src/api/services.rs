@@ -1,9 +1,33 @@
 use crate::{
     app_context::AppContext,
+    errors::VpnError,
     models::api_models::{AuthMemberRequest, ErrorResponse, ServerIpResponse, VpnIdResponse},
 };
 use actix_web::{get, post, web, HttpResponse, Responder};
-use log::info;
+use log::{error, info};
+
+fn map_vpn_error_to_response(vpn_error: VpnError) -> HttpResponse {
+    match vpn_error {
+        VpnError::MemberNotFoundError(vpn_error) => {
+            error!("Member not found: {}", vpn_error);
+            HttpResponse::NotFound().json(ErrorResponse {
+                message: vpn_error.to_string(),
+            })
+        },
+        VpnError::DeletionError(vpn_error) => {
+            error!("Failed to delete member: {}", vpn_error);
+            HttpResponse::UnprocessableEntity().json(ErrorResponse {
+                message: vpn_error.to_string(),
+            })
+        },
+        VpnError::MemberUpdateError(vpn_error) => {
+            error!("Failed to update/authorize member: {}", vpn_error);
+            HttpResponse::UnprocessableEntity().json(ErrorResponse {
+                message: vpn_error.to_string(),
+            })
+        },
+    }
+}
 
 #[get("/status")]
 async fn status() -> impl Responder {
@@ -23,9 +47,7 @@ pub async fn server_ip() -> impl Responder {
         .await
     {
         Ok(ips) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ips }),
-        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
-            message: e.to_string(),
-        }),
+        Err(vpn_error) => map_vpn_error_to_response(vpn_error),
     }
 }
 
@@ -36,10 +58,14 @@ pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Resp
     let vpn = AppContext::instance().vpn_client();
 
     match vpn.auth_member(member_data.member_id.clone(), None).await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
-            message: e.to_string(),
-        }),
+        Ok(_) => {
+            info!("Member {} authorized successfully", member_data.member_id);
+            HttpResponse::NoContent().finish()
+        },
+        Err(vpn_error) => {
+            error!("Failed to authorize member {}: {}", member_data.member_id, vpn_error);
+            map_vpn_error_to_response(vpn_error)
+        },
     }
 }
 
