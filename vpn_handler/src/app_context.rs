@@ -1,14 +1,14 @@
 use crate::config::Config;
 use crate::persistence::key_value_storage::DynKeyValueStore;
 use crate::persistence::key_value_storage_factory::StoreFactory;
-use crate::vpn::vpn::TVpnClient;
+use crate::vpn::vpn::{DynVpn, TVpnClient};
 use crate::vpn::vpn_factory::VpnFactory;
 use std::sync::OnceLock;
 
 pub struct AppContext {
     config: Config,
     storage: DynKeyValueStore,
-    vpn_client: Box<dyn TVpnClient + Send + Sync>,
+    vpn_client: DynVpn,
 }
 
 static APP_CONTEXT: OnceLock<AppContext> = OnceLock::new();
@@ -51,7 +51,7 @@ impl AppContext {
         &self.storage
     }
 
-    pub fn vpn_client(&self) -> &Box<dyn TVpnClient + Send + Sync> {
+    pub fn vpn_client(&self) -> &DynVpn {
         &self.vpn_client
     }
 }
