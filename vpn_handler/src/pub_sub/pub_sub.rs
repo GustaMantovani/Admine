@@ -1,6 +1,8 @@
 use crate::errors::PubSubError;
 
 pub type DynPubSub = Box<dyn PubSubProvider>;
+pub trait PubSubProvider: TPublisher + TSubscriber + Send + Sync {}
+impl<T: TPublisher + TSubscriber + Send + Sync> PubSubProvider for T {}
 
 pub trait TSubscriber {
     fn subscribe(&mut self, topics: Vec<String>) -> Result<(), PubSubError>;
@@ -10,6 +12,3 @@ pub trait TSubscriber {
 pub trait TPublisher {
     fn publish(&mut self, topic: String, message: String) -> Result<(), PubSubError>;
 }
-
-pub trait PubSubProvider: TPublisher + TSubscriber + Send + Sync {}
-impl<T: TPublisher + TSubscriber + Send + Sync> PubSubProvider for T {}

@@ -1,14 +1,17 @@
 use crate::config::Config;
 use crate::persistence::key_value_storage::DynKeyValueStore;
 use crate::persistence::key_value_storage_factory::StoreFactory;
+use crate::pub_sub::pub_sub::DynPubSub;
+use crate::pub_sub::pub_sub_factory::PubSubFactory;
 use crate::vpn::vpn::DynVpn;
 use crate::vpn::vpn_factory::VpnFactory;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 pub struct AppContext {
     config: Config,
     storage: DynKeyValueStore,
     vpn_client: DynVpn,
+    pub_sub: Mutex<DynPubSub>,
 }
 
 static APP_CONTEXT: OnceLock<AppContext> = OnceLock::new();
@@ -31,10 +34,26 @@ impl AppContext {
         )
         .map_err(|e| format!("Failed to create VPN client: {:?}", e))?;
 
+        // Create PubSub client based on configuration
+        let mut pub_sub = PubSubFactory::create_pubsub_instance(
+            config.pub_sub_config.pub_sub_type.clone(),
+            &config.pub_sub_config.url,
+        )
+        .map_err(|e| format!("Failed to create PubSub client: {:?}", e))?;
+
+        // Subscribe to channels
+        pub_sub
+            .subscribe(vec![
+                config.admine_channels_map.server_channel.clone(),
+                config.admine_channels_map.command_channel.clone(),
+            ])
+            .map_err(|e| format!("Failed to subscribe to channels: {:?}", e))?;
+
         Ok(Self {
             config,
             storage,
             vpn_client,
+            pub_sub: Mutex::new(pub_sub),
         })
     }
 
@@ -53,5 +72,9 @@ impl AppContext {
 
     pub fn vpn_client(&self) -> &DynVpn {
         &self.vpn_client
+    }
+
+    pub fn pub_sub(&self) -> &Mutex<DynPubSub> {
+        &self.pub_sub
     }
 }

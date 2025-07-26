@@ -5,8 +5,9 @@ mod errors;
 mod models;
 mod persistence;
 mod pub_sub;
+mod queue_handler;
 mod vpn;
-use crate::{api::server, app_context::AppContext};
+use crate::{api::server, app_context::AppContext, queue_handler::Handle};
 use actix_web::rt;
 use log::{debug, error, info};
 
@@ -28,7 +29,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (actix_server, server_handle) = server::create_server()?;
 
+    info!("Starting queue handler...");
+    let queue_handle = Handle::new()?;
+
+    // Spawn both the HTTP server and queue handler
     rt::spawn(actix_server);
+    rt::spawn(async move {
+        if let Err(e) = queue_handle.run().await {
+            error!("Queue handler error: {}", e);
+        }
+    });
 
     tokio::signal::ctrl_c().await?;
     server_handle.stop(true).await;
