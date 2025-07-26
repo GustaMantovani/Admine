@@ -6,7 +6,7 @@ use crate::{
 use actix_web::{get, post, web, HttpResponse, Responder};
 use log::{error, info};
 
-fn map_vpn_error_to_response(vpn_error: VpnError) -> HttpResponse {
+fn map_error_to_http_response(vpn_error: VpnError) -> HttpResponse {
     match vpn_error {
         VpnError::MemberNotFoundError(vpn_error) => {
             error!("Member not found: {}", vpn_error);
@@ -47,7 +47,7 @@ pub async fn server_ip() -> impl Responder {
         .await
     {
         Ok(ips) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ips }),
-        Err(vpn_error) => map_vpn_error_to_response(vpn_error),
+        Err(vpn_error) => map_error_to_http_response(vpn_error),
     }
 }
 
@@ -64,7 +64,7 @@ pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Resp
         },
         Err(vpn_error) => {
             error!("Failed to authorize member {}: {}", member_data.member_id, vpn_error);
-            map_vpn_error_to_response(vpn_error)
+            map_error_to_http_response(vpn_error)
         },
     }
 }
