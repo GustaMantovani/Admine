@@ -6,8 +6,8 @@ use crate::{
 use actix_web::{get, post, web, HttpResponse, Responder};
 use log::{error, info};
 
-fn map_error_to_http_response(vpn_error: VpnError) -> HttpResponse {
-    match vpn_error {
+fn map_error_to_http_response(error: VpnError) -> HttpResponse {
+    match error {
         VpnError::MemberNotFoundError(vpn_error) => {
             error!("Member not found: {}", vpn_error);
             HttpResponse::NotFound().json(ErrorResponse {
