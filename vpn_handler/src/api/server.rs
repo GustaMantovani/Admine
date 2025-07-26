@@ -8,7 +8,6 @@ pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
 
     let server = HttpServer::new(|| {
         App::new()
-            .service(services::status)
             .service(services::server_ip)
             .service(services::auth_member)
             .service(services::vpn_id)
