@@ -3,21 +3,17 @@ use getset::{Getters, MutGetters, Setters};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Getters, Setters, MutGetters)]
+#[getset(get = "pub", set = "pub")]
 pub struct AdmineMessage {
-    #[getset(get = "pub", set = "pub")]
     origin: String,
-
-    #[getset(get = "pub", set = "pub", get_mut = "pub")]
     tags: Vec<String>,
-
-    #[getset(get = "pub", set = "pub")]
     message: String,
 }
 
 impl AdmineMessage {
     pub fn new(tags: Vec<String>, message: String) -> Self {
         Self {
-            origin: AppContext::instance().config().self_origin_name.clone(),
+            origin: AppContext::instance().config().self_origin_name().clone(),
             tags,
             message,
         }

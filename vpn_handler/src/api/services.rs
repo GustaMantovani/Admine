@@ -77,6 +77,6 @@ pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Resp
 pub async fn vpn_id() -> impl Responder {
     let config = AppContext::instance().config();
     HttpResponse::Ok().json(VpnIdResponse {
-        vpn_id: config.vpn_config.network_id.clone(),
+        vpn_id: config.vpn_config().network_id().clone(),
     })
 }

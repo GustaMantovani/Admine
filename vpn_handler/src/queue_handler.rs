@@ -1,6 +1,6 @@
 use crate::app_context::AppContext;
 use crate::models::admine_message::AdmineMessage;
-use log::{error, info, warn};
+use log::{error, info};
 use std::sync::Arc;
 use tokio::spawn;
 use tokio::sync::mpsc;
@@ -17,8 +17,8 @@ impl Handle {
 
         info!(
             "Handle created successfully with channels: {:?} and retry config: {:?}",
-            AppContext::instance().config().admine_channels_map,
-            AppContext::instance().config().retry_config
+            AppContext::instance().config().admine_channels_map(),
+            AppContext::instance().config().retry_config()
         );
 
         Ok(Self)
@@ -63,8 +63,7 @@ impl Handle {
                 info!("Member {} authenticated successfully.", member_id);
 
                 // Retry logic to fetch member IPs until available.
-                let retry_config = &AppContext::instance().config().retry_config;
-                let mut attempts = retry_config.attempts;
+                let mut attempts = *AppContext::instance().config().retry_config().attempts();
                 let member_ips = loop {
                     match AppContext::instance()
                         .vpn_client()
@@ -83,9 +82,9 @@ impl Handle {
                             attempts -= 1;
                             info!(
                                 "IPs not available yet for member {}. Retrying in {:?}...",
-                                member_id, retry_config.delay
+                                member_id, AppContext::instance().config().retry_config().delay()
                             );
-                            sleep(retry_config.delay).await;
+                            sleep(*AppContext::instance().config().retry_config().delay()).await;
                         }
                     }
                 };
@@ -112,8 +111,8 @@ impl Handle {
                 if let Err(e) = AppContext::instance().pub_sub().lock().unwrap().publish(
                     AppContext::instance()
                         .config()
-                        .admine_channels_map
-                        .vpn_channel
+                        .admine_channels_map()
+                        .vpn_channel()
                         .clone(),
                     pubsub_msg_str,
                 ) {
@@ -182,71 +181,7 @@ impl Handle {
                 raw_message.1, admine_message
             );
 
-            let channels = &AppContext::instance().config().admine_channels_map;
-
-            match raw_message.1.as_str() {
-                // For messages from the server channel with "server_up" tag, enqueue for ingestion.
-                s if s == channels.server_channel => {
-                    if admine_message.has_tag("server_up") {
-                        if let Err(e) = tx.send(Arc::new(admine_message)).await {
-                            error!("Error sending message to ingestion queue: {}", e);
-                        }
-                    }
-                }
-                // For messages from the command channel with "auth_member" tag, process in a separate task.
-                s if s == channels.command_channel => {
-                    if admine_message.has_tag("auth_member") {
-                        let member_id = admine_message.message().clone();
-
-                        tokio::spawn(async move {
-                            if let Err(e) = AppContext::instance()
-                                .vpn_client()
-                                .auth_member(member_id.clone(), None)
-                                .await
-                            {
-                                error!("Error authenticating member {}: {}", member_id, e);
-                                return;
-                            }
-                            info!("Member {} authenticated successfully.", member_id);
-
-                            let command_message = AdmineMessage::new(
-                                vec![String::from("auth_member_success")],
-                                member_id.clone(),
-                            );
-
-                            let command_pubsub_msg = match serde_json::to_string(&command_message) {
-                                Ok(msg) => msg,
-                                Err(e) => {
-                                    error!(
-                                        "Error serializing message for member {}: {}",
-                                        member_id, e
-                                    );
-                                    return;
-                                }
-                            };
-
-                            info!("Publishing command channel message: {}", command_pubsub_msg);
-                            if let Err(e) =
-                                AppContext::instance().pub_sub().lock().unwrap().publish(
-                                    AppContext::instance()
-                                        .config()
-                                        .admine_channels_map
-                                        .vpn_channel
-                                        .clone(),
-                                    command_pubsub_msg,
-                                )
-                            {
-                                error!("Error publishing command channel message: {}", e);
-                            } else {
-                                info!("Command channel message published successfully.");
-                            }
-                        });
-                    }
-                }
-                other => {
-                    warn!("Unsupported channel: {}", other);
-                }
-            }
+            let _ = tx.send(Arc::new(admine_message)).await;
         }
     }
 }

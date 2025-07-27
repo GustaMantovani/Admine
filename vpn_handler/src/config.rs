@@ -1,57 +1,65 @@
 use crate::persistence::key_value_storage_factory::StoreType;
 use crate::pub_sub::pub_sub_factory::PubSubType;
 use crate::vpn::vpn_factory::VpnType;
+use getset::{Getters, Setters};
 use serde::Deserialize;
 use std::time::Duration;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct ApiConfig {
-    pub host: String,
-    pub port: u16,
+    host: String,
+    port: u16,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct PubSubConfig {
-    pub url: String,
-    pub pub_sub_type: PubSubType,
+    url: String,
+    pub_sub_type: PubSubType,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct VpnConfig {
-    pub api_url: String,
-    pub api_key: String,
-    pub network_id: String,
-    pub vpn_type: VpnType,
+    api_url: String,
+    api_key: String,
+    network_id: String,
+    vpn_type: VpnType,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct DbConfig {
-    pub path: String,
-    pub store_type: StoreType,
+    path: String,
+    store_type: StoreType,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct AdmineChannelsMap {
-    pub server_channel: String,
-    pub command_channel: String,
-    pub vpn_channel: String,
+    server_channel: String,
+    command_channel: String,
+    vpn_channel: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct RetryConfig {
-    pub attempts: usize,
-    pub delay: Duration,
+    attempts: usize,
+    delay: Duration,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct Config {
-    pub self_origin_name: String,
-    pub api_config: ApiConfig,
-    pub pub_sub_config: PubSubConfig,
-    pub vpn_config: VpnConfig,
-    pub db_config: DbConfig,
-    pub admine_channels_map: AdmineChannelsMap,
-    pub retry_config: RetryConfig,
+    self_origin_name: String,
+    api_config: ApiConfig,
+    pub_sub_config: PubSubConfig,
+    vpn_config: VpnConfig,
+    db_config: DbConfig,
+    admine_channels_map: AdmineChannelsMap,
+    retry_config: RetryConfig,
 }
 
 impl Config {
