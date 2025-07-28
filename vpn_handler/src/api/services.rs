@@ -39,7 +39,7 @@ fn map_error_to_http_response(error: VpnError) -> HttpResponse {
 pub async fn server_ip() -> impl Responder {
     let server_vpn_id = AppContext::instance()
         .storage()
-        .get("server_vpn_id")
+        .get("server_member_id")
         .unwrap_or("".to_string());
 
     match AppContext::instance()
