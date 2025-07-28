@@ -2,6 +2,9 @@ openapi: 3.0.0
 info:
   title: VPN Handler
   version: '1.0'
+  contact:
+    email: mantovanig000@gmail.com
+  description: VPN Handler API.
 servers:
   - url: 'http://localhost:9000'
 paths:
@@ -19,6 +22,7 @@ paths:
       operationId: get-server-ip
       x-stoplight:
         id: 1bg2x24ekr9ol
+      description: GET server IPs in VPN.
     parameters: []
   /vpn-id:
     get:
@@ -32,6 +36,7 @@ paths:
       operationId: get-vpn-id
       x-stoplight:
         id: zo9shemnt9j6f
+      description: GET internal VPN ID
   /auth-member:
     post:
       summary: Your POST endpoint
@@ -48,6 +53,7 @@ paths:
         id: 4snsp5e4xc4im
       requestBody:
         $ref: '#/components/requestBodies/AuthMemberRequest'
+      description: Authenticate a member on VPN.
 components:
   schemas: {}
   requestBodies:
