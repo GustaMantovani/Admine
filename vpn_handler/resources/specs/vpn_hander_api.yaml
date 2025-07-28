@@ -1,6 +1,4 @@
 openapi: 3.0.0
-x-stoplight:
-  id: occanl18mgzsc
 info:
   title: VPN Handler
   version: '1.0'
