@@ -7,12 +7,12 @@ info:
 servers:
   - url: 'http://localhost:9000'
 paths:
-  /server-ip:
+  /server-ips:
     get:
       summary: Your GET endpoint
       tags: []
       responses:
-        '204':
+        '200':
           $ref: '#/components/responses/ServerIpResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
@@ -21,6 +21,7 @@ paths:
       operationId: get-server-ip
       x-stoplight:
         id: 1bg2x24ekr9ol
+    parameters: []
   /vpn-id:
     get:
       summary: Your GET endpoint
