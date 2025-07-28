@@ -1,8 +1,8 @@
 use crate::app_context::AppContext;
-use getset::{Getters, MutGetters, Setters};
+use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Getters, Setters, MutGetters)]
+#[derive(Serialize, Deserialize, Debug, Clone, Getters, Setters)]
 #[getset(get = "pub", set = "pub")]
 pub struct AdmineMessage {
     origin: String,
