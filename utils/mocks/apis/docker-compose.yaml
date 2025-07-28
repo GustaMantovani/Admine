@@ -3,6 +3,6 @@ services:
     image: stoplight/prism:4
     command: 'mock -h 0.0.0.0 /tmp/api.oas3.yml'
     volumes:
-      - ../../../vpn_handler/resources/specs/vpn_hander_api.yaml:/tmp/api.oas3.yml:ro
+      - ../../../vpn_handler/etc/specs/vpn_hander_api.yaml:/tmp/api.oas3.yml:ro
     ports:
       - '9000:4010'
