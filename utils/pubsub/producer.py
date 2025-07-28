@@ -2,18 +2,19 @@ import redis
 import json
 
 def main():
-    channel = input("Digite o nome do canal: ")
-
     # Conecta ao Redis
     client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
     while True:
+        channel = input("Digite o nome do canal: ")
+        origin = input("Digite a origem: ")
         tags_input = input("Digite as tags (separadas por vírgula): ")
         tags = [tag.strip() for tag in tags_input.split(',')]
         message = input("Digite a mensagem: ")
 
         # Cria a mensagem no formato JSON
         admine_message = {
+            "origin": origin,
             "tags": tags,
             "message": message
         }
