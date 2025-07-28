@@ -1,29 +1,30 @@
-### README for Server Handler
+# SERVER HANDLER #
+The server handler up minecraft server from a compose file.
+It listens to pubsub channels for commands to the server. Responds with zerotier id.
 
-# Server Handler
-
-The server handler is a Go-based Admine component. He is separate in three parts, the Server Handler, Health Checker and Command Handler.
-
-The Server Handler is responsible for set up the Minecraft Server container and comunicate this via a Redis PubSub.
-
-The Health Checker verify the state of the Minecraft Server container.
-
-The Command Handler receives a command via a Redis PubSub and send it to the Minecraft Server.
-
-# Environment variables:
-
-```bash
-export REDIS_SERVER_CHANNEL=server_channel
-export COMMAND_CHANNEL=command_channel
-export NETWORK_ID=xxxxxxxxxxxx
-export REDIS_URL=redis://127.0.0.1/
+## Configuration ##
+The server handler can be configured in a .yaml file or env vars.
+### Yaml ###
+The file is ~/.config/server.yaml
+```
+serverName: "name-of-compose-service"
+composeDirectory: "/compose/absolute/path.yaml"
+host: "pubsub-host-adress"
+port: "pubsub-port"
+pubsub: "pubsub-type"
+senderChannel: "channel-that-responds"
+consummerChannels:
+- "channel1"
+- "channel2"
 ```
 
-# Server Handler config
-
-This config file should be placed in `$HOME/.config/admine/server.yaml`
-
-```yaml
-serverName: "name_server_service_in_the_compose"
-composeDirectory: "compose_directory_full_name"
+### Env ###
+```
+SERVER_NAME "channel"
+COMPOSE_DIRECTORY "/path"
+CONSUMER_CHANNEL "channel1:channel2"
+SENDER_CHANNEL "channel"
+PUBSUB "pubsub-type"
+HOST "pubsub-host-adress"
+PORT "pubsub-port"
 ```

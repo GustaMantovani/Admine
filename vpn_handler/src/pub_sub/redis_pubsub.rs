@@ -3,7 +3,6 @@ use crate::errors::PubSubError;
 use redis::Commands;
 
 pub struct RedisPubSub {
-    client: redis::Client,
     connection: redis::Connection,
     subscribed_topics: Vec<String>,
 }
@@ -14,7 +13,6 @@ impl RedisPubSub {
         let connection = client.get_connection().unwrap();
         let subscribed_topics = Vec::new();
         Self {
-            client,
             connection,
             subscribed_topics,
         }
@@ -29,12 +27,7 @@ impl TSubscriber for RedisPubSub {
         Ok(())
     }
 
-    fn unsubscribe(&mut self, topic: String) -> Result<(), PubSubError> {
-        self.subscribed_topics.retain(|t| t != &topic);
-        Ok(())
-    }
-
-    fn listen_until_to_ricieve_message(&mut self) -> Result<(String, String), PubSubError> {
+    fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError> {
         let mut pubsub = self.connection.as_pubsub();
 
         self.subscribed_topics.iter().for_each(|t| {

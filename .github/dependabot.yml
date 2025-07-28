@@ -5,15 +5,11 @@
 
 version: 2
 updates:
-  - package-ecosystem: "cargo"
-    directory: "/zerotier_handler"
+  - package-ecosystem: "cargo" # See documentation for possible values
+    directory: "/vpn_handler" # Location of package manifests
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "gomod"
-    directory: "/server_handler"
+      interval: "monthly"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/server_handler" # Location of package manifests
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "pip"
-    directory: "/bot"
-    schedule:
-      interval: "weekly"
+      interval: "monthly"

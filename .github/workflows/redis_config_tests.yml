@@ -1,14 +1,11 @@
 name: Redis Configuration CI
 
 on:
-  push:
-    paths:
-      - "redis-pub-sub/docker-compose.yaml"
-      - "redis-pub-sub/redis.conf"
   pull_request:
     paths:
-      - "redis-pub-sub/docker-compose.yaml"
-      - "redis-pub-sub/redis.conf"
+      - "redis_pubsub/docker-compose.yaml"
+      - "redis_pubsub/redis.conf"
+  workflow_dispatch:
 
 jobs:
   validate-config:
@@ -20,11 +17,15 @@ jobs:
 
       - name: Run Redis with configuration
         run: docker compose up -d
-        working-directory: redis-pub-sub
-          
+        working-directory: redis_pubsub
+
+      - name: Wait for Redis to start
+        run: sleep 1
+
       - name: Check Redis status
-        run: docker exec redis-test redis-cli PING
+        run: docker compose exec -T redis redis-cli PING
+        working-directory: redis_pubsub
 
       - name: Remove container
         run: docker compose down
-        working-directory: redis-pub-sub
+        working-directory: redis_pubsub

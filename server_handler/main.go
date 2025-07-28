@@ -1,7 +1,7 @@
 package main
 
 import (
-	"server/handler/cmd"
+	"server_handler/cmd"
 )
 
 func main() {

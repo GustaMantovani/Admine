@@ -1,12 +1,10 @@
 name: Go Server Handler CI
 
 on:
-  push:
-    paths:
-      - "server_handler/**"
   pull_request:
     paths:
       - "server_handler/**"
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -19,11 +17,15 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.23.1"
+          go-version: "1.24.2"
 
       - name: Install dependencies
         run: go mod tidy
         working-directory: server_handler
+
+      - name: Run Redis with configuration
+        run: docker compose up -d
+        working-directory: redis_pubsub
 
       - name: Run tests
         run: go test ./... -v
@@ -32,3 +34,7 @@ jobs:
       - name: Build binary
         run: go build -o server_handler main.go
         working-directory: server_handler
+
+      - name: Remove container
+        run: docker compose down
+        working-directory: redis_pubsub
