@@ -1,28 +1,42 @@
+mod api;
+mod app_context;
+mod config;
 mod errors;
-mod handle;
 mod models;
 mod persistence;
 mod pub_sub;
+mod queue_handler;
 mod vpn;
+use crate::{api::server, app_context::AppContext, queue_handler::Handle};
+use actix_web::rt;
+use log::{debug, error, info};
 
-use handle::Handle;
-use log::{error, info};
-use log4rs;
-
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger using configuration file.
-    log4rs::init_file("./config/log4rs.yaml", Default::default()).map_err(|e| {
+    log4rs::init_file("./etc/log4rs.yaml", Default::default()).map_err(|e| {
         error!("Error initializing logger: {}", e);
         e
     })?;
 
     info!("Starting the application.");
 
-    // Create and run the handle.
-    let handle = Handle::new()?;
-    info!("Handle created successfully.");
-    handle.run().await?;
+    info!("Loading application context...");
+    let _context = AppContext::instance();
 
+    info!("Application context load sucefully!");
+    debug!("{:?}", AppContext::instance().config());
+
+    let (actix_server, server_handle) = server::create_server()?;
+
+    info!("Starting queue handler...");
+    let queue_handle = Handle::new()?;
+
+    // Spawn both the HTTP server and queue handler
+    rt::spawn(actix_server);
+    tokio::spawn(queue_handle.run());
+
+    tokio::signal::ctrl_c().await?;
+    server_handle.stop(true).await;
     Ok(())
 }

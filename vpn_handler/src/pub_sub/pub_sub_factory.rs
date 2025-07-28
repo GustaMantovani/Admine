@@ -1,24 +1,12 @@
 use crate::errors::PubSubError;
+use crate::pub_sub::pub_sub::DynPubSub;
 use crate::pub_sub::redis_pubsub::RedisPubSub;
-use crate::pub_sub::pub_sub::PubSubProvider;
-use std::str::FromStr;
+use serde::Deserialize;
+use strum::EnumString;
 
-pub type DynPubSub = Box<dyn PubSubProvider>;
-
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, EnumString, Deserialize)]
 pub enum PubSubType {
     Redis,
-}
-
-impl FromStr for PubSubType {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<PubSubType, Self::Err> {
-        match input {
-            "Redis" => Ok(PubSubType::Redis),
-            _ => Err(()),
-        }
-    }
 }
 
 pub struct PubSubFactory;

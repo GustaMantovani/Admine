@@ -6,7 +6,7 @@ appenders:
 
   file:
     kind: file
-    path: "/tmp/zerotier_handler.log"
+    path: "/tmp/vpn_handler.log"
     encoder:
       pattern: "{d} - {l} - {m}{n}"
 

@@ -1,4 +1,4 @@
-use crate::persistence::key_value_store::KeyValueStore;
+use crate::persistence::key_value_storage::KeyValueStore;
 use sled::Db;
 
 pub struct SledStore {
@@ -13,20 +13,18 @@ impl SledStore {
 }
 
 impl KeyValueStore for SledStore {
-    fn set(&mut self, key: String, value: String) -> Result<(), String> {
+    fn set(&self, key: String, value: String) -> Result<(), Box<dyn std::error::Error>> {
         self.db
-            .insert(key, value.into_bytes())
-            .map_err(|e| e.to_string())?;
-        self.db.flush().map_err(|e| e.to_string())?;
-        Ok(())
+            .insert(key, value.as_bytes())
+            .map(|_| ())
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
     }
 
-    fn get(&self, key: &str) -> Result<Option<String>, String> {
-        match self.db.get(key).map_err(|e| e.to_string())? {
-            Some(value) => Ok(Some(
-                String::from_utf8(value.to_vec()).map_err(|e| e.to_string())?,
-            )),
-            None => Ok(None),
-        }
+    fn get(&self, key: &str) -> Option<String> {
+        self.db
+            .get(key)
+            .ok()
+            .flatten()
+            .and_then(|ivec| String::from_utf8(ivec.to_vec()).ok())
     }
 }

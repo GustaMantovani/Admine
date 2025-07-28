@@ -1,18 +1,25 @@
+use crate::app_context::AppContext;
+use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
-use serde_json;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Getters, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub struct AdmineMessage {
-    pub tags: Vec<String>,
-    pub message: String,
+    origin: String,
+    tags: Vec<String>,
+    message: String,
 }
 
 impl AdmineMessage {
-    pub fn to_json_string(&self) -> Result<String, serde_json::Error> {
-        serde_json::to_string(self)
+    pub fn new(tags: Vec<String>, message: String) -> Self {
+        Self {
+            origin: AppContext::instance().config().self_origin_name().clone(),
+            tags,
+            message,
+        }
     }
 
-    pub fn from_json_string(json_str: &str) -> Result<AdmineMessage, serde_json::Error> {
-        serde_json::from_str(json_str)
+    pub fn has_tag(&self, tag: &str) -> bool {
+        self.tags.contains(&tag.to_string())
     }
 }
