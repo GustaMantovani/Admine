@@ -34,11 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Spawn both the HTTP server and queue handler
     rt::spawn(actix_server);
-    rt::spawn(async move {
-        if let Err(e) = queue_handle.run().await {
-            error!("Queue handler error: {}", e);
-        }
-    });
+    tokio::spawn(queue_handle.run());
 
     tokio::signal::ctrl_c().await?;
     server_handle.stop(true).await;
