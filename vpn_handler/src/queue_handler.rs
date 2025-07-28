@@ -1,9 +1,6 @@
 use crate::app_context::AppContext;
 use crate::models::admine_message::AdmineMessage;
-use log::{error, info};
-use std::sync::Arc;
-use tokio::spawn;
-use tokio::sync::mpsc;
+use log::{error, info, warn};
 use tokio::time::sleep;
 
 /// Main handle structure.
@@ -12,15 +9,7 @@ pub struct Handle;
 impl Handle {
     /// Initializes the Handle using the shared AppContext.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        // Apenas inicializa o contexto global
         AppContext::instance();
-
-        info!(
-            "Handle created successfully with channels: {:?} and retry config: {:?}",
-            AppContext::instance().config().admine_channels_map(),
-            AppContext::instance().config().retry_config()
-        );
-
         Ok(Self)
     }
 
@@ -35,118 +24,147 @@ impl Handle {
             })
     }
 
-    /// Main run loop.
-    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Handle run started.");
+    /// Process server_up messages with retry logic and IP fetching
+    async fn process_server_up(member_id: String) {
+        let vpn_client = AppContext::instance().vpn_client();
+        let config = AppContext::instance().config();
+        let retry_config = config.retry_config();
 
-        // Create an ingestion queue for server messages.
-        info!("Creating ingestion queue to handle server messages");
-        let (tx, mut rx) = mpsc::channel::<Arc<AdmineMessage>>(32);
+        // Authenticate the member
+        if let Err(e) = vpn_client.auth_member(member_id.clone(), None).await {
+            error!("Error authenticating member {}: {}", member_id, e);
+            return;
+        }
+        info!("Member {} authenticated successfully.", member_id);
 
-        info!("Spawning task to process ingestion messages");
-
-        // Clone context for the ingestion task.
-        spawn(async move {
-            while let Some(ingest_message) = rx.recv().await {
-                info!("Processing ingestion message: {:?}", ingest_message);
-                let member_id = ingest_message.message().clone();
-
-                // Authenticate the member.
-                if let Err(e) = AppContext::instance()
-                    .vpn_client()
-                    .auth_member(member_id.clone(), None)
-                    .await
-                {
-                    error!("Error authenticating member {}: {}", member_id, e);
-                    continue;
-                }
-                info!("Member {} authenticated successfully.", member_id);
-
-                // Retry logic to fetch member IPs until available.
-                let mut attempts = *AppContext::instance().config().retry_config().attempts();
-                let member_ips = loop {
-                    match AppContext::instance()
-                        .vpn_client()
-                        .get_member_ips_in_vpn(member_id.clone())
-                        .await
-                    {
-                        Ok(ips) if !ips.is_empty() => break ips,
-                        Ok(_) | Err(_) => {
-                            if attempts == 0 {
-                                error!(
-                                    "Exceeded retry attempts to fetch IPs for member {}",
-                                    member_id
-                                );
-                                break Vec::new();
-                            }
-                            attempts -= 1;
-                            info!(
-                                "IPs not available yet for member {}. Retrying in {:?}...",
-                                member_id, AppContext::instance().config().retry_config().delay()
-                            );
-                            sleep(*AppContext::instance().config().retry_config().delay()).await;
-                        }
+        // Retry logic to fetch member IPs until available
+        let mut attempts = *retry_config.attempts();
+        let member_ips = loop {
+            match vpn_client.get_member_ips_in_vpn(member_id.clone()).await {
+                Ok(ips) if !ips.is_empty() => break ips,
+                Ok(_) | Err(_) => {
+                    if attempts == 0 {
+                        error!(
+                            "Exceeded retry attempts to fetch IPs for member {}",
+                            member_id
+                        );
+                        return;
                     }
-                };
-
-                // Prepare the message for PubSub publication.
-                let pubsub_message = AdmineMessage::new(
-                    vec![String::from("new_server_up")],
-                    member_ips
-                        .iter()
-                        .map(|ip| ip.to_string())
-                        .collect::<Vec<String>>()
-                        .join(","),
-                );
-
-                let pubsub_msg_str = match serde_json::to_string(&pubsub_message) {
-                    Ok(msg) => msg,
-                    Err(e) => {
-                        error!("Error serializing message for member {}: {}", member_id, e);
-                        continue;
-                    }
-                };
-
-                info!("Publishing ingestion message: {}", pubsub_msg_str);
-                if let Err(e) = AppContext::instance().pub_sub().lock().unwrap().publish(
-                    AppContext::instance()
-                        .config()
-                        .admine_channels_map()
-                        .vpn_channel()
-                        .clone(),
-                    pubsub_msg_str,
-                ) {
-                    error!("Error publishing ingestion message: {}", e);
-                } else {
-                    info!("Ingestion message published successfully.");
-                }
-
-                // Retrieve the old server member ID from persistence.
-                let old_member_id = match AppContext::instance().storage().get("server_member_id") {
-                    Some(id) => id,
-                    None => {
-                        info!("No old server member id found in persistence.");
-                        String::new()
-                    }
-                };
-
-                // If an old ID exists, delete it.
-                if !old_member_id.is_empty() {
-                    if let Err(e) = AppContext::instance()
-                        .vpn_client()
-                        .delete_member(old_member_id.clone())
-                        .await
-                    {
-                        error!("Error deleting old member {}: {}", old_member_id, e);
-                    }
-                }
-
-                // Save the new server member ID in persistence.
-                if let Err(e) = Self::update_server_id(&member_id).await {
-                    error!("Failed to update server member id: {}", e);
+                    attempts -= 1;
+                    info!(
+                        "IPs not available yet for member {}. Retrying in {:?}...",
+                        member_id,
+                        retry_config.delay()
+                    );
+                    sleep(*retry_config.delay()).await;
                 }
             }
-        });
+        };
+
+        // Publish new server IPs
+        let new_message = AdmineMessage::new(
+            vec!["new_server_up".to_string()],
+            member_ips
+                .iter()
+                .map(|ip| ip.to_string())
+                .collect::<Vec<String>>()
+                .join(","),
+        );
+
+        let serialized_message = match serde_json::to_string(&new_message) {
+            Ok(json) => json,
+            Err(e) => {
+                error!("Failed to serialize message: {}", e);
+                return;
+            }
+        };
+
+        if let Err(e) = AppContext::instance().pub_sub().lock().unwrap().publish(
+            config.admine_channels_map().vpn_channel().clone(),
+            serialized_message,
+        ) {
+            error!("Failed to publish message: {}", e);
+        } else {
+            info!("New server up message published successfully.");
+        }
+
+        // Handle old server cleanup
+        let old_member_id = AppContext::instance()
+            .storage()
+            .get("server_member_id")
+            .unwrap_or_default();
+
+        if !old_member_id.is_empty() && old_member_id != member_id {
+            if let Err(e) = vpn_client.delete_member(old_member_id.clone()).await {
+                error!("Error deleting old member {}: {}", old_member_id, e);
+            }
+        }
+
+        // Save the new server member ID
+        if let Err(e) = Self::update_server_id(&member_id).await {
+            error!("Failed to update server member id: {}", e);
+        }
+    }
+
+    /// Process auth_member command
+    async fn process_auth_member(member_id: String) {
+        let vpn_client = AppContext::instance().vpn_client();
+        let config = AppContext::instance().config();
+
+        if let Err(e) = vpn_client.auth_member(member_id.clone(), None).await {
+            error!("Error authenticating member {}: {}", member_id, e);
+            return;
+        }
+        info!("Member {} authenticated successfully.", member_id);
+
+        // Publish success message
+        let success_message =
+            AdmineMessage::new(vec!["auth_member_success".to_string()], member_id);
+
+        let serialized_message = match serde_json::to_string(&success_message) {
+            Ok(json) => json,
+            Err(e) => {
+                error!("Failed to serialize success message: {}", e);
+                return;
+            }
+        };
+
+        if let Err(e) = AppContext::instance().pub_sub().lock().unwrap().publish(
+            config.admine_channels_map().vpn_channel().clone(),
+            serialized_message,
+        ) {
+            error!("Failed to publish success message: {}", e);
+        } else {
+            info!("Auth member success message published successfully.");
+        }
+    }
+
+    /// Process incoming messages based on channel and tags
+    async fn process_message(admine_message: AdmineMessage) {
+        match admine_message.origin() {
+            // Server channel - handle server_up messages
+            org if org == "server" => {
+                if admine_message.has_tag("server_up") && !admine_message.message().is_empty() {
+                    let member_id = admine_message.message().clone();
+                    Self::process_server_up(member_id).await;
+                }
+            }
+            // Command channel - handle auth_member commands
+            org if org == "bot" => {
+                if admine_message.has_tag("auth_member") && !admine_message.message().is_empty() {
+                    let member_id = admine_message.message().clone();
+                    Self::process_auth_member(member_id).await;
+                }
+            }
+            other => {
+                warn!("Unsupported channel: {}", other);
+            }
+        }
+    }
+
+    /// Main run loop.
+    pub async fn run(self) {
+        info!("Handle run started.");
 
         // Main loop to listen for incoming messages.
         loop {
@@ -181,7 +199,7 @@ impl Handle {
                 raw_message.1, admine_message
             );
 
-            let _ = tx.send(Arc::new(admine_message)).await;
+            Self::process_message(admine_message).await;
         }
     }
 }
