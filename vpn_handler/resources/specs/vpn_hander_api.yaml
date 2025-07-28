@@ -1,0 +1,103 @@
+openapi: 3.0.0
+x-stoplight:
+  id: occanl18mgzsc
+info:
+  title: VPN Handler
+  version: '1.0'
+servers:
+  - url: 'http://localhost:9000'
+paths:
+  /server-ip:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '204':
+          $ref: '#/components/responses/ServerIpResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      operationId: get-server-ip
+      x-stoplight:
+        id: 1bg2x24ekr9ol
+  /vpn-id:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/VpnIdResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      operationId: get-vpn-id
+      x-stoplight:
+        id: zo9shemnt9j6f
+  /auth-member:
+    post:
+      summary: Your POST endpoint
+      tags: []
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      operationId: post-auth-member
+      x-stoplight:
+        id: 4snsp5e4xc4im
+      requestBody:
+        $ref: '#/components/requestBodies/AuthMemberRequest'
+components:
+  schemas: {}
+  requestBodies:
+    AuthMemberRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              member_id:
+                type: string
+                x-stoplight:
+                  id: a1yzbqr0t48mg
+  responses:
+    ServerIpResponse:
+      description: ''
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              server_ips:
+                type: array
+                x-stoplight:
+                  id: 7bod4hhuzc62g
+                items:
+                  x-stoplight:
+                    id: zj41tvuempxsd
+                  type: string
+    VpnIdResponse:
+      description: ''
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              vpn_id:
+                type: string
+                x-stoplight:
+                  id: 6ncvnu282jpsn
+          examples: {}
+    ErrorResponse:
+      description: ''
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                x-stoplight:
+                  id: 06poiyycxhz44
