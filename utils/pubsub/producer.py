@@ -5,9 +5,10 @@ def main():
     # Conecta ao Redis
     client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+    channel = input("Digite o nome do canal: ")
+    origin = input("Digite a origem: ")
+
     while True:
-        channel = input("Digite o nome do canal: ")
-        origin = input("Digite a origem: ")
         tags_input = input("Digite as tags (separadas por vírgula): ")
         tags = [tag.strip() for tag in tags_input.split(',')]
         message = input("Digite a mensagem: ")
