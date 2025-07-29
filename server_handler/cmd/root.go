@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"server_handler/cmd/queue"
+	"server_handler/internal/config"
 
 	"github.com/spf13/cobra"
 )
@@ -48,7 +48,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		config.GetLogger().Error("Error trying to execute rootCmd: " + err.Error())
 		os.Exit(1)
 	}
 }

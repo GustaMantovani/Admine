@@ -11,9 +11,8 @@ import (
 	"strings"
 )
 
-var c = config.GetInstance()
-
 func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
+	var c = config.GetInstance()
 	if msg.Tags[0] == "server_up" {
 		serverUp(ps)
 	} else if msg.Tags[0] == "server_down" {
@@ -30,16 +29,40 @@ func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
 }
 
 func serverUp(ps pubsub.PubSubInterface) {
-	minecraftserver.StartServerCompose()
+	var c = config.GetInstance()
+	err := minecraftserver.StartServerCompose()
+	if err != nil {
+		config.GetLogger().Error("error starting server compose: " + err.Error())
+		return
+	}
+
 	ps.SendMessage("Starting server", c.SenderChannel)
-	docker.WaitForBuildAndStart()
-	msg := models.NewMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), []string{"server_up"})
+	err = docker.WaitForBuildAndStart()
+	if err != nil {
+		config.GetLogger().Error("Error during build and start of the container: " + err.Error())
+
+	}
+
+	zeroTierID, err := docker.GetZeroTierNodeID(c.ComposeContainerName)
+	if err != nil {
+		config.GetLogger().Error("Error getting zerotier ID: " + err.Error())
+		ps.SendMessage("Error in server's zerotier", c.SenderChannel)
+		return
+	}
+
+	msg := models.NewMessage(zeroTierID, []string{"server_up"})
 	ps.SendMessage(msg.ToString(), c.SenderChannel)
-	log.Println("Server up")
 }
 
 func serverDown(ps pubsub.PubSubInterface) {
-	zerotierId := docker.GetZeroTierNodeID(c.ComposeContainerName)
+	var c = config.GetInstance()
+	zerotierId, err := docker.GetZeroTierNodeID(c.ComposeContainerName)
+
+	if err != nil {
+		config.GetLogger().Error("Error getting zerotier ID: " + err.Error())
+		ps.SendMessage("Error in server's zerotier", c.SenderChannel)
+		return
+	}
 
 	commandexecuter.WriteToContainer("/stop")
 	ps.SendMessage("Stopping server", c.SenderChannel)
@@ -48,26 +71,42 @@ func serverDown(ps pubsub.PubSubInterface) {
 	for sair {
 		msg, err := docker.ReadLastContainerLine()
 		if err != nil {
-			log.Println("Erro ao ler a última linha do container do servidor: ", err.Error())
+			config.GetLogger().Error("Error reading last container line: " + err.Error())
+			ps.SendMessage("Error reading container logs", c.SenderChannel)
+			return
 		}
 		if strings.Contains(msg, "All dimensions are saved") {
 			sair = true
 		}
 	}
 
-	minecraftserver.StopServerCompose()
+	err = minecraftserver.StopServerCompose()
+	if err != nil {
+		config.GetLogger().Warn("Error stopping server: " + err.Error())
+		msg := models.NewMessage("Error stopping server", []string{"server_down"})
+		ps.SendMessage(msg.ToString(), c.SenderChannel)
+		return
+	}
 
 	msg := models.NewMessage(zerotierId, []string{"server_down"})
 
 	ps.SendMessage(msg.ToString(), c.SenderChannel)
 
-	log.Println("Stop server")
+	config.GetLogger().Info("Server stopped")
 }
 
 func command(ps pubsub.PubSubInterface, message string) {
+	var c = config.GetInstance()
 	commandexecuter.WriteToContainer(message)
-	msg := models.NewMessage(docker.GetZeroTierNodeID(c.ComposeContainerName), []string{"commands"})
+
+	zeroTierID, err := docker.GetZeroTierNodeID(c.ComposeContainerName)
+	if err != nil {
+		config.GetLogger().Error("Error getting zerotier ID: " + err.Error())
+		return
+	}
+
+	msg := models.NewMessage(zeroTierID, []string{"commands"})
 	ps.SendMessage(msg.ToString(), c.SenderChannel)
 
-	log.Println("Send a command to the server: ", message)
+	config.GetLogger().Info("Sent a command to the server: " + message)
 }

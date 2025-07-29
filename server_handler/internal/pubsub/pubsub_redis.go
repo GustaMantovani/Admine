@@ -3,7 +3,8 @@ package pubsub
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"os"
+	"server_handler/internal/config"
 	"server_handler/internal/models"
 
 	"github.com/redis/go-redis/v9"
@@ -32,10 +33,13 @@ func (ps PubSubRedis) ListenForMessages(channels []string, msgChannel chan model
 	subscriber := ps.client.Subscribe(context.Background(), channels...)
 	_, err := subscriber.Receive(context.Background())
 	if err != nil {
-		log.Println("error: ", err.Error())
+		config.GetLogger().Error("error connecting to pubsub subscriber: " + err.Error())
+		config.CloseLogFile()
+		os.Exit(1)
 	}
+
 	ch := subscriber.Channel()
-	log.Println("lintening channels: ", channels)
+	config.GetLogger().Info("listening messages from consumer channels")
 
 	for msg := range ch {
 		var m models.Message
@@ -43,7 +47,7 @@ func (ps PubSubRedis) ListenForMessages(channels []string, msgChannel chan model
 		err := json.Unmarshal([]byte(msg.Payload), &m)
 
 		if err != nil {
-			log.Println("error in json unmarshal process: ", err)
+			config.GetLogger().Warn("error in message json unmarshal process: " + err.Error())
 		}
 
 		msgChannel <- m

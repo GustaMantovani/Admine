@@ -1,18 +1,18 @@
 package queue
 
 import (
-	"log"
 	"server_handler/internal/config"
 	"server_handler/internal/handler"
 	"server_handler/internal/models"
 	"server_handler/internal/pubsub"
+	"strings"
 )
 
 /*
 Start to listen a pubsub for commands
 */
 func RunListenQueue() {
-	log.Println("Running queue. Consumer channel: ", config.GetInstance().ConsumerChannel)
+	config.GetLogger().Info("Running queue. Consumer channel: [" + strings.Join(config.GetInstance().ConsumerChannel, " ") + "]")
 	listenCommands()
 }
 
@@ -30,9 +30,8 @@ func listenCommands() {
 	go ps.ListenForMessages(c.ConsumerChannel, mc)
 
 	for msg := range mc {
-		log.Println(msg)
+		config.GetLogger().Info(msg.ToString())
 		if len(msg.Tags) > 0 {
-			log.Println(msg.Tags[0])
 			handler.ManageCommand(msg, ps)
 		}
 	}

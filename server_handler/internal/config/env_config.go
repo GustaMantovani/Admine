@@ -1,13 +1,13 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"strings"
 )
 
 // Set a Config variable and if any value is an empty string returns false, because the config is not full set
-func isEnvSetAndSetConfig(config *config) bool {
+func isEnvSetAndSetConfig(config *config) (bool, error) {
 	var channels []string
 
 	envChannels := os.Getenv("CONSUMER_CHANNEL")
@@ -22,11 +22,38 @@ func isEnvSetAndSetConfig(config *config) bool {
 	config.Host = os.Getenv("HOST")
 	config.Port = os.Getenv("PORT")
 
-	log.Println(config)
-
-	if config.ComposeContainerName == "" || config.ComposeAbsPath == "" || len(config.ConsumerChannel) == 0 || config.SenderChannel == "" || config.Pubsub == "" || config.Host == "" || config.Port == "" {
-		return false
+	var envVarsNotSet []string
+	if config.ComposeContainerName == "" {
+		envVarsNotSet = append(envVarsNotSet, "SERVER_NAME")
 	}
 
-	return true
+	if config.ComposeAbsPath == "" {
+		envVarsNotSet = append(envVarsNotSet, "COMPOSE_DIRECTORY")
+	}
+
+	if config.ConsumerChannel[len(config.ConsumerChannel)-1] == "" {
+		envVarsNotSet = append(envVarsNotSet, "CONSUMER_CHANNEL")
+	}
+
+	if config.SenderChannel == "" {
+		envVarsNotSet = append(envVarsNotSet, "SENDER_CHANNEL")
+	}
+
+	if config.SenderChannel == "" {
+		envVarsNotSet = append(envVarsNotSet, "PUBSUB")
+	}
+
+	if config.SenderChannel == "" {
+		envVarsNotSet = append(envVarsNotSet, "HOST")
+	}
+
+	if config.SenderChannel == "" {
+		envVarsNotSet = append(envVarsNotSet, "PORT")
+	}
+
+	if len(envVarsNotSet) != 0 {
+		return false, fmt.Errorf("env vars not set: [%s]", strings.Join(envVarsNotSet, " "))
+	}
+
+	return true, nil
 }

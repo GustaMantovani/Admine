@@ -28,3 +28,6 @@ PUBSUB "pubsub-type"
 HOST "pubsub-host-adress"
 PORT "pubsub-port"
 ```
+
+## Log File ##
+The log file is found in ~/.local/state/admine/server_handler.log
