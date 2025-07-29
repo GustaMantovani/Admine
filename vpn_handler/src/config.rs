@@ -64,7 +64,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let content = std::fs::read_to_string("./vpn_handler_config.toml")?;
+        let content = std::fs::read_to_string("D")?;
         Ok(toml::from_str(&content)?)
     }
 }
