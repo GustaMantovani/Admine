@@ -52,7 +52,7 @@ func isEnvSetAndSetConfig(config *config) (bool, error) {
 	}
 
 	if len(envVarsNotSet) != 0 {
-		return false, fmt.Errorf("Env vars not set: " + "[" + strings.Join(envVarsNotSet, " ") + "]")
+		return false, fmt.Errorf("env vars not set: [%s]", strings.Join(envVarsNotSet, " "))
 	}
 
 	return true, nil
