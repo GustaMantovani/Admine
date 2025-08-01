@@ -3,7 +3,7 @@ module server_handler
 go 1.24.2
 
 require (
-	github.com/docker/docker v28.3.0+incompatible
+	github.com/docker/docker v28.3.3+incompatible
 	gopkg.in/yaml.v3 v3.0.1
 )
 
