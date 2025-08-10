@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::app_context::AppContext;
 use crate::models::admine_message::AdmineMessage;
 use log::{error, info, warn};
@@ -41,8 +43,8 @@ impl Handle {
         let mut attempts = *retry_config.attempts();
         let member_ips = loop {
             match vpn_client.get_member_ips_in_vpn(member_id.clone()).await {
-                Ok(ips) if !ips.is_empty() => break ips,
-                Ok(_) | Err(_) => {
+                Ok(ips) => break ips,
+                Err(_) => {
                     if attempts == 0 {
                         error!(
                             "Exceeded retry attempts to fetch IPs for member {}",
@@ -141,19 +143,30 @@ impl Handle {
 
     /// Process incoming messages based on channel and tags
     async fn process_message(admine_message: AdmineMessage) {
+        info!(
+            "Dispatching message: origin={}, message_len={}",
+            admine_message.origin(),
+            admine_message.message().len()
+        );
         match admine_message.origin() {
             // Server channel - handle server_up messages
             org if org == "server" => {
                 if admine_message.has_tag("server_up") && !admine_message.message().is_empty() {
                     let member_id = admine_message.message().clone();
+                    info!("server_up received: member_id={}", member_id);
                     Self::process_server_up(member_id).await;
+                } else {
+                    warn!("Ignored server message...");
                 }
             }
             // Command channel - handle auth_member commands
             org if org == "bot" => {
                 if admine_message.has_tag("auth_member") && !admine_message.message().is_empty() {
                     let member_id = admine_message.message().clone();
+                    info!("auth_member command received: member_id={}", member_id);
                     Self::process_auth_member(member_id).await;
+                } else {
+                    warn!("Ignored bot command...");
                 }
             }
             other => {
@@ -200,6 +213,8 @@ impl Handle {
             );
 
             Self::process_message(admine_message).await;
+
+            let _ = sleep(Duration::from_millis(10));
         }
     }
 }

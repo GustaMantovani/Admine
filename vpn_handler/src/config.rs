@@ -3,7 +3,7 @@ use crate::pub_sub::pub_sub_factory::PubSubType;
 use crate::vpn::vpn_factory::VpnType;
 use getset::{Getters, Setters};
 use serde::Deserialize;
-use std::time::Duration;
+use std::{env, time::Duration};
 
 #[derive(Debug, Clone, Deserialize, Getters, Setters)]
 #[getset(get = "pub", set = "pub")]
@@ -64,7 +64,15 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let content = std::fs::read_to_string("D")?;
+        let args: Vec<String> = env::args().collect();
+
+        let config_path = if args.len() > 1 {
+            args[1].clone()
+        } else {
+            String::from("./etc/vpn_handler_config.toml")
+        };
+
+        let content = std::fs::read_to_string(&config_path)?;
         Ok(toml::from_str(&content)?)
     }
 }

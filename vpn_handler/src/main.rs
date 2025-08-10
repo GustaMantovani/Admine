@@ -27,16 +27,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Application context load sucefully!");
     debug!("{:?}", AppContext::instance().config());
 
-    let (actix_server, server_handle) = server::create_server()?;
+    let (actix_server, _) = server::create_server()?;
 
     info!("Starting queue handler...");
     let queue_handle = Handle::new()?;
 
-    // Spawn both the HTTP server and queue handler
-    rt::spawn(actix_server);
-    tokio::spawn(queue_handle.run());
+    rt::spawn(queue_handle.run());
+    let _ = actix_server.await;
 
-    tokio::signal::ctrl_c().await?;
-    server_handle.stop(true).await;
     Ok(())
 }

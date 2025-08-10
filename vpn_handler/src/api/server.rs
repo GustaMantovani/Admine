@@ -14,6 +14,7 @@ pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
     })
     .bind((host.as_str(), port))?
     .workers(1)
+    .disable_signals()
     .run();
 
     let handle = server.handle();
