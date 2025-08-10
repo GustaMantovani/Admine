@@ -69,7 +69,7 @@ impl Config {
         let config_path = if args.len() > 1 {
             args[1].clone()
         } else {
-            String::from("./config.toml")
+            String::from("./etc/vpn_handler_config.toml")
         };
 
         print!("{:?}", args);
