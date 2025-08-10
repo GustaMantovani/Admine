@@ -1,7 +1,7 @@
 use crate::{api::services, app_context::AppContext};
-use actix_web::{dev::Server, dev::ServerHandle, App, HttpServer};
+use actix_web::{dev::Server, App, HttpServer};
 
-pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
+pub fn create_server() -> Result<Server, std::io::Error> {
     let config = AppContext::instance().config();
     let host = &config.api_config().host();
     let port = *config.api_config().port();
@@ -16,6 +16,5 @@ pub fn create_server() -> Result<(Server, ServerHandle), std::io::Error> {
     .workers(1)
     .run();
 
-    let handle = server.handle();
-    Ok((server, handle))
+    Ok(server)
 }

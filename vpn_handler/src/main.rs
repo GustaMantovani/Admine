@@ -9,7 +9,6 @@ mod queue_handler;
 mod vpn;
 
 use crate::{api::server, app_context::AppContext, queue_handler::Handle};
-use actix_web::rt;
 use log::{debug, error, info};
 
 #[actix_web::main]
@@ -29,16 +28,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Application context load sucefully!");
     debug!("{:?}", AppContext::instance().config());
 
-    let (actix_server, server_handle) = server::create_server()?;
-
-    info!("Starting queue handler...");
+    let server = server::create_server()?;
     let queue_handle = Handle::new()?;
 
-    // Spawn both the HTTP server and queue handler
-    rt::spawn(actix_server);
-    tokio::spawn(queue_handle.run());
+    tokio::select! {
+        _ = server =>{},
+        _ = queue_handle.run() => {}
+    }
 
-    tokio::signal::ctrl_c().await?;
-    server_handle.stop(true).await;
     Ok(())
 }
