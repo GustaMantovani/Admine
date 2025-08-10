@@ -7,6 +7,7 @@ mod persistence;
 mod pub_sub;
 mod queue_handler;
 mod vpn;
+
 use crate::{api::server, app_context::AppContext, queue_handler::Handle};
 use actix_web::rt;
 use log::{debug, error, info};
@@ -16,6 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger using configuration file.
     log4rs::init_file("./etc/log4rs.yaml", Default::default()).map_err(|e| {
         error!("Error initializing logger: {}", e);
+        println!("Error initializing logger: {}", e);
         e
     })?;
 

@@ -8,14 +8,22 @@ pub struct RedisPubSub {
 }
 
 impl RedisPubSub {
-    pub fn new(url: &str) -> Self {
-        let client = redis::Client::open(url).unwrap();
-        let connection = client.get_connection().unwrap();
+    pub fn new(url: &str) -> Result<Self, PubSubError> {
+        let client = redis::Client::open(url).map_err(|e| {
+            log::error!("Failed to create Redis client with URL '{}': {}", url, e);
+            PubSubError::CreationError(format!("Failed to create Redis client: {}", e))
+        })?;
+        
+        let connection = client.get_connection().map_err(|e| {
+            log::error!("Failed to establish Redis connection: {}", e);
+            PubSubError::ConnectionError(format!("Failed to connect to Redis: {}", e))
+        })?;
+        
         let subscribed_topics = Vec::new();
-        Self {
+        Ok(Self {
             connection,
             subscribed_topics,
-        }
+        })
     }
 }
 
@@ -31,14 +39,22 @@ impl TSubscriber for RedisPubSub {
         let mut pubsub = self.connection.as_pubsub();
 
         self.subscribed_topics.iter().for_each(|t| {
-            pubsub.subscribe(t).unwrap();
+            if let Err(e) = pubsub.subscribe(t) {
+                log::error!("Failed to subscribe to topic '{}': {}", t, e);
+            }
         });
 
-        let msg = pubsub.get_message().unwrap();
+        let msg = pubsub.get_message().map_err(|e| {
+            log::error!("Failed to receive message from Redis: {}", e);
+            PubSubError::MessageError(format!("Failed to get message: {}", e))
+        })?;
 
         match msg.get_payload() {
             Ok(p) => return Ok((p, msg.get_channel_name().to_string())),
-            Err(e) => return Err(PubSubError::MessageError(e.to_string())),
+            Err(e) => {
+                log::error!("Failed to parse message payload: {}", e);
+                return Err(PubSubError::MessageError(e.to_string()));
+            }
         };
     }
 }
@@ -46,8 +62,11 @@ impl TSubscriber for RedisPubSub {
 impl TPublisher for RedisPubSub {
     fn publish(&mut self, topic: String, message: String) -> Result<(), PubSubError> {
         self.connection
-            .publish::<String, String, ()>(topic, message)
-            .unwrap();
+            .publish::<String, String, ()>(topic.clone(), message.clone())
+            .map_err(|e| {
+                log::error!("Failed to publish message to topic '{}': {}", topic, e);
+                PubSubError::MessageError(format!("Failed to publish message: {}", e))
+            })?;
         Ok(())
     }
 }

@@ -17,7 +17,7 @@ impl PubSubFactory {
         url: &str,
     ) -> Result<DynPubSub, PubSubError> {
         match pubsub_type {
-            PubSubType::Redis => Ok(Box::new(RedisPubSub::new(url))),
+            PubSubType::Redis => Ok(Box::new(RedisPubSub::new(url)?)),
         }
     }
 }

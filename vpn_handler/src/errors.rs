@@ -4,6 +4,12 @@ use thiserror::Error;
 pub enum PubSubError {
     #[error("Failed to get message payload: {0}")]
     MessageError(String),
+
+    #[error("Connection error: {0}")]
+    ConnectionError(String),
+
+    #[error("Creation error: {0}")]
+    CreationError(String),
 }
 
 #[derive(Error, Debug)]

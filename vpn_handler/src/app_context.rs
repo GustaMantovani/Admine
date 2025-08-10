@@ -62,6 +62,11 @@ impl AppContext {
     }
 
     pub fn instance() -> &'static AppContext {
-        APP_CONTEXT.get_or_init(|| Self::new().expect("Failed to initialize application context"))
+        APP_CONTEXT.get_or_init(|| {
+            Self::new().unwrap_or_else(|e| {
+                log::error!("Failed to initialize application context: {}", e);
+                panic!("Failed to initialize application context: {}", e);
+            })
+        })
     }
 }

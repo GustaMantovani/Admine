@@ -4,3 +4,4 @@
 /etc/zerotier_handler.log
 /etc/vpn_handler_config.toml
 .idea
+config.toml
