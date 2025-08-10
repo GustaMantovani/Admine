@@ -13,12 +13,12 @@ impl RedisPubSub {
             log::error!("Failed to create Redis client with URL '{}': {}", url, e);
             PubSubError::CreationError(format!("Failed to create Redis client: {}", e))
         })?;
-        
+
         let connection = client.get_connection().map_err(|e| {
             log::error!("Failed to establish Redis connection: {}", e);
             PubSubError::ConnectionError(format!("Failed to connect to Redis: {}", e))
         })?;
-        
+
         let subscribed_topics = Vec::new();
         Ok(Self {
             connection,
