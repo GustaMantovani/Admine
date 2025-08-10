@@ -72,8 +72,6 @@ impl Config {
             String::from("./etc/vpn_handler_config.toml")
         };
 
-        print!("{:?}", args);
-
         let content = std::fs::read_to_string(&config_path)?;
         Ok(toml::from_str(&content)?)
     }
