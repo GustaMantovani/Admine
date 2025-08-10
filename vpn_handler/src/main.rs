@@ -7,8 +7,8 @@ mod persistence;
 mod pub_sub;
 mod queue_handler;
 mod vpn;
-
 use crate::{api::server, app_context::AppContext, queue_handler::Handle};
+use actix_web::rt;
 use log::{debug, error, info};
 
 #[actix_web::main]
@@ -16,7 +16,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger using configuration file.
     log4rs::init_file("./etc/log4rs.yaml", Default::default()).map_err(|e| {
         error!("Error initializing logger: {}", e);
-        println!("Error initializing logger: {}", e);
         e
     })?;
 
@@ -28,13 +27,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Application context load sucefully!");
     debug!("{:?}", AppContext::instance().config());
 
-    let server = server::create_server()?;
+    let (actix_server, _) = server::create_server()?;
+
+    info!("Starting queue handler...");
     let queue_handle = Handle::new()?;
 
-    tokio::select! {
-        _ = server =>{},
-        _ = queue_handle.run() => {}
-    }
+    rt::spawn(queue_handle.run());
+    let _ = actix_server.await;
 
     Ok(())
 }
