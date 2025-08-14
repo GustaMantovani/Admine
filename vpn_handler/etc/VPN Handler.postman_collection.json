@@ -1,0 +1,78 @@
+{
+	"info": {
+		"_postman_id": "a0b55426-7138-4b92-b279-230e3309e239",
+		"name": "VPN Handler",
+		"description": "VPN Handler API.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28995257"
+	},
+	"item": [
+		{
+			"name": "Server IPs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/server-ips",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"server-ips"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VPN ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/vpn-id",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"vpn-id"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Auth Member",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"member_id\": \"a41a6f919c\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/auth-member",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"auth-member"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "localhost:9000",
+			"type": "default"
+		}
+	]
+}
