@@ -2,18 +2,13 @@ from functools import wraps
 from logging import Logger
 from typing import Callable, Dict, List, Optional
 import json
-
 from core.external.abstractions.minecraft_server_service import (
     MinecraftServerService,
 )
-
 from core.external.abstractions.vpn_service import (VpnService,)
-
-
 from core.external.abstractions.pubsub_service import PubSubService
 from core.models.admine_message import AdmineMessage
 from core.config import Config
-
 
 def admin_command(func):
     @wraps(func)
@@ -162,9 +157,9 @@ class CommandHandle:
 
         administrators.append(user_id)
 
-        # Save to config.json file
+        # Save to bot_config.json file
 
-        with open("bot/config.json", "w") as f:
+        with open("./bot_config.json", "w") as f:
             json.dump(config._Config__config, f, indent=4)
 
         self.__logger.info(f"User {user_id} added as administrator.")
