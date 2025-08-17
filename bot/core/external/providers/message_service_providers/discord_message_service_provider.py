@@ -7,7 +7,6 @@ from discord.ext import commands
 from core.external.abstractions.message_service import MessageService
 
 import asyncio
-import os
 
 
 class _DiscordClient(commands.Bot):
@@ -16,18 +15,19 @@ class _DiscordClient(commands.Bot):
             command_prefix: str,
             logger: Logger,
             callback_function: Optional[Callable[[str,Optional[List[str]],str,List[str]], None]] = None,
-            #lembrar colocar lista administradores
-            administrators: Optional[List[str]] = None
+            administrators: Optional[List[str]] = [],
+            channels_ids: List[str] = []
     ):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
         self.command_handle_function_callback = callback_function
         self._logger = logger
         self._ready_event = asyncio.Event()
-        self._adminstrators = administrators or []
+        self._administrators = administrators
+        self._channels_ids = channels_ids
 
 
     async def on_ready(self):
-        self._logger.info(f"Bot conectado como {self.user.name} (ID: {self.user.id})")
+        self._logger.info(f"Bot connected as {self.user.name} (ID: {self.user.id})")
         self._ready_event.set()
 
     async def setup_hook(self):
@@ -41,7 +41,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'on'.")
-                await self.command_handle_function_callback("on", [] ,str(interaction.user.id), self._adminstrators)
+                await self.command_handle_function_callback("on", [] ,str(interaction.user.id), self._administrators)
                 await interaction.response.send_message(
                     "Request to start the Minecraft server received!"
                 )
@@ -60,7 +60,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'off'.")
-                await self.command_handle_function_callback("off", [] ,str(interaction.user.id), self._adminstrators)
+                await self.command_handle_function_callback("off", [] ,str(interaction.user.id), self._administrators)
                 await interaction.response.send_message(
                     "Request to take down the Minecraft server received!"
                 )
@@ -79,7 +79,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'restart'.")
-                await self.command_handle_function_callback("restart", [] ,str(interaction.user.id), self._adminstrators)
+                await self.command_handle_function_callback("restart", [] ,str(interaction.user.id), self._administrators)
                 await interaction.response.send_message(
                     "Request to restart the Minecraft server received!"
                 )
@@ -98,7 +98,7 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info(f"Calling the command handle callback with 'adm' for user {user.id}.")
                 # Aqui você pode passar também o ID do user mencionado para o callback
-                response = await self.command_handle_function_callback("adm", [user.id,user.mention], str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("adm", [user.id,user.mention], str(interaction.user.id), self._administrators)
                 await interaction.response.send_message(
                     response
                 )
@@ -117,7 +117,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'auth'.")
-                response = await self.command_handle_function_callback("auth",[vpn_id] ,str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("auth",[vpn_id] ,str(interaction.user.id), self._administrators)
                 
                 await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'auth' command.")
@@ -135,7 +135,7 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'vpn_id'.")
 
-                response = await self.command_handle_function_callback("vpn_id",[] ,str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("vpn_id",[] ,str(interaction.user.id), self._administrators)
                 
                 await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'vpn_id' command.")
@@ -146,20 +146,20 @@ class _DiscordClient(commands.Bot):
                 )
 
 
-        @self.tree.command(name="server_ip", description="Command to get the server's ip")
-        async def server_ip(interaction: discord.Interaction):
+        @self.tree.command(name="server_ips", description="Command to get the server's ip")
+        async def server_ips(interaction: discord.Interaction):
             self._logger.debug(
-                f"Received 'server_ip' command. Callback function: {self.command_handle_function_callback}"
+                f"Received 'server_ips' command. Callback function: {self.command_handle_function_callback}"
             )
             if self.command_handle_function_callback is not None:
-                self._logger.info("Calling the command handle callback with 'server_ip'.")
+                self._logger.info("Calling the command handle callback with 'server_ips'.")
                 
-                response = await self.command_handle_function_callback("server_ip",[] ,str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("server_ips",[] ,str(interaction.user.id), self._administrators)
                 
                 await interaction.response.send_message(response)
-                self._logger.info("Sent confirmation message for 'server_ip' command.")
+                self._logger.info("Sent confirmation message for 'server_ips' command.")
             else:
-                self._logger.warning("Callback function not set for 'server_ip' command.")
+                self._logger.warning("Callback function not set for 'server_ips' command.")
                 await interaction.response.send_message(
                     "No processor available for this command."
                 )
@@ -173,7 +173,7 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'command'.")
             
-                response = await self.command_handle_function_callback("command", [mine_command],str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("command", [mine_command],str(interaction.user.id), self._administrators)
                 await interaction.response.send_message(
                     response
                 )
@@ -193,7 +193,7 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'info'.")
                 
-                response = await self.command_handle_function_callback("info",[] ,str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("info",[] ,str(interaction.user.id), self._administrators)
                 
                 await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'info' command.")
@@ -211,7 +211,7 @@ class _DiscordClient(commands.Bot):
             )
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'status'.")
-                response = await self.command_handle_function_callback("status", [] ,str(interaction.user.id), self._adminstrators)
+                response = await self.command_handle_function_callback("status", [] ,str(interaction.user.id), self._administrators)
                 
                 await interaction.response.send_message(response)
                 self._logger.info("Sent confirmation message for 'status' command.")
@@ -241,14 +241,15 @@ class DiscordMessageServiceProvider(MessageService):
             logging: Logger,
             token: str,
             command_prefix: str = "!mc",
-            channels: Optional[list[str]] = None,
-            administrators: Optional[list[str]] = None,
+            channels_ids: Optional[list[str]] = [],
+            administrators: Optional[list[str]] = [],
+            
     ):
-        super().__init__(logging, channels, administrators)
+        super().__init__(logging, channels_ids, administrators)
         self.__token = token
         self.__command_prefix = command_prefix
         self.__discord_client = _DiscordClient(
-            command_prefix=self.__command_prefix, logger=logging, administrators=administrators
+            command_prefix=self.__command_prefix, logger=logging, administrators=administrators, channels_ids=channels_ids
         )
 
     @property
@@ -278,7 +279,8 @@ class DiscordMessageServiceProvider(MessageService):
 
     async def send_message(self, message: str):
         self._logger.debug(f"Sending message: {message}")
-        await self.__discord_client.send_message_to_channel(os.getenv("CHANNEL_ID"), message)
+        for channel in self.__discord_client._channels_ids:
+            await self.__discord_client.send_message_to_channel(channel, message)
  
     def listen_message(self, callback_function: Callable[[str,Optional[List[str]],str,List[str]], None] = None):
         self._logger.debug("Listening for messages")

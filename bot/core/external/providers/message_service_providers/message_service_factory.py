@@ -19,10 +19,10 @@ class MessageServiceFactory:
         MessageServiceProviderType.DISCORD: lambda logging,
                                                    config: DiscordMessageServiceProvider(
             logging=logging,
-            channels=config.get("discord.channels"),
             administrators=config.get("discord.administrators"),
             token=config.get("discord.token"),
             command_prefix=config.get("discord.commandprefix"),
+            channels_ids=config.get("discord.channel_ids")
         )
     }
 

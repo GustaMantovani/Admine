@@ -3,8 +3,8 @@ from logging import Logger
 from typing import Callable, Dict, List, Optional
 import json
 
-from core.external.abstractions.minecraft_server_info_service import (
-    MinecraftServerInfoService,
+from core.external.abstractions.minecraft_server_service import (
+    MinecraftServerService,
 )
 
 from core.external.abstractions.vpn_service import (VpnService,)
@@ -29,7 +29,7 @@ class CommandHandle:
             self,
             logging: Logger,
             pubsub_service: PubSubService,
-            minecraft_info_service: MinecraftServerInfoService,
+            minecraft_info_service: MinecraftServerService,
             vpn_service:VpnService,
     ):
         self.__logger = logging
@@ -103,7 +103,7 @@ class CommandHandle:
         try:
             return await self.__vpn_service.auth_member(" ".join(args))
         except Exception as e:
-            return "Error authorize member!"
+            return f"Error authorize member!"
 
     @admin_command
     async def __command(self, args: List[str]):
@@ -140,7 +140,7 @@ class CommandHandle:
     async def __server_ip(self, args: List[str]):
         self.__logger.debug(f"Getting server ip the server with args: {args}")
         try:
-            return await self.__vpn_service.get_server_ip()
+            return await self.__vpn_service.get_server_ips()
         except Exception as e:
             return "Error getting server ip"    
 

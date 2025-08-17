@@ -8,11 +8,11 @@ from core.external.providers.message_service_providers.message_service_factory i
 from core.external.providers.message_service_providers.message_service_provider_type import (
     MessageServiceProviderType,
 )
-from core.external.providers.minecraft_server_info_service_providers.minecraft_server_info_service_factory import (
-    MinecraftInfoServiceFactory,
+from core.external.providers.minecraft_server_service_providers.minecraft_server_service_factory import (
+    MinecraftServiceFactory,
 )
-from core.external.providers.minecraft_server_info_service_providers.minecraft_server_info_service_provider_type import (
-    MinecraftInfoServiceProviderType,
+from core.external.providers.minecraft_server_service_providers.minecraft_server_service_provider_type import (
+    MinecraftServiceProviderType,
 )
 from core.external.providers.pubsub_service_providers.pubsub_service_factory import (
     PubSubServiceFactory,
@@ -57,10 +57,10 @@ class Bot:
 
         # Minecraft Info Service Provider
         minecraft_provider_str = self.__config.get("providers.minecraft", "SERVER_HANDLER_API")
-        minecraft_provider_type = MinecraftInfoServiceProviderType[
+        minecraft_provider_type = MinecraftServiceProviderType[
             minecraft_provider_str
         ]
-        self.__minecraft_info_service = MinecraftInfoServiceFactory.create(
+        self.__minecraft_info_service = MinecraftServiceFactory.create(
             self.__logger, minecraft_provider_type, self.__config
         )
         self.__logger.info(

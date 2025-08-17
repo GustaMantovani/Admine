@@ -6,7 +6,7 @@ class VpnService(ABC):
         self.__logger = logging
 
     @abstractmethod
-    def get_server_ip(self) -> str:
+    def get_server_ips(self) -> str:
         pass
 
     @abstractmethod

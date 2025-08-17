@@ -7,16 +7,16 @@ class MessageService(ABC):
     def __init__(
             self,
             logger: Logger,
-            channels: Optional[list[str]] = None,
-            administrators: Optional[list[str]] = None,
+            channels_ids: Optional[list[str]] = [],
+            administrators: Optional[list[str]] = [],
     ):
         self._logger = logger
-        self.__channels = channels if channels is not None else []
-        self.__administrators = administrators if administrators is not None else []
+        self.__channels_ids = channels_ids
+        self.__administrators = administrators
 
     @property
     def channels(self) -> list[str]:
-        return self.__channels
+        return self.__channels_ids
 
     @property
     def administrators(self) -> list[str]:

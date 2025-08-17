@@ -1,3 +1,4 @@
 redis
 discord.py
 dotenv
+requests

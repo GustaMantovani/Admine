@@ -8,13 +8,13 @@ from core.exceptions import ConfigError, ConfigFileError
 class Config:
     _instance = None
 
-    def __new__(cls, config_file: str = "bot/config.json"):
+    def __new__(cls, config_file: str = "./bot_config.json"):
         if cls._instance is None:
             cls._instance = super(Config, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, config_file: str = "bot/config.json"):
+    def __init__(self, config_file: str = "./bot_config.json"):
         if self._initialized:
             return
         self.__config = self.__load_from_json(config_file) or self.__load_from_env()
@@ -38,13 +38,14 @@ class Config:
             "providers": {
                 "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
                 "pubsub": os.getenv("PROVIDERS_PUBSUB", "REDIS"),
-                "minecraft": os.getenv("PROVIDERS_MINECRAFT", "SERVER_HANDLER_API"),
-                "vpn":os.getenv("PROVIDERS_VPN", "VPN_API"),
+                "minecraft": os.getenv("PROVIDERS_MINECRAFT", "REST"),
+                "vpn":os.getenv("PROVIDERS_VPN", "REST"),
             },
             "discord": {
                 "token": os.getenv("DISCORD_TOKEN"),
                 "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX","!mc"),
                 "administrators": os.getenv("DISCORD_ADMINISTRATORS", "").split(","),
+                "channel_ids": os.getenv("CHANNEL_ID").split(",")
             },
             "redis": {
                 "connectionstring": os.getenv(
@@ -59,7 +60,7 @@ class Config:
             },
             "vpn": {
                 "connectionstring": os.getenv(
-                    "VPN_CONNECTION_STRING", "http://localhost:9090"
+                    "VPN_CONNECTION_STRING", "http://localhost:9000"
                 ),
                 "token": os.getenv("VPN_TOKEN", ""),
             },

@@ -51,7 +51,7 @@ class MinecraftServerStatus:
             status=status,
             description=json_data.get("description"),
             uptime=json_data.get("uptime"),
-            online_players=json_data.get("onlinePlayers"),
+            online_players=json_data.get("online_players"),
             tps=json_data.get("tps"),
         )
 
