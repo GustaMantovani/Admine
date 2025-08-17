@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Callable, Optional
 
-from core.models.admine_message import AdmineMessage
+from bot.models.admine_message import AdmineMessage
 
 
 class PubSubService(ABC):
