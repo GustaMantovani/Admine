@@ -46,7 +46,7 @@ class CommandHandle:
             "status": self.__status,
             "adm": self.__turn_admin,
             "vpn_id": self.__vpn_id,
-            "server_ip": self.__server_ip,
+            "server_ips": self.__server_ips,
         }
 
     async def process_command(
@@ -132,7 +132,7 @@ class CommandHandle:
         except Exception:
             return "Error getting vpn id"
 
-    async def __server_ip(self, args: List[str]):
+    async def __server_ips(self, args: List[str]):
         self.__logger.debug(f"Getting server ip the server with args: {args}")
         try:
             return await self.__vpn_service.get_server_ips()

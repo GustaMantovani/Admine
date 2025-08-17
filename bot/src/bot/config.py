@@ -45,7 +45,7 @@ class Config:
                 "token": os.getenv("DISCORD_TOKEN"),
                 "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc"),
                 "administrators": os.getenv("DISCORD_ADMINISTRATORS", "").split(","),
-                "channel_ids": os.getenv("CHANNEL_ID").split(","),
+                "channel_ids": os.getenv("CHANNEL_IDS").split(","),
             },
             "redis": {
                 "connectionstring": os.getenv("REDIS_CONNECTION_STRING", "localhost:6379"),
