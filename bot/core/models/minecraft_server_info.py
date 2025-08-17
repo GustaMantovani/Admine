@@ -34,9 +34,9 @@ class MinecraftServerInfo:
 
     def __str__(self):
         return (
-            f"Versão do Minecraft: {self.minecraft_version}\n"
-            f"Versão do Java: {self.java_version}\n"
-            f"Engine de Mods: {self.mod_engine}\n"
-            f"Máximo de Jogadores: {self.max_players}\n"
-            f"Semente (Seed): {self.seed}"
+            f"Minecraft Version: {self.minecraft_version}\n"
+            f"Java Version: {self.java_version}\n"
+            f"Mod Engine: {self.mod_engine}\n"
+            f"Max Players: {self.max_players}\n"
+            f"Seed: {self.seed}"
         )

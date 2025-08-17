@@ -16,11 +16,9 @@ class ApiVpnServiceProviders(VpnService):
             response = await asyncio.to_thread(requests.get, url)
             response.raise_for_status()
             
-            # Log da resposta bruta para debug
             self.__logger.debug(f"Raw response status: {response.status_code}")
             self.__logger.debug(f"Raw response text: '{response.text}'")
-            
-            # Verifica se a resposta tem conteúdo
+
             if not response.text.strip():
                 self.__logger.warning("Empty response received from server-ips endpoint")
                 return "Empty response from server"

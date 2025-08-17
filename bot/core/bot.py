@@ -101,17 +101,11 @@ class Bot:
     async def start(self):
         self.__logger.info("Starting bot...")
 
-        # Envia mensagem de inicialização no PubSub
-        message = AdmineMessage("Bot",["server_start"], "FUNCIONOU")
-        self.__pubsub_service.send_message(message)
-
-        # Configura o callback para processar comandos do Discord
         self.__message_services[0].set_callback(self.__command_handle.process_command)
 
-        # Inicia as tarefas de escuta em paralelo
         await asyncio.gather(
-            self.__message_services[0].connect(),  # Discord bot ouvindo comandos
-            self.__pubsub_service.listen_message(self.__event_handle.handle_event)  # Redis ouvindo eventos
+            self.__message_services[0].connect(),
+            self.__pubsub_service.listen_message(self.__event_handle.handle_event)
         )
 
     def shutdown(self):

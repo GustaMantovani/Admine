@@ -67,10 +67,10 @@ class MinecraftServerStatus:
     
     def __str__(self):
         return (
-            f"Status do Servidor: {self.status.value}\n"
-            f"Saúde: {self.health.value}\n"
-            f"Descrição: {self.description}\n"
+            f"Server Status: {self.status.value}\n"
+            f"Health: {self.health.value}\n"
+            f"Description: {self.description}\n"
             f"Uptime: {self.uptime}\n"
-            f"Jogadores Online: {self.online_players}\n"
+            f"Online Players: {self.online_players}\n"
             f"TPS: {self.tps}"
         )

@@ -24,10 +24,6 @@ class MessageService(ABC):
 
     @abstractmethod
     async def connect(self):
-        """
-        Método para conectar ao serviço de mensagens.
-        Deve ser implementado pelas subclasses.
-        """
         pass
 
     @abstractmethod

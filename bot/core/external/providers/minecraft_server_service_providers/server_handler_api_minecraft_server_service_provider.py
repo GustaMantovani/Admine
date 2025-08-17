@@ -55,4 +55,4 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
             raise
 
     def __str__(self):
-        return f"ServerHandlerApiMinecraftServerInfoServiceProvider(api_url={self.api_url})"
+        return f"ServerHandlerApiMinecraftServerServiceProvider(api_url={self.api_url})"

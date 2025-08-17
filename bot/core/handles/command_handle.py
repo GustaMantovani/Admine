@@ -147,26 +147,26 @@ class CommandHandle:
 
     @admin_command
     async def __turn_admin(self, args: List[str]):
-        self.__logger.debug(f"Adicionando administrador com args: {args}")
+        self.__logger.debug(f"Adding administrator with args: {args}")
         if not args or not args[0]:
-            return "Nenhum ID de usuário informado para tornar administrador."
-        
+            return "No user ID provided to make administrator."
+
         user_id = str(args[0])
         user_mention = args[1]
         config = Config()
-        
+
         administrators: list[str] = config.get("discord.administrators", [])
-         # Atualiza a lista de administradores do próprio objeto
+        # Update the administrators list in the object itself
         if user_id in administrators:
             return f"{user_mention} is already an administrator."
-        
+
         administrators.append(user_id)
-        
-        # Salva no arquivo config.json
-        
+
+        # Save to config.json file
+
         with open("bot/config.json", "w") as f:
             json.dump(config._Config__config, f, indent=4)
 
-        self.__logger.info(f"Usuário {user_id} adicionado como administrador.")
+        self.__logger.info(f"User {user_id} added as administrator.")
         return f"{user_mention} is now an administrator."
         
