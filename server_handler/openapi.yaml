@@ -17,7 +17,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
       operationId: get-info
-      description: GET Minecraft server info.
+      description: Get Minecraft server info.
   /status:
     get:
       summary: Your GET endpoint
