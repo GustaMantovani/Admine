@@ -6,15 +6,6 @@ class CustomLogger:
     def __init__(
             self, logger_name="MyApp", log_file="app.log", max_bytes=1000000, backup_count=5
     ):
-        """
-        Inicializa um logger customizado com handlers para console e arquivo.
-
-        Args:
-            logger_name (str): Nome do logger (padrão: 'MyApp').
-            log_file (str): Caminho do arquivo de log (padrão: 'app.log').
-            max_bytes (int): Tamanho máximo do arquivo de log em bytes (padrão: 1MB).
-            backup_count (int): Número de arquivos de backup (padrão: 5).
-        """
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(logging.DEBUG)
 
@@ -40,10 +31,4 @@ class CustomLogger:
             self.logger.addHandler(file_handler)
 
     def get_logger(self):
-        """
-        Retorna o logger configurado.
-
-        Returns:
-            logging.Logger: Instância do logger configurado.
-        """
         return self.logger
