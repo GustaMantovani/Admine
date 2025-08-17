@@ -1,0 +1,193 @@
+openapi: 3.0.0
+x-stoplight:
+  id: o7tsthhk77yfq
+info:
+  title: Server Handler
+  version: '1.0'
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /info:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/InfoResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      operationId: get-info
+      description: GET Minecraft server info.
+  /status:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/StatusResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      operationId: get-status
+      description: Get Minecraft server status.
+  /command:
+    post:
+      summary: ''
+      operationId: post-command
+      responses:
+        '200':
+          $ref: '#/components/responses/CommandExecutionResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      requestBody:
+        $ref: '#/components/requestBodies/CommandRequestBody'
+      description: Execute a command in Minecraft server.
+components:
+  schemas:
+    ServerInfo:
+      title: ServerInfo
+      x-stoplight:
+        id: 845cda6469f48
+      type: object
+      properties:
+        minecraftVersion:
+          type: string
+        javaVersion:
+          type: string
+        modEngine:
+          type: string
+        maxPlayers:
+          type: integer
+        seed:
+          type: string
+      required:
+        - minecraftVersion
+        - javaVersion
+        - modEngine
+        - maxPlayers
+        - seed
+    ServerStatus:
+      title: ServerStatus
+      x-stoplight:
+        id: 7liftbz6ac42r
+      type: object
+      properties:
+        health:
+          type: string
+          enum:
+            - HEALTHY
+            - 'SICK '
+            - 'CRITICAL '
+            - UNKNOWN
+        status:
+          type: string
+          enum:
+            - ONLINE
+            - OFFLINE
+            - MAINTENANCE
+            - UNKNOWN
+        description:
+          type: string
+        uptime:
+          type: string
+        tps:
+          type: number
+      required:
+        - health
+        - status
+        - description
+        - uptime
+        - tps
+    Command:
+      title: Command
+      x-stoplight:
+        id: pie3lscxwq4pe
+      type: object
+      properties:
+        command:
+          type: string
+      required:
+        - command
+    CommandResult:
+      title: CommandResult
+      x-stoplight:
+        id: 73eihcwxtxam9
+      type: object
+      properties:
+        exitCode:
+          type: integer
+        output:
+          type: string
+      required:
+        - output
+    Server-Info:
+      type: object
+      x-examples:
+        Example 1:
+          value:
+            minecraftVersion: string
+            javaVersion: string
+            modEngine: string
+            maxPlayers: 0
+            seed: string
+      properties:
+        minecraftVersion:
+          type: string
+        javaVersion:
+          type: string
+        modEngine:
+          type: string
+        maxPlayers:
+          type: integer
+        seed:
+          type: string
+      required:
+        - minecraftVersion
+        - javaVersion
+        - modEngine
+        - maxPlayers
+        - seed
+  responses:
+    ErrorResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              mesage:
+                type: string
+            required:
+              - mesage
+        application/xml:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    InfoResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServerInfo'
+          examples: {}
+    StatusResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServerStatus'
+    CommandExecutionResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommandResult'
+  requestBodies:
+    CommandRequestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Command'
