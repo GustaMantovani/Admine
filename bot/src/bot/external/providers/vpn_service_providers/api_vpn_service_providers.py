@@ -1,0 +1,107 @@
+import asyncio
+from logging import Logger
+
+import requests
+
+from bot.external.abstractions.vpn_service import VpnService
+
+
+class ApiVpnServiceProviders(VpnService):
+    def __init__(self, logging: Logger, api_url: str, token: str = ""):
+        self.__logger = logging
+        self.api_url = api_url.rstrip("/")
+        self.token = token
+
+    async def get_server_ips(self) -> str:
+        url = f"{self.api_url}/server-ips"
+        self.__logger.info("Requesting server IP addresses.")
+        try:
+            response = await asyncio.to_thread(requests.get, url)
+            response.raise_for_status()
+
+            self.__logger.debug(f"Raw response status: {response.status_code}")
+            self.__logger.debug(f"Raw response text: '{response.text}'")
+
+            if not response.text.strip():
+                self.__logger.warning("Empty response received from server-ips endpoint")
+                return "Empty response from server"
+
+            try:
+                resp_json = response.json()
+                self.__logger.debug(f"/server-ips response received: {resp_json}")
+
+                server_ips = resp_json.get("server_ips", [])
+
+                return self._format_server_ips_response(server_ips)
+            except ValueError as json_error:
+                self.__logger.error(f"Failed to parse JSON response: {json_error}")
+                self.__logger.error(f"Response content: '{response.text}'")
+                return f"Invalid JSON response: {response.text[:100]}"
+        except Exception as e:
+            self.__logger.warning(f"Error finding server IP: {e}")
+            raise
+
+    async def get_vpn_id(self) -> str:
+        url = f"{self.api_url}/vpn-id"
+        self.__logger.info("Requesting VPN ID.")
+        self.__logger.debug(f"GET {url}")
+        try:
+            response = await asyncio.to_thread(requests.get, url)
+            response.raise_for_status()
+            resp_json = response.json()
+            self.__logger.debug(f"/vpn_id response received: {resp_json}")
+            vpn_id = resp_json.get("vpn_id", "")
+            return self._format_vpn_id_response(vpn_id)
+        except Exception as e:
+            self.__logger.warning(f"Error finding VPN ID: {e}")
+            raise
+
+    async def auth_member(self, member_id: str) -> str:
+        url = f"{self.api_url}/auth-member"
+        payload = {"member_id": member_id}
+        self.__logger.info(f"Sending member ID for authorization: {member_id}")
+        self.__logger.debug(f"POST {url} | Payload: {payload}")
+        try:
+            response = await asyncio.to_thread(requests.post, url, json=payload)
+            response.raise_for_status()
+            return self._format_auth_member_response(member_id, True)
+        except Exception as e:
+            self.__logger.warning(f"Error authorizing member ID: {e}")
+            raise
+
+    def _format_server_ips_response(self, server_ips) -> str:
+        """Format the server IPs response for Discord display."""
+        if not server_ips:
+            return "🔍 **Server IPs**\n❌ No IP addresses available for the server."
+
+        formatted_response = "🔍 **Server IP Addresses**\n"
+
+        if isinstance(server_ips, list):
+            if len(server_ips) == 1:
+                formatted_response += f"📍 **IP:** `{server_ips[0]}`"
+            else:
+                formatted_response += "📍 **Available IPs:**\n"
+                for i, ip in enumerate(server_ips, 1):
+                    formatted_response += f"{i}. `{ip}`\n"
+                formatted_response = formatted_response.rstrip()
+        else:
+            formatted_response += f"📍 **IP:** `{server_ips}`"
+
+        return formatted_response
+
+    def _format_vpn_id_response(self, vpn_id: str) -> str:
+        """Format the VPN ID response for Discord display."""
+        if not vpn_id:
+            return "🔑 **VPN Information**\n❌ VPN ID not available or request failed."
+
+        return f"🔑 **VPN Network ID**\n📋 **ID:** `{vpn_id}`"
+
+    def _format_auth_member_response(self, member_id: str, success: bool) -> str:
+        """Format the member authorization response for Discord display."""
+        if success:
+            return f"✅ **Member Authorization**\n🎉 Member `{member_id}` successfully authorized for VPN access!"
+        else:
+            return f"❌ **Member Authorization**\n💥 Failed to authorize member `{member_id}` for VPN access."
+
+    def __str__(self):
+        return f"ApiVpnServiceProvider(api_url={self.api_url})"
