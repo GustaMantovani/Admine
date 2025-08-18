@@ -99,7 +99,7 @@ class CommandHandle:
         try:
             return await self.__vpn_service.auth_member(" ".join(args))
         except Exception:
-            return "Error authorize member!"
+            return f"Error authorizing member ID: {args[0]}"
 
     @admin_command
     async def __command(self, args: List[str]):
