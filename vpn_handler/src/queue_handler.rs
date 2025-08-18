@@ -65,7 +65,7 @@ impl Handle {
 
         // Publish new server IPs
         let new_message = AdmineMessage::new(
-            vec!["new_server_up".to_string()],
+            vec!["new_server_ips".to_string()],
             member_ips
                 .iter()
                 .map(|ip| ip.to_string())
@@ -151,7 +151,7 @@ impl Handle {
         match admine_message.origin() {
             // Server channel - handle server_up messages
             org if org == "server" => {
-                if admine_message.has_tag("server_up") && !admine_message.message().is_empty() {
+                if admine_message.has_tag("server_on") && !admine_message.message().is_empty() {
                     let member_id = admine_message.message().clone();
                     info!("server_up received: member_id={}", member_id);
                     Self::process_server_up(member_id).await;
