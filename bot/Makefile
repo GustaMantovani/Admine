@@ -103,11 +103,9 @@ shell: ## Open a shell in the virtual environment
 	@poetry shell
 
 # Git helpers
-git-hooks: ## Install git hooks
-	@echo "Installing git hooks..."
-	@echo "#!/bin/sh" > .git/hooks/pre-commit
-	@echo "make check" >> .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
+git-hooks: ## Install git hooks using the pre-commit framework
+	@echo "Installing git hooks via pre-commit..."
+	@poetry run pre-commit install
 	@echo "Git hooks installed!"
 
 # All-in-one commands
