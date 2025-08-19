@@ -7,13 +7,9 @@ class MessageService(ABC):
     def __init__(
         self,
         logger: Logger,
-        channels_ids: Optional[list[str]] = None,
-        administrators: Optional[list[str]] = None,
+        channels_ids: Optional[list[str]] = [],
+        administrators: Optional[list[str]] = [],
     ):
-        if administrators is None:
-            administrators = []
-        if channels_ids is None:
-            channels_ids = []
         self._logger = logger
         self.__channels_ids = channels_ids
         self.__administrators = administrators
