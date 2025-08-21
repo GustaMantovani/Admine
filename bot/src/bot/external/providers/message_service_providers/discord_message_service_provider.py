@@ -99,6 +99,26 @@ class _DiscordClient(commands.Bot):
                 self._logger.warning("Callback function not set for 'adm' command.")
                 await interaction.response.send_message("No processor available for this command.")
 
+        # Command to add a channel ID to the list of authorized channels
+        @self.tree.command(name="add_channel", description="Adiciona um channel_id à lista de canais autorizados")
+        async def add_channel(interaction: discord.Interaction, channel_id: str):
+            self._logger.debug(
+                f"Received 'add_channel' command. Callback function: {self.command_handle_function_callback}. Channel ID: {channel_id}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info(f"Calling the command handle callback with 'add_channel' for channel {channel_id}.")
+                response = await self.command_handle_function_callback(
+                    "add_channel",
+                    [channel_id],
+                    str(interaction.user.id),
+                    self._administrators,
+                )
+                await interaction.response.send_message(response)
+                self._logger.info("Sent confirmation message for 'add_channel' command.")
+            else:
+                self._logger.warning("Callback function not set for 'add_channel' command.")
+                await interaction.response.send_message("No processor available for this command.")
+
         # Command to authorizing a member in the server!
         @self.tree.command(name="auth", description="Command to authorizing a member in the server")
         async def auth(interaction: discord.Interaction, vpn_id: str):
@@ -212,13 +232,16 @@ class _DiscordClient(commands.Bot):
     async def send_message_to_channel(self, channel_id: int, message: str):
         await self._ready_event.wait()
         self._logger.debug(f"Trying to send message to channel {channel_id}: {message}")
-        channel = await self.fetch_channel(channel_id)
-        self._logger.debug(f"Channel found: {channel}")
-        if channel is None:
-            self._logger.warning(f"Channel with ID {channel_id} not found.")
-            return
-        self._logger.debug(f"Sending message to channel {channel_id}: {message}")
-        await channel.send(message)
+        try:
+            channel = await self.fetch_channel(channel_id)
+            self._logger.debug(f"Channel found: {channel}")
+            if channel is None:
+                self._logger.warning(f"Channel with ID {channel_id} not found.")
+                return
+            self._logger.debug(f"Sending message to channel {channel_id}: {message}")
+            await channel.send(message)
+        except Exception as e:
+            self._logger.error(f"Failed to fetch channel {channel_id}: {e}")
 
 
 class DiscordMessageServiceProvider(MessageService):
