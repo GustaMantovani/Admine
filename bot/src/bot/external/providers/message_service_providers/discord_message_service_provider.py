@@ -101,7 +101,8 @@ class _DiscordClient(commands.Bot):
 
         # Command to add a channel ID to the list of authorized channels
         @self.tree.command(name="add_channel", description="Adiciona um channel_id à lista de canais autorizados")
-        async def add_channel(interaction: discord.Interaction, channel_id: str):
+        async def add_channel(interaction: discord.Interaction):
+            channel_id = str(interaction.channel.id)
             self._logger.debug(
                 f"Received 'add_channel' command. Callback function: {self.command_handle_function_callback}. Channel ID: {channel_id}"
             )
@@ -117,6 +118,29 @@ class _DiscordClient(commands.Bot):
                 self._logger.info("Sent confirmation message for 'add_channel' command.")
             else:
                 self._logger.warning("Callback function not set for 'add_channel' command.")
+                await interaction.response.send_message("No processor available for this command.")
+
+        # Command to add a channel ID to the list of authorized channels
+        @self.tree.command(name="remove_channel", description="Remove um channel_id à lista de canais autorizados")
+        async def remove_channel(interaction: discord.Interaction):
+            channel_id = str(interaction.channel.id)
+            self._logger.debug(
+                f"Received 'remove_channel' command. Callback function: {self.command_handle_function_callback}. Channel ID: {channel_id}"
+            )
+            if self.command_handle_function_callback is not None:
+                self._logger.info(
+                    f"Calling the command handle callback with 'remove_channel' for channel {channel_id}."
+                )
+                response = await self.command_handle_function_callback(
+                    "remove_channel",
+                    [channel_id],
+                    str(interaction.user.id),
+                    self._administrators,
+                )
+                await interaction.response.send_message(response)
+                self._logger.info("Sent confirmation message for 'remove_channel' command.")
+            else:
+                self._logger.warning("Callback function not set for 'remove_channel' command.")
                 await interaction.response.send_message("No processor available for this command.")
 
         # Command to authorizing a member in the server!
