@@ -2,6 +2,7 @@ package minecraftserver
 
 import (
 	"server_handler/internal/config"
+	"server_handler/internal/docker"
 
 	"github.com/harrim91/docker-compose-go/client"
 )
@@ -19,19 +20,20 @@ func configureCompose() *client.ComposeClient {
 
 // Inicia o servidor
 func StartServerCompose() error {
-	compose := configureCompose()
-
-	upCh, err := compose.Up(&client.UpOptions{Detach: false}, config.GetLogFile())
-
-	if err != nil {
-		return err
-	}
-
-	err = <-upCh
-
-	if err != nil {
-		return err
-	}
+	docker.ComposeUp()
+	// compose := configureCompose()
+	//
+	// upCh, err := compose.Up(&client.UpOptions{Detach: false}, config.GetLogFile())
+	//
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// err = <-upCh
+	//
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
