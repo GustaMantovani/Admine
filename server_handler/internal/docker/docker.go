@@ -100,6 +100,7 @@ func WaitForBuildAndStart() error {
 	if err != nil {
 		return err
 	}
+	print("e")
 
 	containerName := c.ComposeContainerName // Substitua pelo nome do seu container
 
@@ -108,6 +109,8 @@ func WaitForBuildAndStart() error {
 	if err != nil {
 		return err
 	}
+
+	print("f")
 
 	err = waitForContainerStart(cli, containerName)
 	if err != nil {

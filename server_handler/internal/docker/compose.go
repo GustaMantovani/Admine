@@ -11,7 +11,39 @@ func ComposeUp() {
 	cmd := exec.Command("docker", "compose", "up")
 	s := strings.Split(path, "/")
 	l := len(s)
-	dir := strings.Join(s[1:l-1], "")
+	dir := "/" + strings.Join(s[1:l-1], "/") + "/"
 
-	cmd.Path = dir
+	file := config.GetLogFile()
+
+	cmd.Dir = dir
+	cmd.Stdout = file
+	go func() {
+		err := cmd.Run()
+
+		if err != nil {
+			// TODO: upgrade error msg
+			config.GetLogger().Error("Error")
+		}
+	}()
+}
+
+func ComposeDown() {
+	path := config.GetInstance().ComposeAbsPath
+	cmd := exec.Command("docker", "compose", "down")
+	s := strings.Split(path, "/")
+	l := len(s)
+	dir := "/" + strings.Join(s[1:l-1], "/") + "/"
+
+	file := config.GetLogFile()
+
+	cmd.Dir = dir
+	cmd.Stdout = file
+	go func() {
+		err := cmd.Run()
+
+		if err != nil {
+			// TODO: upgrade error msg
+			config.GetLogger().Error("Error")
+		}
+	}()
 }

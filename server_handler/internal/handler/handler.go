@@ -9,6 +9,7 @@ import (
 	"server_handler/internal/models"
 	"server_handler/internal/pubsub"
 	"strings"
+	"time"
 )
 
 func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
@@ -30,6 +31,7 @@ func ManageCommand(msg models.Message, ps pubsub.PubSubInterface) error {
 
 func serverUp(ps pubsub.PubSubInterface) {
 	var c = config.GetInstance()
+
 	err := minecraftserver.StartServerCompose()
 	if err != nil {
 		config.GetLogger().Error("error starting server compose: " + err.Error())
@@ -37,6 +39,8 @@ func serverUp(ps pubsub.PubSubInterface) {
 	}
 
 	ps.SendMessage("Starting server", c.SenderChannel)
+
+	time.Sleep(100 * time.Millisecond)
 	err = docker.WaitForBuildAndStart()
 	if err != nil {
 		config.GetLogger().Error("Error during build and start of the container: " + err.Error())
@@ -80,13 +84,14 @@ func serverDown(ps pubsub.PubSubInterface) {
 		}
 	}
 
-	err = minecraftserver.StopServerCompose()
-	if err != nil {
-		config.GetLogger().Warn("Error stopping server: " + err.Error())
-		msg := models.NewMessage("Error stopping server", []string{"server_down"})
-		ps.SendMessage(msg.ToString(), c.SenderChannel)
-		return
-	}
+	docker.ComposeDown()
+	// err = minecraftserver.StopServerCompose()
+	// if err != nil {
+	// 	config.GetLogger().Warn("Error stopping server: " + err.Error())
+	// 	msg := models.NewMessage("Error stopping server", []string{"server_down"})
+	// 	ps.SendMessage(msg.ToString(), c.SenderChannel)
+	// 	return
+	// }
 
 	msg := models.NewMessage(zerotierId, []string{"server_down"})
 
