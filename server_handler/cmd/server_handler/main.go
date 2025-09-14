@@ -1,1 +1,88 @@
-package pubusub
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"admine.com/server_handler/internal"
+	"admine.com/server_handler/internal/pubsub"
+	"admine.com/server_handler/pkg"
+)
+
+func main() {
+	// Initialize logger
+	logger, err := pkg.Setup("server_handler.log")
+	if err != nil {
+		log.Fatalf("Failed to setup logger: %v", err)
+	}
+
+	// Initialize application context
+	ctx, err := internal.Init("config.yaml")
+	if err != nil {
+		logger.Error("Failed to initialize app context: %v", err)
+		log.Fatalf("Failed to initialize app context: %v", err)
+	}
+
+	logger.Info("Server Handler starting...")
+
+	// Create PubSub service
+	pubsubService, err := pubsub.CreatePubSub(ctx.Config.PubSub)
+	if err != nil {
+		logger.Error("Failed to create PubSub service: %v", err)
+		log.Fatalf("Failed to create PubSub service: %v", err)
+	}
+
+	// Create event handler
+	eventHandler := pubsub.NewEventHandler(pubsubService)
+
+	// Subscribe to incoming messages
+	msgChannel, err := pubsubService.Subscribe(ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
+	if err != nil {
+		logger.Error("Failed to subscribe to commands: %v", err)
+		log.Fatalf("Failed to subscribe to commands: %v", err)
+	}
+
+	logger.Info("Server Handler started successfully. Listening for messages on channel: %s", ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
+
+	// Create context for graceful shutdown
+	mainCtx, cancel := context.WithCancel(context.Background())
+
+	// Handle graceful shutdown
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		logger.Info("Received shutdown signal. Shutting down gracefully...")
+		cancel()
+	}()
+
+	// Main message processing loop
+	for {
+		select {
+		case <-mainCtx.Done():
+			logger.Info("Shutting down...")
+
+			// Close PubSub connection
+			if err := pubsubService.Close(); err != nil {
+				logger.Error("Error closing PubSub service: %v", err)
+			}
+
+			logger.Info("Server Handler stopped")
+			return
+
+		case msg := <-msgChannel:
+			if msg != nil {
+				logger.Info("Received message with tags: %v", msg.Tags)
+
+				// Process the message
+				if err := eventHandler.ManageCommand(msg); err != nil {
+					logger.Error("Error processing message: %v", err)
+				}
+			}
+		}
+	}
+}
