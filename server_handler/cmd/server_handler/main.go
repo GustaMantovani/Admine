@@ -13,17 +13,24 @@ import (
 )
 
 func main() {
-	// Initialize logger
-	logger, err := pkg.Setup("server_handler.log")
-	if err != nil {
-		log.Fatalf("Failed to setup logger: %v", err)
+
+	configPath := "server_handler_config.yaml"
+	args := os.Args		
+
+	if (len(args) > 2){
+		configPath = args[1]
 	}
 
 	// Initialize application context
-	ctx, err := internal.Init("config.yaml")
+	ctx, err := internal.Init(configPath)
 	if err != nil {
-		logger.Error("Failed to initialize app context: %v", err)
 		log.Fatalf("Failed to initialize app context: %v", err)
+	}
+
+	// Initialize logger
+	logger, err := pkg.Setup(ctx.Config.App.LogFilePath)
+	if err != nil {
+		log.Fatalf("Failed to setup logger: %v", err)
 	}
 
 	logger.Info("Server Handler starting...")

@@ -18,6 +18,7 @@ type Config struct {
 
 type AppConfig struct {
 	SelfOriginName string `yaml:"self_origin_name"`
+	LogFilePath string `yaml:"log_file_path"`
 }
 
 type PubSubConfig struct {
