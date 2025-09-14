@@ -1,10 +1,9 @@
-package commandexecuter
+package pkg
 
 import (
 	"context"
 	"fmt"
 	"io"
-	"server_handler/internal/config"
 
 	"slices"
 
@@ -12,38 +11,37 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func WriteToContainer(input string) error {
-	ctx := context.Background()
+func WriteToContainer(ctx context.Context, containerName string, input string) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
-	// Cria o cliente Docker
+	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
 	defer cli.Close()
 
+	// List containers
 	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
 		return err
 	}
 
-	containerName := config.GetInstance().ComposeContainerName
-
-	// Obtém o ID do container pelo nome
+	// Find container ID by name
 	var containerID string
-	for _, container := range containers {
-		if slices.Contains(container.Names, "/"+containerName) { // Os nomes incluem a barra inicial
-			containerID = container.ID
+	for _, c := range containers {
+		if slices.Contains(c.Names, "/"+containerName) {
+			containerID = c.ID
+			break
 		}
 	}
-
 	if containerID == "" {
 		return fmt.Errorf("container '%s' not found", containerName)
 	}
 
-	fmt.Println(containerID)
-
-	// Anexa ao stdin do container
+	// Attach to container stdin
 	hijackedResp, err := cli.ContainerAttach(ctx, containerID, container.AttachOptions{
 		Stream: true,
 		Stdin:  true,
@@ -55,17 +53,16 @@ func WriteToContainer(input string) error {
 	}
 	defer hijackedResp.Close()
 
-	// Escreve no stdin
+	// Write input to container
 	input = input + "\n"
 	_, err = io.WriteString(hijackedResp.Conn, input)
 	if err != nil {
 		return err
 	}
 
-	// Envia EOF para o stdin, se necessário
+	// Optionally close stdin write
 	if closer, ok := hijackedResp.Conn.(interface{ CloseWrite() error }); ok {
-		err = closer.CloseWrite()
-		if err != nil {
+		if err := closer.CloseWrite(); err != nil {
 			return err
 		}
 	}
