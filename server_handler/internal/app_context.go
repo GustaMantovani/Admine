@@ -3,11 +3,13 @@ package internal
 import (
 	"fmt"
 	"sync"
+
+	"admine.com/server_handler/internal/config"
 )
 
 // AppContext is the singleton application context
 type AppContext struct {
-	Config  *Config
+	Config *config.Config
 }
 
 var (
@@ -19,14 +21,14 @@ var (
 func Init(configPath string) (*AppContext, error) {
 	var err error
 	once.Do(func() {
-		cfg, e := LoadConfig(configPath)
+		cfg, e := config.LoadConfig(configPath)
 		if e != nil {
 			err = fmt.Errorf("failed to load config: %w", e)
 			return
 		}
 
 		instance = &AppContext{
-			Config:  cfg,
+			Config: cfg,
 		}
 	})
 	if instance == nil && err == nil {

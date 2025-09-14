@@ -3,24 +3,18 @@ package pubsub
 import (
 	"fmt"
 
-	"admine.com/server_handler/internal"
-	pubsub_impls "admine.com/server_handler/internal/pubsub/pubsub_impls"
+	"admine.com/server_handler/internal/config"
+	"admine.com/server_handler/internal/pubsub/pubsub_impls"
 )
 
 // CreatePubSub returns a concrete PubSubService based on type
-func CreatePubSub(pubSubType string) (PubSubService, error) {
-	ctx := internal.Get() // singleton AppContext
-	if ctx == nil {
-		return nil, fmt.Errorf("AppContext not initialized")
-	}
+func CreatePubSub(c config.PubSubConfig) (PubSubService, error) {
 
-	switch pubSubType {
+	switch c.Type {
 	case "redis":
-		// Assumes Redis configuration exists in AppContext.Config
-		cfg := ctx.Config
-		return pubsub_impls.NewRedisPubSub(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB), nil
+		return pubsub.NewRedisPubSub(c.Redis), nil
 
 	default:
-		return nil, fmt.Errorf("unknown pubsub type: %s", pubSubType)
+		return nil, fmt.Errorf("unknown pubsub type: %s", c.Type)
 	}
 }

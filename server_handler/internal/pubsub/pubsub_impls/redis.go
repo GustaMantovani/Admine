@@ -7,6 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"admine.com/server_handler/internal/pubsub/models"
+	"admine.com/server_handler/internal/config"
 )
 
 type RedisPubSub struct {
@@ -15,12 +16,12 @@ type RedisPubSub struct {
 	cancel context.CancelFunc
 }
 
-func NewRedisPubSub(addr, password string, db int) *RedisPubSub {
+func NewRedisPubSub(c config.RedisConfig) *RedisPubSub {
 	ctx, cancel := context.WithCancel(context.Background())
 	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
+		Addr:     c.Addr,
+		Password: c.Password,
+		DB:       c.Db,
 	})
 
 	return &RedisPubSub{

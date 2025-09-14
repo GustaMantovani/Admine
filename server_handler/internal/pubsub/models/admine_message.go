@@ -6,15 +6,15 @@ import (
 )
 
 type AdmineMessage struct {
-	Origin  string `json:"origin"`
+	Origin  string   `json:"origin"`
 	Tags    []string `json:"tags"`
-	Message string `json:"message"`
+	Message string   `json:"message"`
 }
 
 func NewAdmineMessage(tags []string, message string) *AdmineMessage {
-	ctx := internal.Get() // singleton AppContext
+	ctx := internal.Get()
 	return &AdmineMessage{
-		Origin:  ctx.Config.Host, // using Host as the origin identifier
+		Origin:  ctx.Config.App.SelfOriginName,
 		Tags:    tags,
 		Message: message,
 	}

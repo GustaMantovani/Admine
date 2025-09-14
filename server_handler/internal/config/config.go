@@ -1,4 +1,4 @@
-package internal
+package config
 
 import (
 	"os"
@@ -26,7 +26,9 @@ type PubSubConfig struct {
 }
 
 type RedisConfig struct {
-	Addr string `yaml:"addr"`
+	Addr     string `yaml:"addr"`
+	Password string `yaml:"password"`
+	Db       int `yaml:"db"`
 }
 
 type MinecraftServerConfig struct {
