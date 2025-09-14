@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"admine.com/server_handler/internal"
-	mcserver "admine.com/server_handler/internal/core/mc_server/mc_server_impls"
+	mcserver "admine.com/server_handler/internal/mc_server/mc_server_impls"
 	"admine.com/server_handler/pkg"
 )
 
