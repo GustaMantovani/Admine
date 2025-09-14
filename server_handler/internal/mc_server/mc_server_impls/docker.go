@@ -1,6 +1,8 @@
 package mcserver
 
 import (
+	"context"
+
 	"admine.com/server_handler/pkg"
 )
 
@@ -40,5 +42,5 @@ func (d *DockerMinecraftServer) Info() (string, error) {
 }
 
 func (d *DockerMinecraftServer) ExecuteCommand(command string) (string, error) {
-	return "nil", pkg.WriteToContainer(nil, d.ContainerName, command)
+	return "nil", pkg.WriteToContainer(context.Background(), d.ContainerName, command)
 }
