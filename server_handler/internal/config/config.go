@@ -21,8 +21,15 @@ type AppConfig struct {
 }
 
 type PubSubConfig struct {
-	Type  string      `yaml:"type"`
-	Redis RedisConfig `yaml:"redis"`
+	Type              string            `yaml:"type"`
+	Redis             RedisConfig       `yaml:"redis"`
+	AdmineChannelsMap AdmineChannelsMap `yaml:"admine_channels_map"`
+}
+
+type AdmineChannelsMap struct {
+	ServerChannel  string `yaml:"server_channel"`
+	CommandChannel string `yaml:"command_channel"`
+	VpnChannel     string `yaml:"vpn_channel"`
 }
 
 type RedisConfig struct {
