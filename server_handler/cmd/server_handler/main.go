@@ -39,7 +39,7 @@ func main() {
 	pubsubService, err := pubsub.CreatePubSub(ctx.Config.PubSub)
 	if err != nil {
 		logger.Error("Failed to create PubSub service: %v", err)
-		log.Fatalf("Failed to create PubSub service: %v", err)
+		os.Exit(1)
 	}
 
 	// Create event handler
@@ -49,7 +49,7 @@ func main() {
 	msgChannel, err := pubsubService.Subscribe(ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
 	if err != nil {
 		logger.Error("Failed to subscribe to commands: %v", err)
-		log.Fatalf("Failed to subscribe to commands: %v", err)
+		os.Exit(1)
 	}
 
 	logger.Info("Server Handler started successfully. Listening for messages on channel: %s", ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
