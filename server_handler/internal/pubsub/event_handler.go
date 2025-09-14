@@ -9,18 +9,29 @@ import (
 	"admine.com/server_handler/pkg"
 )
 
-func ManageCommand(msg *models.AdmineMessage, ps PubSubService) error {
-	ctx := internal.Get()
+// EventHandler handles incoming messages and manages server operations
+type EventHandler struct {
+	pubsub PubSubService
+}
 
+// NewEventHandler creates a new EventHandler instance
+func NewEventHandler(ps PubSubService) *EventHandler {
+	return &EventHandler{
+		pubsub: ps,
+	}
+}
+
+// ManageCommand processes incoming messages and routes them to appropriate handlers
+func (eh *EventHandler) ManageCommand(msg *models.AdmineMessage) error {
 	if msg.HasTag("server_up") {
-		serverUp(ps, ctx)
+		eh.serverUp()
 	} else if msg.HasTag("server_down") {
-		serverDown(ps, ctx)
+		eh.serverDown()
 	} else if msg.HasTag("command") {
-		command(ps, ctx, msg.Message)
+		eh.command(msg.Message)
 	} else {
 		responseMsg := models.NewAdmineMessage([]string{"error"}, "Invalid tag.")
-		ps.Publish("admine_responses", responseMsg)
+		eh.pubsub.Publish("admine_responses", responseMsg)
 
 		if pkg.Logger != nil {
 			pkg.Logger.Error("Received an invalid tag: %v", msg.Tags)
@@ -32,18 +43,19 @@ func ManageCommand(msg *models.AdmineMessage, ps PubSubService) error {
 	return nil
 }
 
-func serverUp(ps PubSubService, ctx *internal.AppContext) {
+func (eh *EventHandler) serverUp() {
+	ctx := internal.Get()
 	// Start the server using the MinecraftServer interface
 	if ctx.MinecraftServer == nil {
 		pkg.Logger.Error("MinecraftServer is not initialized")
 		responseMsg := models.NewAdmineMessage([]string{"error"}, "Server not initialized")
-		ps.Publish("admine_responses", responseMsg)
+		eh.pubsub.Publish("admine_responses", responseMsg)
 		return
 	}
 
 	// Send starting message
 	responseMsg := models.NewAdmineMessage([]string{"server_status"}, "Starting server")
-	ps.Publish("admine_responses", responseMsg)
+	eh.pubsub.Publish("admine_responses", responseMsg)
 
 	err := (*ctx.MinecraftServer).Start()
 	if err != nil {
@@ -51,7 +63,7 @@ func serverUp(ps PubSubService, ctx *internal.AppContext) {
 			pkg.Logger.Error("Error starting server: %s", err.Error())
 		}
 		errorMsg := models.NewAdmineMessage([]string{"error"}, "Failed to start server: "+err.Error())
-		ps.Publish("admine_responses", errorMsg)
+		eh.pubsub.Publish("admine_responses", errorMsg)
 		return
 	}
 
@@ -65,24 +77,25 @@ func serverUp(ps PubSubService, ctx *internal.AppContext) {
 	}
 
 	successMsg := models.NewAdmineMessage([]string{"server_up"}, info)
-	ps.Publish("admine_responses", successMsg)
+	eh.pubsub.Publish("admine_responses", successMsg)
 
 	if pkg.Logger != nil {
 		pkg.Logger.Info("Server started successfully")
 	}
 }
 
-func serverDown(ps PubSubService, ctx *internal.AppContext) {
+func (eh *EventHandler) serverDown() {
+	ctx := internal.Get()
 	if ctx.MinecraftServer == nil {
 		pkg.Logger.Error("MinecraftServer is not initialized")
 		responseMsg := models.NewAdmineMessage([]string{"error"}, "Server not initialized")
-		ps.Publish("admine_responses", responseMsg)
+		eh.pubsub.Publish("admine_responses", responseMsg)
 		return
 	}
 
 	// Send stopping message
 	responseMsg := models.NewAdmineMessage([]string{"server_status"}, "Stopping server")
-	ps.Publish("admine_responses", responseMsg)
+	eh.pubsub.Publish("admine_responses", responseMsg)
 
 	// Execute stop command through the server interface
 	_, err := (*ctx.MinecraftServer).ExecuteCommand("/stop")
@@ -102,23 +115,24 @@ func serverDown(ps PubSubService, ctx *internal.AppContext) {
 			pkg.Logger.Error("Error stopping server: %s", err.Error())
 		}
 		errorMsg := models.NewAdmineMessage([]string{"error"}, "Error stopping server: "+err.Error())
-		ps.Publish("admine_responses", errorMsg)
+		eh.pubsub.Publish("admine_responses", errorMsg)
 		return
 	}
 
 	successMsg := models.NewAdmineMessage([]string{"server_down"}, "Server stopped successfully")
-	ps.Publish("admine_responses", successMsg)
+	eh.pubsub.Publish("admine_responses", successMsg)
 
 	if pkg.Logger != nil {
 		pkg.Logger.Info("Server stopped successfully")
 	}
 }
 
-func command(ps PubSubService, ctx *internal.AppContext, message string) {
+func (eh *EventHandler) command(message string) {
+	ctx := internal.Get()
 	if ctx.MinecraftServer == nil {
 		pkg.Logger.Error("MinecraftServer is not initialized")
 		responseMsg := models.NewAdmineMessage([]string{"error"}, "Server not initialized")
-		ps.Publish("admine_responses", responseMsg)
+		eh.pubsub.Publish("admine_responses", responseMsg)
 		return
 	}
 
@@ -129,7 +143,7 @@ func command(ps PubSubService, ctx *internal.AppContext, message string) {
 			pkg.Logger.Error("Error executing command '%s': %s", message, err.Error())
 		}
 		errorMsg := models.NewAdmineMessage([]string{"error"}, "Failed to execute command: "+err.Error())
-		ps.Publish("admine_responses", errorMsg)
+		eh.pubsub.Publish("admine_responses", errorMsg)
 		return
 	}
 
@@ -142,7 +156,7 @@ func command(ps PubSubService, ctx *internal.AppContext, message string) {
 	}
 
 	successMsg := models.NewAdmineMessage([]string{"command_result"}, responseMessage)
-	ps.Publish("admine_responses", successMsg)
+	eh.pubsub.Publish("admine_responses", successMsg)
 
 	if pkg.Logger != nil {
 		pkg.Logger.Info("Executed command '%s' successfully", message)

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/redis/go-redis/v9"
-	"admine.com/server_handler/internal/pubsub/models"
 	"admine.com/server_handler/internal/config"
+	"admine.com/server_handler/internal/pubsub/models"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisPubSub struct {
