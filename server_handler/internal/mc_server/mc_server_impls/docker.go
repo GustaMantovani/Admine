@@ -9,12 +9,14 @@ import (
 type DockerMinecraftServer struct {
 	DockerCompose *pkg.DockerCompose
 	ContainerName string
+	ServiceName   string
 }
 
-func NewDockerMinecraftServer(compose *pkg.DockerCompose, containerName string) *DockerMinecraftServer {
+func NewDockerMinecraftServer(compose *pkg.DockerCompose, containerName string, serviceName string) *DockerMinecraftServer {
 	return &DockerMinecraftServer{
 		DockerCompose: compose,
 		ContainerName: containerName,
+		ServiceName:   serviceName,
 	}
 }
 
@@ -41,6 +43,16 @@ func (d *DockerMinecraftServer) Info() (string, error) {
 	return "nil", nil
 }
 
+func (d *DockerMinecraftServer) StartUpInfo() string {
+	id, err := pkg.GetZeroTierNodeID(d.ContainerName)
+	if err != nil {
+		pkg.Logger.Error("Failed to get ZeroTier Node ID: %v", err)
+		return ""
+	}
+
+	return id
+}
+
 func (d *DockerMinecraftServer) ExecuteCommand(command string) (string, error) {
-	return "nil", pkg.WriteToContainer(context.Background(), d.ContainerName, command)
+	return "nil", pkg.WriteToContainer(context.Background(), d.ServiceName, command)
 }

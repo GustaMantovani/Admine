@@ -46,6 +46,7 @@ type MinecraftServerConfig struct {
 type DockerConfig struct {
 	ComposePath   string `yaml:"compose_path"`
 	ContainerName string `yaml:"container_name"`
+	ServiceName   string `yaml:"service_name"`
 }
 
 type WebServerConfig struct {

@@ -23,7 +23,7 @@ func NewEventHandler(ps PubSubService) *EventHandler {
 
 // ManageCommand processes incoming messages and routes them to appropriate handlers
 func (eh *EventHandler) ManageCommand(msg *models.AdmineMessage) error {
-	if msg.HasTag("server_up") {
+	if msg.HasTag("server_on") {
 		eh.serverUp()
 	} else if msg.HasTag("server_down") {
 		eh.serverDown()
@@ -55,34 +55,22 @@ func (eh *EventHandler) serverUp() {
 	}
 
 	// Send starting message
-	responseMsg := models.NewAdmineMessage([]string{"server_status"}, "Starting server")
-	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
 	err := (*ctx.MinecraftServer).Start()
 	if err != nil {
-		if pkg.Logger != nil {
-			pkg.Logger.Error("Error starting server: %s", err.Error())
-		}
+		pkg.Logger.Error("Error starting server: %s", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"error"}, "Failed to start server: "+err.Error())
 		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
 		return
 	}
 
-	// Get server info (this might include network information)
-	info, err := (*ctx.MinecraftServer).Info()
-	if err != nil {
-		if pkg.Logger != nil {
-			pkg.Logger.Error("Error getting server info: %s", err.Error())
-		}
-		info = "Server started successfully"
-	}
+	// Get server startInfo (this might include network information)
+	startInfo := (*ctx.MinecraftServer).StartUpInfo()
 
-	successMsg := models.NewAdmineMessage([]string{"server_up"}, info)
+	successMsg := models.NewAdmineMessage([]string{"server_on"}, startInfo)
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
 
-	if pkg.Logger != nil {
-		pkg.Logger.Info("Server started successfully")
-	}
+	pkg.Logger.Info("Server started successfully")
 }
 
 func (eh *EventHandler) serverDown() {

@@ -12,7 +12,7 @@ func CreateMinecraftServer(config config.MinecraftServerConfig) (MinecraftServer
 	switch config.RuntimeType {
 	case "docker":
 		dc := pkg.NewDockerCompose(config.Docker.ComposePath)
-		return mcserver.NewDockerMinecraftServer(dc, "mine_server"), nil
+		return mcserver.NewDockerMinecraftServer(dc, config.Docker.ContainerName, config.Docker.ServiceName), nil
 	default:
 		return nil, fmt.Errorf("unknown pubsub type: %s", config.RuntimeType)
 	}
