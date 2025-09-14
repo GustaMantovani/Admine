@@ -17,7 +17,7 @@ func main() {
 	configPath := "server_handler_config.yaml"
 	args := os.Args		
 
-	if (len(args) > 2){
+	if (len(args) > 1){
 		configPath = args[1]
 	}
 
