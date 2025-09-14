@@ -5,11 +5,13 @@ import (
 	"sync"
 
 	"admine.com/server_handler/internal/config"
+	"admine.com/server_handler/internal/mc_server"
 )
 
 // AppContext is the singleton application context
 type AppContext struct {
-	Config *config.Config
+	Config          *config.Config
+	MinecraftServer *mcserver.MinecraftServer
 }
 
 var (
@@ -27,8 +29,15 @@ func Init(configPath string) (*AppContext, error) {
 			return
 		}
 
+		mc, e := mcserver.CreateMinecraftServer(cfg.MinecraftServer)
+		if e != nil {
+			err = fmt.Errorf("failed to load config: %w", e)
+			return
+		}
+
 		instance = &AppContext{
-			Config: cfg,
+			Config:          cfg,
+			MinecraftServer: &mc,
 		}
 	})
 	if instance == nil && err == nil {
