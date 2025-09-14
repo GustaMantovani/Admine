@@ -1,27 +1,62 @@
 package internal
 
+import (
+	"os"
+
+	"gopkg.in/yaml.v3"
+)
+
 type Config struct {
-	// App identity
+	App AppConfig `yaml:"app"`
+
+	PubSub PubSubConfig `yaml:"pubsub"`
+
+	MinecraftServer MinecraftServerConfig `yaml:"minecraft_server"`
+
+	WebSever WebServerConfig `yaml:"web_server"`
+}
+
+type AppConfig struct {
 	SelfOriginName string `yaml:"self_origin_name"`
+}
 
-	// Redis configuration
-	RedisAddr     string `yaml:"redis_addr"`
-	RedisPassword string `yaml:"redis_password"`
-	RedisDB       int    `yaml:"redis_db"`
+type PubSubConfig struct {
+	Type  string      `yaml:"type"`
+	Redis RedisConfig `yaml:"redis"`
+}
 
-	// Docker Compose
-	DockerComposePath string `yaml:"compose_path"`
+type RedisConfig struct {
+	Addr string `yaml:"addr"`
+}
 
-	// Other optional fields
+type MinecraftServerConfig struct {
+	RuntimeType string       `yaml:"runtime_type"`
+	Docker      DockerConfig `yaml:"docker"`
+}
+
+type DockerConfig struct {
+	ComposePath   string `yaml:"compose_path"`
+	ContainerName string `yaml:"container_name"`
+}
+
+type WebServerConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
 }
 
-// LoadConfig reads a YAML file and unmarshals into Config
+// LoadConfig reads YAML file into Config
 func LoadConfig(path string) (*Config, error) {
-	// exemplo usando gopkg.in/yaml.v3
-	// f, err := os.Open(path)
-	// ...
-	// yaml.NewDecoder(f).Decode(&cfg)
-	return &Config{}, nil
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var cfg Config
+	decoder := yaml.NewDecoder(file)
+	if err := decoder.Decode(&cfg); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }
