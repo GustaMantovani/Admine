@@ -25,9 +25,7 @@ func (dc *DockerCompose) run(args ...string) error {
 
 	cmdArgs := append(baseArgs, args...)
 
-	if Logger != nil {
-		Logger.Info("Running command: docker %v", cmdArgs)
-	}
+	Logger.Info("Running command: docker %v", cmdArgs)
 
 	cmd := exec.Command("docker", cmdArgs...)
 	cmd.Stdout = os.Stdout
@@ -35,15 +33,11 @@ func (dc *DockerCompose) run(args ...string) error {
 	cmd.Stdin = os.Stdin
 
 	if err := cmd.Run(); err != nil {
-		if Logger != nil {
-			Logger.Error("Command failed: docker %v | %v", cmdArgs, err)
-		}
+		Logger.Error("Command failed: docker %v | %v", cmdArgs, err)
 		return err
 	}
 
-	if Logger != nil {
-		Logger.Info("Command succeeded: docker %v", cmdArgs)
-	}
+	Logger.Info("Command succeeded: docker %v", cmdArgs)
 
 	return nil
 }
@@ -99,9 +93,7 @@ func (dc *DockerCompose) Logs(services ...string) error {
 // Exec runs a command for each specified service
 func (dc *DockerCompose) Exec(command []string, services ...string) error {
 	if len(services) == 0 {
-		if Logger != nil {
-			Logger.Error("No services specified for Exec")
-		}
+		Logger.Error("No services specified for Exec")
 		return nil
 	}
 
@@ -117,9 +109,7 @@ func (dc *DockerCompose) Exec(command []string, services ...string) error {
 // ExecStructured runs a command for each specified service and returns a map with outputs
 func (dc *DockerCompose) ExecStructured(command []string, services ...string) (map[string]string, error) {
 	if len(services) == 0 {
-		if Logger != nil {
-			Logger.Info("No services specified for Exec")
-		}
+		Logger.Info("No services specified for Exec")
 		return nil, nil
 	}
 

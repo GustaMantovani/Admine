@@ -127,9 +127,7 @@ func GetZeroTierNodeID(containerName string) (string, error) {
 	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		if Logger != nil {
-			Logger.Error("Failed to execute zerotier-cli info: %v", err)
-		}
+		Logger.Error("Failed to execute zerotier-cli info: %v", err)
 		return "", fmt.Errorf("failed to get zerotier info: %w", err)
 	}
 
@@ -201,28 +199,20 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 				All:     true,
 			})
 			if err != nil {
-				if Logger != nil {
-					Logger.Error("Error listing containers: %v", err)
-				}
+				Logger.Error("Error listing containers: %v", err)
 				continue
 			}
 
 			if len(containers) > 0 {
 				container := containers[0]
-				if Logger != nil {
-					Logger.Info("Container '%s' status: %s", containerName, container.State)
-				}
+				Logger.Info("Container '%s' status: %s", containerName, container.State)
 
 				if container.State == "running" {
-					if Logger != nil {
-						Logger.Info("Container '%s' is now running", containerName)
-					}
+					Logger.Info("Container '%s' is now running", containerName)
 					return nil
 				}
 			} else {
-				if Logger != nil {
-					Logger.Debug("Container '%s' not found, waiting...", containerName)
-				}
+				Logger.Debug("Container '%s' not found, waiting...", containerName)
 			}
 		}
 	}

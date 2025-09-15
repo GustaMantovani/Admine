@@ -1,7 +1,6 @@
 package pubsub
 
 import (
-	"log"
 	"strings"
 
 	"admine.com/server_handler/internal"
@@ -25,8 +24,10 @@ func NewEventHandler(ps PubSubService) *EventHandler {
 func (eh *EventHandler) ManageCommand(msg *models.AdmineMessage) error {
 	if msg.HasTag("server_on") {
 		eh.serverUp()
-	} else if msg.HasTag("server_down") {
+	} else if msg.HasTag("server_off") {
 		eh.serverDown()
+	} else if msg.HasTag("restart") {
+		eh.restart()
 	} else if msg.HasTag("command") {
 		eh.command(msg.Message)
 	} else {
@@ -34,11 +35,7 @@ func (eh *EventHandler) ManageCommand(msg *models.AdmineMessage) error {
 		responseMsg := models.NewAdmineMessage([]string{"error"}, "Invalid tag.")
 		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-		if pkg.Logger != nil {
-			pkg.Logger.Error("Received an invalid tag: %v", msg.Tags)
-		} else {
-			log.Println("Received an invalid tag:", msg.Tags)
-		}
+		pkg.Logger.Error("Received an invalid tag: %v", msg.Tags)
 	}
 
 	return nil
@@ -89,9 +86,7 @@ func (eh *EventHandler) serverDown() {
 	// Execute stop command through the server interface
 	_, err := (*ctx.MinecraftServer).ExecuteCommand("/stop")
 	if err != nil {
-		if pkg.Logger != nil {
-			pkg.Logger.Error("Error executing stop command: %s", err.Error())
-		}
+		pkg.Logger.Error("Error executing stop command: %s", err.Error())
 	}
 
 	// Wait for graceful shutdown (simplified approach)
@@ -100,20 +95,50 @@ func (eh *EventHandler) serverDown() {
 
 	err = (*ctx.MinecraftServer).Stop()
 	if err != nil {
-		if pkg.Logger != nil {
-			pkg.Logger.Error("Error stopping server: %s", err.Error())
-		}
+		pkg.Logger.Error("Error stopping server: %s", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"error"}, "Error stopping server: "+err.Error())
 		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
 		return
 	}
 
-	successMsg := models.NewAdmineMessage([]string{"server_down"}, "Server stopped successfully")
+	successMsg := models.NewAdmineMessage([]string{"server_off"}, "Server stopped successfully")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
 
-	if pkg.Logger != nil {
-		pkg.Logger.Info("Server stopped successfully")
+	pkg.Logger.Info("Server stopped successfully")
+}
+
+func (eh *EventHandler) restart() {
+	ctx := internal.Get()
+	if ctx.MinecraftServer == nil {
+		pkg.Logger.Error("MinecraftServer is not initialized")
+		responseMsg := models.NewAdmineMessage([]string{"error"}, "Server not initialized")
+		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
+		return
 	}
+
+	// Send restarting message
+	statusMsg := models.NewAdmineMessage([]string{"server_status"}, "Restarting server")
+	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, statusMsg)
+
+	pkg.Logger.Info("Starting server restart process")
+
+	// Use the Restart method from the MinecraftServer interface
+	err := (*ctx.MinecraftServer).Restart()
+	if err != nil {
+		pkg.Logger.Error("Error restarting server: %s", err.Error())
+		errorMsg := models.NewAdmineMessage([]string{"error"}, "Failed to restart server: "+err.Error())
+		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
+		return
+	}
+
+	// Get server startup info after restart
+	startInfo := (*ctx.MinecraftServer).StartUpInfo()
+
+	// Send restart success message
+	successMsg := models.NewAdmineMessage([]string{"restart_complete"}, startInfo)
+	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
+
+	pkg.Logger.Info("Server restarted successfully")
 }
 
 func (eh *EventHandler) command(message string) {
@@ -128,9 +153,7 @@ func (eh *EventHandler) command(message string) {
 	// Execute the command through the MinecraftServer interface
 	result, err := (*ctx.MinecraftServer).ExecuteCommand(message)
 	if err != nil {
-		if pkg.Logger != nil {
-			pkg.Logger.Error("Error executing command '%s': %s", message, err.Error())
-		}
+		pkg.Logger.Error("Error executing command '%s': %s", message, err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"error"}, "Failed to execute command: "+err.Error())
 		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
 		return
@@ -147,7 +170,5 @@ func (eh *EventHandler) command(message string) {
 	successMsg := models.NewAdmineMessage([]string{"command_result"}, responseMessage)
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
 
-	if pkg.Logger != nil {
-		pkg.Logger.Info("Executed command '%s' successfully", message)
-	}
+	pkg.Logger.Info("Executed command '%s' successfully", message)
 }
