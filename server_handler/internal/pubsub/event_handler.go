@@ -25,7 +25,7 @@ func (eh *EventHandler) ManageCommand(msg *models.AdmineMessage) error {
 	if msg.HasTag("server_on") {
 		eh.serverUp()
 	} else if msg.HasTag("server_off") {
-		eh.serverDown()
+		eh.serverOff()
 	} else if msg.HasTag("restart") {
 		eh.restart()
 	} else if msg.HasTag("command") {
@@ -52,6 +52,8 @@ func (eh *EventHandler) serverUp() {
 	}
 
 	// Send starting message
+	responseMsg := models.NewAdmineMessage([]string{"server_status"}, "Starting server")
+	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
 	err := (*ctx.MinecraftServer).Start()
 	if err != nil {
@@ -70,7 +72,7 @@ func (eh *EventHandler) serverUp() {
 	pkg.Logger.Info("Server started successfully")
 }
 
-func (eh *EventHandler) serverDown() {
+func (eh *EventHandler) serverOff() {
 	ctx := internal.Get()
 	if ctx.MinecraftServer == nil {
 		pkg.Logger.Error("MinecraftServer is not initialized")
