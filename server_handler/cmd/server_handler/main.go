@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"admine.com/server_handler/internal"
+	"admine.com/server_handler/internal/api"
 	"admine.com/server_handler/internal/pubsub"
 	"admine.com/server_handler/pkg"
 )
@@ -45,6 +47,14 @@ func main() {
 	// Create event handler
 	eventHandler := pubsub.NewEventHandler(pubsubService)
 
+	// Create and start web server in background
+	webServer := api.NewServer(ctx.Config)
+	go func() {
+		if err := webServer.StartBackground(); err != nil {
+			logger.Error("Failed to start web server: %v", err)
+		}
+	}()
+
 	// Subscribe to incoming messages
 	msgChannel, err := pubsubService.Subscribe(ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
 	if err != nil {
@@ -72,6 +82,14 @@ func main() {
 		select {
 		case <-mainCtx.Done():
 			logger.Info("Shutting down...")
+
+			// Stop web server
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer shutdownCancel()
+
+			if err := webServer.Stop(shutdownCtx); err != nil {
+				logger.Error("Error stopping web server: %v", err)
+			}
 
 			// Close PubSub connection
 			if err := pubsubService.Close(); err != nil {
