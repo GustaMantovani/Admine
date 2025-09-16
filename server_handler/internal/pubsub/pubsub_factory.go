@@ -1,15 +1,20 @@
 package pubsub
 
-import "server_handler/internal/config"
+import (
+	"fmt"
 
-// Returns a concrete Pubsub by config.Config pubsub field
-func PubSubFactoryCreate() PubSubInterface {
-	var c = config.GetInstance()
-	var address = c.Host + ":" + c.Port
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	pubsub_impls "github.com/GustaMantovani/Admine/server_handler/internal/pubsub/pubsub_impls"
+)
 
-	var pubSubTypes = map[string]PubSubInterface{
-		"redis": New(address),
+// CreatePubSub returns a concrete PubSubService based on type
+func CreatePubSub(c config.PubSubConfig) (PubSubService, error) {
+
+	switch c.Type {
+	case "redis":
+		return pubsub_impls.NewRedisPubSub(c.Redis), nil
+
+	default:
+		return nil, fmt.Errorf("unknown pubsub type: %s", c.Type)
 	}
-
-	return pubSubTypes[c.Pubsub]
 }

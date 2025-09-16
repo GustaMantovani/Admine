@@ -2,60 +2,73 @@ package config
 
 import (
 	"os"
-	"path"
-	"sync"
+
+	"gopkg.in/yaml.v3"
 )
 
-type config struct {
-	ComposeAbsPath       string
-	ComposeContainerName string
-	ConsumerChannel      []string
-	SenderChannel        string
-	Pubsub               string
-	Host                 string
-	Port                 string
+type Config struct {
+	App AppConfig `yaml:"app"`
+
+	PubSub PubSubConfig `yaml:"pubsub"`
+
+	MinecraftServer MinecraftServerConfig `yaml:"minecraft_server"`
+
+	WebSever WebServerConfig `yaml:"web_server"`
 }
 
-var instance *config
-var once sync.Once
+type AppConfig struct {
+	SelfOriginName string `yaml:"self_origin_name"`
+	LogFilePath    string `yaml:"log_file_path"`
+	LogLevel       string `yaml:"log_level"`
+}
 
-/*
-Get the Singleton instance of the server configuration.
+type PubSubConfig struct {
+	Type              string            `yaml:"type"`
+	Redis             RedisConfig       `yaml:"redis"`
+	AdmineChannelsMap AdmineChannelsMap `yaml:"admine_channels_map"`
+}
 
-Checks whether it is possible to fetch data from a configuration file
-or environment variables. If not, it closes the program.
-*/
-func GetInstance() *config {
-	once.Do(func() {
-		instance = &config{}
-		configFile, err := GetConfigFileData()
+type AdmineChannelsMap struct {
+	ServerChannel  string `yaml:"server_channel"`
+	CommandChannel string `yaml:"command_channel"`
+	VpnChannel     string `yaml:"vpn_channel"`
+}
 
-		if err != nil {
-			GetLogger().Warn("Could not fetch data from configuration file: " + err.Error())
+type RedisConfig struct {
+	Addr     string `yaml:"addr"`
+	Password string `yaml:"password"`
+	Db       int    `yaml:"db"`
+}
 
-			_, err := isEnvSetAndSetConfig(instance)
-			if err != nil {
-				GetLogger().Warn("Could not fetch data from env vars too: " + err.Error())
-				GetLogger().Warn("Closing app because its not configured")
-				os.Exit(1)
-			}
+type MinecraftServerConfig struct {
+	RuntimeType string       `yaml:"runtime_type"`
+	Docker      DockerConfig `yaml:"docker"`
+}
 
-			return
-		}
+type DockerConfig struct {
+	ComposePath   string `yaml:"compose_path"`
+	ContainerName string `yaml:"container_name"`
+	ServiceName   string `yaml:"service_name"`
+}
 
-		composeAbsPath := configFile.ComposeDirectory + "/" + "docker-compose.yaml"
-		containerName := path.Base(configFile.ComposeDirectory) + "-" + configFile.ServerName + "-1"
+type WebServerConfig struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
 
-		instance = &config{
-			ComposeAbsPath:       composeAbsPath,
-			ConsumerChannel:      configFile.ConsumerChannels,
-			SenderChannel:        configFile.SenderChannel,
-			ComposeContainerName: containerName,
-			Pubsub:               configFile.Pubsub,
-			Host:                 configFile.Host,
-			Port:                 configFile.Port,
-		}
-	})
+// LoadConfig reads YAML file into Config
+func LoadConfig(path string) (*Config, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-	return instance
+	var cfg Config
+	decoder := yaml.NewDecoder(file)
+	if err := decoder.Decode(&cfg); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }

@@ -1,10 +1,13 @@
 package pubsub
 
 import (
-	"server_handler/internal/models"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub/models"
 )
 
-type PubSubInterface interface {
-	ListenForMessages([]string, chan models.Message)
-	SendMessage(string, string)
+type PubSubService interface {
+	Publish(topic string, msg *models.AdmineMessage) error
+
+	Subscribe(topics ...string) (<-chan *models.AdmineMessage, error)
+
+	Close() error
 }
