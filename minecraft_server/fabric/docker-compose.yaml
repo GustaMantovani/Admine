@@ -1,5 +1,6 @@
 services:
   mine_server:
+    container_name: mine_server
     build:
       context: .
       args:
