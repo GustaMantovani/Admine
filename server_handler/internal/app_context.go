@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
-	"github.com/GustaMantovani/Admine/server_handler/internal/mc_server"
+	mcserver "github.com/GustaMantovani/Admine/server_handler/internal/mc_server"
 )
 
 // AppContext is the singleton application context

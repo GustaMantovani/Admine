@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"encoding/json"
+
+	"github.com/GustaMantovani/Admine/server_handler/internal"
 )
 
 type AdmineMessage struct {
