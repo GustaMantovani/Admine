@@ -18,9 +18,6 @@ import (
 )
 
 func WriteToContainer(ctx context.Context, containerName string, input string) error {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 
 	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -30,7 +27,7 @@ func WriteToContainer(ctx context.Context, containerName string, input string) e
 	defer cli.Close()
 
 	// Find container ID by name
-	containerID, err := getContainerID(containerName, cli)
+	containerID, err := getContainerID(containerName, cli, ctx)
 	if err != nil {
 		return err
 	}
@@ -65,8 +62,7 @@ func WriteToContainer(ctx context.Context, containerName string, input string) e
 }
 
 // ReadLastContainerLine reads the last line of logs from a container
-func ReadLastContainerLine(containerName string) (string, error) {
-	ctx := context.Background()
+func ReadLastContainerLine(containerName string, ctx context.Context) (string, error) {
 
 	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -76,7 +72,7 @@ func ReadLastContainerLine(containerName string) (string, error) {
 	defer cli.Close()
 
 	// Find container ID by name
-	containerID, err := getContainerID(containerName, cli)
+	containerID, err := getContainerID(containerName, cli, ctx)
 	if err != nil {
 		return "", err
 	}
@@ -143,8 +139,8 @@ func GetZeroTierNodeID(containerName string) (string, error) {
 }
 
 // WaitForContainerStart waits for a container to start and be in running state
-func WaitForContainerStart(containerName string, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+func WaitForContainerStart(containerName string, timeout time.Duration, ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	// Create Docker client
@@ -167,8 +163,8 @@ func WaitForContainerStart(containerName string, timeout time.Duration) error {
 }
 
 // getContainerID finds a container ID by name
-func getContainerID(containerName string, cli *client.Client) (string, error) {
-	containers, err := cli.ContainerList(context.Background(), container.ListOptions{All: true})
+func getContainerID(containerName string, cli *client.Client, ctx context.Context) (string, error) {
+	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
 		return "", err
 	}

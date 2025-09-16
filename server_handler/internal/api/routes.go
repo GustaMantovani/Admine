@@ -11,7 +11,7 @@ func SetupRoutes() *gin.Engine {
 	router := gin.Default()
 
 	// Create handlers
-	serverHandler := handlers.NewServerHandler()
+	serverHandler := handlers.NewApiHandler()
 
 	// API routes
 	api := router.Group("/api/v1")

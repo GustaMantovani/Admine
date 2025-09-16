@@ -16,8 +16,10 @@ type RedisPubSub struct {
 	cancel context.CancelFunc
 }
 
-func NewRedisPubSub(c config.RedisConfig) *RedisPubSub {
-	ctx, cancel := context.WithCancel(context.Background())
+func NewRedisPubSub(c config.RedisConfig, ctx context.Context) *RedisPubSub {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.Addr,
 		Password: c.Password,
