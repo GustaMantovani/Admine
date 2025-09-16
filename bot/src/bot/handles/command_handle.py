@@ -47,6 +47,8 @@ class CommandHandle:
             "adm": self.__turn_admin,
             "vpn_id": self.__vpn_id,
             "server_ips": self.__server_ips,
+            "add_channel": self.__add_channel,
+            "remove_channel": self.__remove_channel,
         }
 
     async def process_command(
@@ -163,3 +165,49 @@ class CommandHandle:
 
         self.__logger.info(f"User {user_id} added as administrator.")
         return f"{user_mention} is now an administrator."
+
+    @admin_command
+    async def __add_channel(self, args: List[str]):
+        self.__logger.debug(f"Adding channel ID with args: {args}")
+        if not args or not args[0]:
+            return "No channel ID provided to add."
+
+        channel_id = str(args[0])
+        config = Config()
+
+        channel_ids: list[str] = config.get("discord.channel_ids", [])
+        # Update the channel IDs list in the object itself
+        if channel_id in channel_ids:
+            return f"Channel ID {channel_id} is already authorized."
+
+        channel_ids.append(channel_id)
+
+        # Save to bot_config.json file
+        with open("./bot_config.json", "w") as f:
+            json.dump(config._Config__config, f, indent=4)
+
+        self.__logger.info(f"Channel ID {channel_id} added to authorized channels.")
+        return f"Channel ID {channel_id} has been added to authorized channels."
+
+    @admin_command
+    async def __remove_channel(self, args: List[str]):
+        self.__logger.debug(f"Removing channel ID with args: {args}")
+        if not args or not args[0]:
+            return "No channel ID provided to remove."
+
+        channel_id = str(args[0])
+        config = Config()
+
+        channel_ids: list[str] = config.get("discord.channel_ids", [])
+        # Update the channel IDs list in the object itself
+        if channel_id not in channel_ids:
+            return f"Channel ID {channel_id} is not authorized."
+
+        channel_ids.remove(channel_id)
+
+        # Save to bot_config.json file
+        with open("./bot_config.json", "w") as f:
+            json.dump(config._Config__config, f, indent=4)
+
+        self.__logger.info(f"Channel ID {channel_id} removed to authorized channels.")
+        return f"Channel ID {channel_id} has been removed to authorized channels."
