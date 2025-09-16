@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"admine.com/server_handler/internal"
-	"admine.com/server_handler/internal/api"
-	"admine.com/server_handler/internal/pubsub"
-	"admine.com/server_handler/pkg"
+	"github.com/GustaMantovani/Admine/server_handler/internal"
+	"github.com/GustaMantovani/Admine/server_handler/internal/api"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub"
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
 func main() {

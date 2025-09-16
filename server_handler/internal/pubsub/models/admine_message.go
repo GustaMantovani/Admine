@@ -1,7 +1,7 @@
 package models
 
 import (
-	"admine.com/server_handler/internal"
+	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"encoding/json"
 )
 

@@ -3,7 +3,7 @@ package mcserver
 import (
 	"context"
 
-	"admine.com/server_handler/pkg"
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
 type DockerMinecraftServer struct {

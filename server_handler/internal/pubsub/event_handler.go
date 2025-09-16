@@ -3,9 +3,9 @@ package pubsub
 import (
 	"strings"
 
-	"admine.com/server_handler/internal"
-	"admine.com/server_handler/internal/pubsub/models"
-	"admine.com/server_handler/pkg"
+	"github.com/GustaMantovani/Admine/server_handler/internal"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub/models"
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
 // EventHandler handles incoming messages and manages server operations

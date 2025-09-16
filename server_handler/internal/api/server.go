@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"admine.com/server_handler/internal/config"
-	"admine.com/server_handler/pkg"
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
 // Server represents the HTTP API server

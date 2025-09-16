@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"admine.com/server_handler/internal/config"
-	"admine.com/server_handler/internal/pubsub/models"
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub/models"
 	"github.com/redis/go-redis/v9"
 )
 

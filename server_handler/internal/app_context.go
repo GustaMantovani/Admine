@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"admine.com/server_handler/internal/config"
-	"admine.com/server_handler/internal/mc_server"
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	"github.com/GustaMantovani/Admine/server_handler/internal/mc_server"
 )
 
 // AppContext is the singleton application context

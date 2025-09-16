@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"admine.com/server_handler/internal"
-	"admine.com/server_handler/internal/api/models"
-	"admine.com/server_handler/pkg"
+	"github.com/GustaMantovani/Admine/server_handler/internal"
+	"github.com/GustaMantovani/Admine/server_handler/internal/api/models"
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 	"github.com/gin-gonic/gin"
 )
 

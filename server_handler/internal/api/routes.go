@@ -1,7 +1,7 @@
 package api
 
 import (
-	"admine.com/server_handler/internal/api/handlers"
+	"github.com/GustaMantovani/Admine/server_handler/internal/api/handlers"
 	"github.com/gin-gonic/gin"
 )
 

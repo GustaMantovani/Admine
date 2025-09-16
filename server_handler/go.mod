@@ -1,4 +1,4 @@
-module admine.com/server_handler
+module github.com/GustaMantovani/Admine/server_handler
 
 go 1.24.6
 

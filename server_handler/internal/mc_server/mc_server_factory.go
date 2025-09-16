@@ -3,9 +3,9 @@ package mcserver
 import (
 	"fmt"
 
-	"admine.com/server_handler/internal/config"
-	mcserver "admine.com/server_handler/internal/mc_server/mc_server_impls"
-	"admine.com/server_handler/pkg"
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	mcserver "github.com/GustaMantovani/Admine/server_handler/internal/mc_server/mc_server_impls"
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
 func CreateMinecraftServer(config config.MinecraftServerConfig) (MinecraftServer, error) {

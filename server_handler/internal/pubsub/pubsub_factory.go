@@ -3,8 +3,8 @@ package pubsub
 import (
 	"fmt"
 
-	"admine.com/server_handler/internal/config"
-	pubsub_impls "admine.com/server_handler/internal/pubsub/pubsub_impls"
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	pubsub_impls "github.com/GustaMantovani/Admine/server_handler/internal/pubsub/pubsub_impls"
 )
 
 // CreatePubSub returns a concrete PubSubService based on type
