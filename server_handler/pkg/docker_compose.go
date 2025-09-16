@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"log/slog"
 	"os"
 	"os/exec"
 )
@@ -10,7 +11,7 @@ type DockerCompose struct {
 	File string
 }
 
-// NewDockerCompose creates a Compose instance using global logger
+// NewDockerCompose creates a Compose instance using global slog
 func NewDockerCompose(file string) *DockerCompose {
 	return &DockerCompose{
 		File: file,
@@ -25,7 +26,7 @@ func (dc *DockerCompose) run(args ...string) error {
 
 	cmdArgs := append(baseArgs, args...)
 
-	Logger.Info("Running command: docker %v", cmdArgs)
+	slog.Info("Running command", "cmd", "docker", "args", cmdArgs)
 
 	cmd := exec.Command("docker", cmdArgs...)
 	cmd.Stdout = os.Stdout
@@ -33,11 +34,11 @@ func (dc *DockerCompose) run(args ...string) error {
 	cmd.Stdin = os.Stdin
 
 	if err := cmd.Run(); err != nil {
-		Logger.Error("Command failed: docker %v | %v", cmdArgs, err)
+		slog.Error("Command failed", "cmd", "docker", "args", cmdArgs, "error", err)
 		return err
 	}
 
-	Logger.Info("Command succeeded: docker %v", cmdArgs)
+	slog.Info("Command succeeded", "cmd", "docker", "args", cmdArgs)
 
 	return nil
 }
@@ -93,7 +94,7 @@ func (dc *DockerCompose) Logs(services ...string) error {
 // Exec runs a command for each specified service
 func (dc *DockerCompose) Exec(command []string, services ...string) error {
 	if len(services) == 0 {
-		Logger.Error("No services specified for Exec")
+		slog.Error("No services specified for Exec")
 		return nil
 	}
 
@@ -109,7 +110,7 @@ func (dc *DockerCompose) Exec(command []string, services ...string) error {
 // ExecStructured runs a command for each specified service and returns a map with outputs
 func (dc *DockerCompose) ExecStructured(command []string, services ...string) (map[string]string, error) {
 	if len(services) == 0 {
-		Logger.Info("No services specified for Exec")
+		slog.Info("No services specified for Exec")
 		return nil, nil
 	}
 

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os/exec"
 	"slices"
 	"strings"
@@ -127,7 +128,7 @@ func GetZeroTierNodeID(containerName string) (string, error) {
 	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		Logger.Error("Failed to execute zerotier-cli info: %v", err)
+		slog.Error("Failed to execute zerotier-cli info", "error", err)
 		return "", fmt.Errorf("failed to get zerotier info: %w", err)
 	}
 
@@ -199,20 +200,20 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 				All:     true,
 			})
 			if err != nil {
-				Logger.Error("Error listing containers: %v", err)
+				slog.Error("Error listing containers", "error", err)
 				continue
 			}
 
 			if len(containers) > 0 {
 				container := containers[0]
-				Logger.Info("Container '%s' status: %s", containerName, container.State)
+				slog.Info("Container status", "container", containerName, "status", container.State)
 
 				if container.State == "running" {
-					Logger.Info("Container '%s' is now running", containerName)
+					slog.Info("Container is now running", "container", containerName)
 					return nil
 				}
 			} else {
-				Logger.Debug("Container '%s' not found, waiting...", containerName)
+				slog.Debug("Container not found, waiting", "container", containerName)
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,18 +30,18 @@ func main() {
 		log.Fatalf("Failed to initialize app context: %v", err)
 	}
 
-	// Initialize logger
-	logger, err := pkg.Setup(ctx.Config.App.LogFilePath)
+	// Initialize slog
+	err = pkg.Setup(ctx.Config.App.LogFilePath, ctx.Config.App.LogLevel)
 	if err != nil {
-		log.Fatalf("Failed to setup logger: %v", err)
+		log.Fatalf("Failed to setup slog: %v", err)
 	}
 
-	logger.Info("Server Handler starting...")
+	slog.Info("Server Handler starting...")
 
 	// Create PubSub service
 	pubsubService, err := pubsub.CreatePubSub(ctx.Config.PubSub)
 	if err != nil {
-		logger.Error("Failed to create PubSub service: %v", err)
+		slog.Error("Failed to create PubSub service", "error", err)
 		os.Exit(1)
 	}
 
@@ -51,18 +52,18 @@ func main() {
 	webServer := api.NewServer(ctx.Config)
 	go func() {
 		if err := webServer.StartBackground(); err != nil {
-			logger.Error("Failed to start web server: %v", err)
+			slog.Error("Failed to start web server", "error", err)
 		}
 	}()
 
 	// Subscribe to incoming messages
 	msgChannel, err := pubsubService.Subscribe(ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
 	if err != nil {
-		logger.Error("Failed to subscribe to commands: %v", err)
+		slog.Error("Failed to subscribe to commands", "error", err)
 		os.Exit(1)
 	}
 
-	logger.Info("Server Handler started successfully. Listening for messages on channel: %s", ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
+	slog.Info("Server Handler started successfully. Listening for messages on channel", "channel", ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
 
 	// Create context for graceful shutdown
 	mainCtx, cancel := context.WithCancel(context.Background())
@@ -73,7 +74,7 @@ func main() {
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
 
-		logger.Info("Received shutdown signal. Shutting down gracefully...")
+		slog.Info("Received shutdown signal. Shutting down gracefully...")
 		cancel()
 	}()
 
@@ -81,31 +82,31 @@ func main() {
 	for {
 		select {
 		case <-mainCtx.Done():
-			logger.Info("Shutting down...")
+			slog.Info("Shutting down...")
 
 			// Stop web server
 			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer shutdownCancel()
 
 			if err := webServer.Stop(shutdownCtx); err != nil {
-				logger.Error("Error stopping web server: %v", err)
+				slog.Error("Error stopping web server", "error", err)
 			}
 
 			// Close PubSub connection
 			if err := pubsubService.Close(); err != nil {
-				logger.Error("Error closing PubSub service: %v", err)
+				slog.Error("Error closing PubSub service", "error", err)
 			}
 
-			logger.Info("Server Handler stopped")
+			slog.Info("Server Handler stopped")
 			return
 
 		case msg := <-msgChannel:
 			if msg != nil {
-				logger.Info("Received message with tags: %v", msg.Tags)
+				slog.Info("Received message with tags", "tags", msg.Tags)
 
 				// Process the message
 				if err := eventHandler.ManageCommand(msg); err != nil {
-					logger.Error("Error processing message: %v", err)
+					slog.Error("Error processing message", "error", err)
 				}
 			}
 		}

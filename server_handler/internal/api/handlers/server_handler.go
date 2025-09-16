@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/api/models"
-	"github.com/GustaMantovani/Admine/server_handler/pkg"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,11 +20,11 @@ func NewServerHandler() *ServerHandler {
 
 // GetInfo handles GET /info endpoint
 func (h *ServerHandler) GetInfo(c *gin.Context) {
-	pkg.Logger.Info("GET /info endpoint called")
+	slog.Info("GET /info endpoint called")
 
 	ctx := internal.Get()
 	if ctx.MinecraftServer == nil {
-		pkg.Logger.Error("MinecraftServer is not initialized")
+		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
@@ -32,7 +32,7 @@ func (h *ServerHandler) GetInfo(c *gin.Context) {
 	// Get server info through the MinecraftServer interface
 	_, err := (*ctx.MinecraftServer).Info()
 	if err != nil {
-		pkg.Logger.Error("Failed to get server info: %s", err.Error())
+		slog.Error("Failed to get server info", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server info: "+err.Error()))
 		return
 	}
@@ -47,17 +47,17 @@ func (h *ServerHandler) GetInfo(c *gin.Context) {
 		20,        // MaxPlayers - from server properties
 	)
 
-	pkg.Logger.Info("Successfully retrieved server info")
+	slog.Info("Successfully retrieved server info")
 	c.JSON(http.StatusOK, serverInfo)
 }
 
 // GetStatus handles GET /status endpoint
 func (h *ServerHandler) GetStatus(c *gin.Context) {
-	pkg.Logger.Info("GET /status endpoint called")
+	slog.Info("GET /status endpoint called")
 
 	ctx := internal.Get()
 	if ctx.MinecraftServer == nil {
-		pkg.Logger.Error("MinecraftServer is not initialized")
+		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
@@ -65,7 +65,7 @@ func (h *ServerHandler) GetStatus(c *gin.Context) {
 	// Get server status through the MinecraftServer interface
 	statusStr, err := (*ctx.MinecraftServer).Status()
 	if err != nil {
-		pkg.Logger.Error("Failed to get server status: %s", err.Error())
+		slog.Error("Failed to get server status", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server status: "+err.Error()))
 		return
 	}
@@ -95,24 +95,24 @@ func (h *ServerHandler) GetStatus(c *gin.Context) {
 		20.0,     // Would be actual TPS from server
 	)
 
-	pkg.Logger.Info("Successfully retrieved server status")
+	slog.Info("Successfully retrieved server status")
 	c.JSON(http.StatusOK, serverStatus)
 }
 
 // PostCommand handles POST /command endpoint
 func (h *ServerHandler) PostCommand(c *gin.Context) {
-	pkg.Logger.Info("POST /command endpoint called")
+	slog.Info("POST /command endpoint called")
 
 	var command models.Command
 	if err := c.ShouldBindJSON(&command); err != nil {
-		pkg.Logger.Error("Invalid command request: %s", err.Error())
+		slog.Error("Invalid command request", "error", err.Error())
 		c.JSON(http.StatusBadRequest, models.NewErrorResponse("Invalid request: "+err.Error()))
 		return
 	}
 
 	ctx := internal.Get()
 	if ctx.MinecraftServer == nil {
-		pkg.Logger.Error("MinecraftServer is not initialized")
+		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
@@ -120,7 +120,7 @@ func (h *ServerHandler) PostCommand(c *gin.Context) {
 	// Execute command through the MinecraftServer interface
 	output, err := (*ctx.MinecraftServer).ExecuteCommand(command.Command)
 	if err != nil {
-		pkg.Logger.Error("Failed to execute command '%s': %s", command.Command, err.Error())
+		slog.Error("Failed to execute command", "command", command.Command, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to execute command: "+err.Error()))
 		return
 	}
@@ -128,6 +128,6 @@ func (h *ServerHandler) PostCommand(c *gin.Context) {
 	// Return command result
 	result := models.NewCommandResultWithOutput(output)
 
-	pkg.Logger.Info("Successfully executed command '%s'", command.Command)
+	slog.Info("Successfully executed command", "command", command.Command)
 	c.JSON(http.StatusOK, result)
 }

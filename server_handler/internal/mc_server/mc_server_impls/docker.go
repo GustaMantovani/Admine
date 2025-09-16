@@ -46,7 +46,6 @@ func (d *DockerMinecraftServer) Info() (string, error) {
 func (d *DockerMinecraftServer) StartUpInfo() string {
 	id, err := pkg.GetZeroTierNodeID(d.ContainerName)
 	if err != nil {
-		pkg.Logger.Error("Failed to get ZeroTier Node ID: %v", err)
 		return ""
 	}
 
