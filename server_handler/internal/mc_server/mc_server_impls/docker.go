@@ -28,6 +28,10 @@ func (d *DockerMinecraftServer) Stop() error {
 	return d.DockerCompose.Stop()
 }
 
+func (d *DockerMinecraftServer) Down() error {
+	return d.DockerCompose.Down()
+}
+
 func (d *DockerMinecraftServer) Restart() error {
 	if err := d.Stop(); err != nil {
 		return err

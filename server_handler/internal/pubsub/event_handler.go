@@ -26,6 +26,8 @@ func (eh *EventHandler) ManageCommand(msg *models.AdmineMessage) error {
 		eh.serverUp()
 	} else if msg.HasTag("server_off") {
 		eh.serverOff()
+	} else if msg.HasTag("server_down") {
+		eh.serverDown()
 	} else if msg.HasTag("restart") {
 		eh.restart()
 	} else if msg.HasTag("command") {
@@ -107,6 +109,43 @@ func (eh *EventHandler) serverOff() {
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
 
 	slog.Info("Server stopped successfully")
+}
+
+func (eh *EventHandler) serverDown() {
+	ctx := internal.Get()
+	if ctx.MinecraftServer == nil {
+		slog.Error("MinecraftServer is not initialized")
+		responseMsg := models.NewAdmineMessage([]string{"error"}, "Server not initialized")
+		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
+		return
+	}
+
+	// Send stopping message
+	responseMsg := models.NewAdmineMessage([]string{"server_status"}, "Removing server")
+	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
+
+	// Execute stop command through the server interface
+	_, err := (*ctx.MinecraftServer).ExecuteCommand("/stop")
+	if err != nil {
+		slog.Error("Error executing stop command", "error", err.Error())
+	}
+
+	// Wait for graceful shutdown (simplified approach)
+	// In a real implementation, you might want to monitor server logs
+	// or implement a more sophisticated shutdown detection
+
+	err = (*ctx.MinecraftServer).Down()
+	if err != nil {
+		slog.Error("Error stopping server", "error", err.Error())
+		errorMsg := models.NewAdmineMessage([]string{"error"}, "Error removing server: "+err.Error())
+		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
+		return
+	}
+
+	successMsg := models.NewAdmineMessage([]string{"server_off"}, "Server removed successfully")
+	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
+
+	slog.Info("Server removed successfully")
 }
 
 func (eh *EventHandler) restart() {
