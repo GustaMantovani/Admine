@@ -10,13 +10,15 @@ type DockerMinecraftServer struct {
 	DockerCompose *pkg.DockerCompose
 	ContainerName string
 	ServiceName   string
+	Context       context.Context
 }
 
-func NewDockerMinecraftServer(compose *pkg.DockerCompose, containerName string, serviceName string) *DockerMinecraftServer {
+func NewDockerMinecraftServer(compose *pkg.DockerCompose, containerName string, serviceName string, ctx context.Context) *DockerMinecraftServer {
 	return &DockerMinecraftServer{
 		DockerCompose: compose,
 		ContainerName: containerName,
 		ServiceName:   serviceName,
+		Context:       ctx,
 	}
 }
 
@@ -57,5 +59,5 @@ func (d *DockerMinecraftServer) StartUpInfo() string {
 }
 
 func (d *DockerMinecraftServer) ExecuteCommand(command string) (string, error) {
-	return "nil", pkg.WriteToContainer(context.Background(), d.ServiceName, command)
+	return "nil", pkg.WriteToContainer(d.Context, d.ServiceName, command)
 }

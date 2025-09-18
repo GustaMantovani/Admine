@@ -13,8 +13,8 @@ import (
 type ServerHandler struct {
 }
 
-// NewServerHandler creates a new ServerHandler instance
-func NewServerHandler() *ServerHandler {
+// NewApiHandler creates a new ServerHandler instance
+func NewApiHandler() *ServerHandler {
 	return &ServerHandler{}
 }
 

@@ -1,6 +1,7 @@
 package mcserver
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
@@ -8,11 +9,11 @@ import (
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
-func CreateMinecraftServer(config config.MinecraftServerConfig) (MinecraftServer, error) {
+func CreateMinecraftServer(config config.MinecraftServerConfig, ctx context.Context) (MinecraftServer, error) {
 	switch config.RuntimeType {
 	case "docker":
 		dc := pkg.NewDockerCompose(config.Docker.ComposePath)
-		return mcserver.NewDockerMinecraftServer(dc, config.Docker.ContainerName, config.Docker.ServiceName), nil
+		return mcserver.NewDockerMinecraftServer(dc, config.Docker.ContainerName, config.Docker.ServiceName, ctx), nil
 	default:
 		return nil, fmt.Errorf("unknown pubsub type: %s", config.RuntimeType)
 	}

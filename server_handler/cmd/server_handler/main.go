@@ -17,6 +17,9 @@ import (
 
 func main() {
 
+	// Create context for graceful shutdown
+	mainCtx, cancel := context.WithCancel(context.Background())
+
 	configPath := "server_handler_config.yaml"
 	args := os.Args
 
@@ -25,7 +28,7 @@ func main() {
 	}
 
 	// Initialize application context
-	ctx, err := internal.Init(configPath)
+	ctx, err := internal.Init(configPath, &mainCtx)
 	if err != nil {
 		log.Fatalf("Failed to initialize app context: %v", err)
 	}
@@ -39,7 +42,7 @@ func main() {
 	slog.Info("Server Handler starting...")
 
 	// Create PubSub service
-	pubsubService, err := pubsub.CreatePubSub(ctx.Config.PubSub)
+	pubsubService, err := pubsub.CreatePubSub(ctx.Config.PubSub, mainCtx)
 	if err != nil {
 		slog.Error("Failed to create PubSub service", "error", err)
 		os.Exit(1)
@@ -53,6 +56,7 @@ func main() {
 	go func() {
 		if err := webServer.StartBackground(); err != nil {
 			slog.Error("Failed to start web server", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -64,9 +68,6 @@ func main() {
 	}
 
 	slog.Info("Server Handler started successfully. Listening for messages on channel", "channel", ctx.Config.PubSub.AdmineChannelsMap.CommandChannel)
-
-	// Create context for graceful shutdown
-	mainCtx, cancel := context.WithCancel(context.Background())
 
 	// Handle graceful shutdown
 	go func() {
@@ -85,7 +86,7 @@ func main() {
 			slog.Info("Shutting down...")
 
 			// Stop web server
-			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			shutdownCtx, shutdownCancel := context.WithTimeout(mainCtx, 30*time.Second)
 			defer shutdownCancel()
 
 			if err := webServer.Stop(shutdownCtx); err != nil {

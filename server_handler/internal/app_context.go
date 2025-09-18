@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 
 // AppContext is the singleton application context
 type AppContext struct {
+	MainCtx         *context.Context
 	Config          *config.Config
 	MinecraftServer *mcserver.MinecraftServer
 }
@@ -20,7 +22,7 @@ var (
 )
 
 // Init initializes the AppContext singleton with the YAML config path
-func Init(configPath string) (*AppContext, error) {
+func Init(configPath string, mainCtx *context.Context) (*AppContext, error) {
 	var err error
 	once.Do(func() {
 		cfg, e := config.LoadConfig(configPath)
@@ -29,13 +31,14 @@ func Init(configPath string) (*AppContext, error) {
 			return
 		}
 
-		mc, e := mcserver.CreateMinecraftServer(cfg.MinecraftServer)
+		mc, e := mcserver.CreateMinecraftServer(cfg.MinecraftServer, *mainCtx)
 		if e != nil {
 			err = fmt.Errorf("failed to load config: %w", e)
 			return
 		}
 
 		instance = &AppContext{
+			MainCtx:         mainCtx,
 			Config:          cfg,
 			MinecraftServer: &mc,
 		}
