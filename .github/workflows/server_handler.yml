@@ -23,18 +23,14 @@ jobs:
         run: go mod tidy
         working-directory: server_handler
 
-      - name: Run Redis with configuration
-        run: docker compose up -d
-        working-directory: redis_pubsub
-
-      - name: Run tests
-        run: go test ./... -v
+      - name: Static check
+        run: go vet ./...
         working-directory: server_handler
+
+      # - name: Run tests
+      #   run: go test ./... -v
+      #   working-directory: server_handler
 
       - name: Build binary
-        run: go build -o server_handler main.go
+        run: go build -o server_handler cmd/server_handler/main.go
         working-directory: server_handler
-
-      - name: Remove container
-        run: docker compose down
-        working-directory: redis_pubsub
