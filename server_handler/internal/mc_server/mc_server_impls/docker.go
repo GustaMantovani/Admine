@@ -2,22 +2,24 @@ package mcserver
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
 type DockerMinecraftServer struct {
 	DockerCompose *pkg.DockerCompose
-	ContainerName string
-	ServiceName   string
+	DockerConfig  config.DockerConfig
 	Context       context.Context
 }
 
-func NewDockerMinecraftServer(compose *pkg.DockerCompose, containerName string, serviceName string, ctx context.Context) *DockerMinecraftServer {
+func NewDockerMinecraftServer(compose *pkg.DockerCompose, dockerConfig config.DockerConfig, ctx context.Context) *DockerMinecraftServer {
 	return &DockerMinecraftServer{
 		DockerCompose: compose,
-		ContainerName: containerName,
-		ServiceName:   serviceName,
+		DockerConfig:  dockerConfig,
 		Context:       ctx,
 	}
 }
@@ -27,6 +29,36 @@ func (d *DockerMinecraftServer) Start() error {
 }
 
 func (d *DockerMinecraftServer) Stop() error {
+	// Envia comando /stop
+	if _, err := d.ExecuteCommand("/stop"); err != nil {
+		return err
+	}
+
+	// Espera log de shutdown
+	ctx, cancel := context.WithTimeout(d.Context, 60*time.Second)
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		err := pkg.StreamContainerLogs(ctx, d.DockerConfig.ContainerName, func(line string) {
+			if strings.Contains(line, "All dimensions are saved") {
+				done <- nil
+			}
+		})
+		if err != nil {
+			done <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("timeout wating server shutdown")
+	case err := <-done:
+		if err != nil {
+			return err
+		}
+	}
+
 	return d.DockerCompose.Stop()
 }
 
@@ -50,7 +82,7 @@ func (d *DockerMinecraftServer) Info() (string, error) {
 }
 
 func (d *DockerMinecraftServer) StartUpInfo() string {
-	id, err := pkg.GetZeroTierNodeID(d.ContainerName)
+	id, err := pkg.GetZeroTierNodeID(d.DockerConfig.ContainerName)
 	if err != nil {
 		return ""
 	}
@@ -59,5 +91,5 @@ func (d *DockerMinecraftServer) StartUpInfo() string {
 }
 
 func (d *DockerMinecraftServer) ExecuteCommand(command string) (string, error) {
-	return "nil", pkg.WriteToContainer(d.Context, d.ServiceName, command)
+	return "nil", pkg.WriteToContainer(d.Context, d.DockerConfig.ServiceName, command)
 }

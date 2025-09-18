@@ -87,17 +87,7 @@ func (eh *EventHandler) serverOff() {
 	responseMsg := models.NewAdmineMessage([]string{"notification"}, "Stopping server")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-	// Execute stop command through the server interface
-	_, err := (*ctx.MinecraftServer).ExecuteCommand("/stop")
-	if err != nil {
-		slog.Error("Error executing stop command", "error", err.Error())
-	}
-
-	// Wait for graceful shutdown (simplified approach)
-	// In a real implementation, you might want to monitor server logs
-	// or implement a more sophisticated shutdown detection
-
-	err = (*ctx.MinecraftServer).Stop()
+	err := (*ctx.MinecraftServer).Stop()
 	if err != nil {
 		slog.Error("Error stopping server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Error stopping server: "+err.Error())

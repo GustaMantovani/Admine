@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -46,9 +47,10 @@ type MinecraftServerConfig struct {
 }
 
 type DockerConfig struct {
-	ComposePath   string `yaml:"compose_path"`
-	ContainerName string `yaml:"container_name"`
-	ServiceName   string `yaml:"service_name"`
+	ComposePath        string        `yaml:"compose_path"`
+	ContainerName      string        `yaml:"container_name"`
+	ServiceName        string        `yaml:"service_name"`
+	ContainerUpTimeout time.Duration `yaml:"container_up_timeout"`
 }
 
 type WebServerConfig struct {

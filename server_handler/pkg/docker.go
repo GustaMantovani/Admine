@@ -214,3 +214,33 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 		}
 	}
 }
+
+// StreamContainerLogs streams logs from a container and passes each line to a callback.
+func StreamContainerLogs(ctx context.Context, containerName string, onLine func(string)) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+
+	out, err := cli.ContainerLogs(ctx, containerName, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Tail:       "0",
+	})
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	scanner := bufio.NewScanner(out)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 8 && line[0] < 32 {
+			line = line[8:]
+		}
+		onLine(line)
+	}
+	return scanner.Err()
+}
