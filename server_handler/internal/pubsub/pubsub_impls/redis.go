@@ -18,7 +18,6 @@ type RedisPubSub struct {
 
 func NewRedisPubSub(c config.RedisConfig, ctx context.Context) *RedisPubSub {
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.Addr,
