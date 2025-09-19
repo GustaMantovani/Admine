@@ -3,6 +3,7 @@ package mcserver
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -29,18 +30,17 @@ func (d *DockerMinecraftServer) Start() error {
 }
 
 func (d *DockerMinecraftServer) Stop() error {
-	// Envia comando /stop
 	if _, err := d.ExecuteCommand("/stop"); err != nil {
 		return err
 	}
 
-	// Espera log de shutdown
 	ctx, cancel := context.WithTimeout(d.Context, 60*time.Second)
 	defer cancel()
 
 	done := make(chan error, 1)
 	go func() {
 		err := pkg.StreamContainerLogs(ctx, d.DockerConfig.ContainerName, func(line string) {
+			slog.Debug("Container line:", "line", line)
 			if strings.Contains(line, "All dimensions are saved") {
 				done <- nil
 			}
@@ -52,13 +52,14 @@ func (d *DockerMinecraftServer) Stop() error {
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("timeout wating server shutdown")
+		return fmt.Errorf("timeout esperando shutdown do minecraft")
 	case err := <-done:
 		if err != nil {
 			return err
 		}
 	}
 
+	// Agora é seguro parar o container
 	return d.DockerCompose.Stop()
 }
 
