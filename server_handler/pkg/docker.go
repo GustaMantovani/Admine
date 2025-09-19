@@ -227,8 +227,8 @@ func StreamContainerLogs(ctx context.Context, containerName string, onLine func(
 	out, err := cli.ContainerLogs(ctx, containerName, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: false,
-		Follow:     false,
-		Tail:       "100",
+		Follow:     true,
+		Tail:       "1",
 	})
 	if err != nil {
 		return err

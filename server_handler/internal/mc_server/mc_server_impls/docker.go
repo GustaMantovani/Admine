@@ -30,14 +30,15 @@ func (d *DockerMinecraftServer) Start() error {
 }
 
 func (d *DockerMinecraftServer) Stop() error {
-	if _, err := d.ExecuteCommand("/stop"); err != nil {
-		return err
-	}
-
 	ctx, cancel := context.WithTimeout(d.Context, 60*time.Second)
 	defer cancel()
 
 	done := make(chan error, 1)
+
+	if _, err := d.ExecuteCommand("/stop"); err != nil {
+		return err
+	}
+
 	go func() {
 		err := pkg.StreamContainerLogs(ctx, d.DockerConfig.ContainerName, func(line string) {
 			slog.Debug("Container line:", "line", line)
