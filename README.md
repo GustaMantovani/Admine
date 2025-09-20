@@ -1,6 +1,41 @@
-## Core Components
+# Admine - Infrastructure Manager for Minecraft Servers
+
+Admine is a comprehensive infrastructure management solution for Minecraft servers running on Linux systems. It provides automated server lifecycle management, VPN connectivity through ZeroTier, and Discord-based administration interface.
+
+## What is Admine?
+
+Admine automates the complete management of Minecraft servers in a containerized environment, solving the common problem of running servers behind NAT (Network Address Translation) or in private networks where direct public access isn't available.
+
+**Key Features:**
+- **Automated Server Management**: Start, stop, restart, and monitor Minecraft servers through Docker containers
+- **VPN Integration**: Seamless ZeroTier VPN management that allows players to connect to private servers as if they were on a local network
+- **NAT Traversal**: Enables server hosting even when behind firewalls, routers, or restricted network environments
+- **Discord Interface**: User-friendly Discord bot for server administration and monitoring
+- **Multi-Version Support**: Compatible with Vanilla, Forge, and Fabric servers
+- **Real-time Communication**: Redis-based messaging between system components
+
+The system is designed for server administrators who want to host Minecraft servers in private networks (home networks, cloud instances behind NAT, etc.) while providing secure and easy access to players through VPN connectivity.
+
+## System Architecture
 
 ![Admine](.readme/Admine.drawio.svg)
+
+The architecture demonstrates how Admine enables players to connect to private Minecraft servers through VPN connectivity:
+
+**Network Topology:**
+- **Private Network**: Contains the Minecraft server infrastructure (Docker containers, handlers, Redis)
+- **Public Network**: Discord server and ZeroTier service for external communication
+- **Player Networks (LAN 1, LAN 2)**: Players behind their own NAT/firewalls
+
+**Connection Flow:**
+1. **Server Management**: Discord bot communicates with handlers via HTTP calls
+2. **VPN Connectivity**: ZeroTier creates a virtual network overlay connecting all participants
+3. **Player Access**: Players join the ZeroTier network and can directly access the private Minecraft server
+4. **Administration**: All management happens through Discord commands, regardless of network location
+
+This design allows hosting Minecraft servers in any private network while providing seamless access to players worldwide.
+
+## Core Components
 
 ### 1. Server Handler (Go)
 The `server_handler` component manages Minecraft server containers:
