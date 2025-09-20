@@ -1,14 +1,30 @@
 package api
 
 import (
+	"log/slog"
+	"strings"
+
+	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/api/handlers"
 	"github.com/gin-gonic/gin"
+	sloggin "github.com/samber/slog-gin"
 )
 
 // SetupRoutes configures all API routes
 func SetupRoutes() *gin.Engine {
-	// Create Gin router
-	router := gin.Default()
+	// Set Gin mode BEFORE creating router
+	logLevel := strings.ToUpper(internal.Get().Config.App.LogLevel)
+
+	if logLevel == "DEBUG" {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// Create Gin router AFTER setting mode
+	router := gin.New()
+
+	router.Use(sloggin.New(slog.Default()))
 
 	// Create handlers
 	serverHandler := handlers.NewApiHandler()
