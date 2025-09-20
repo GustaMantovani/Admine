@@ -1,8 +1,10 @@
 package pubsub
 
 import (
+	"context"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub/models"
@@ -57,7 +59,11 @@ func (eh *EventHandler) serverUp() {
 	responseMsg := models.NewAdmineMessage([]string{"notification"}, "Starting server")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-	err := (*ctx.MinecraftServer).Start(*ctx.MainCtx)
+	// Create context with timeout for server start operation
+	startCtx, cancel := context.WithTimeout(*ctx.MainCtx, ctx.Config.MinecraftServer.ServerOnTimeout)
+	defer cancel()
+
+	err := (*ctx.MinecraftServer).Start(startCtx)
 	if err != nil {
 		slog.Error("Error starting server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Failed to start server: "+err.Error())
@@ -66,7 +72,10 @@ func (eh *EventHandler) serverUp() {
 	}
 
 	// Get server startInfo (this might include network information)
-	startInfo := (*ctx.MinecraftServer).StartUpInfo(*ctx.MainCtx)
+	infoCtx, infoCancel := context.WithTimeout(*ctx.MainCtx, 30*time.Second)
+	defer infoCancel()
+
+	startInfo := (*ctx.MinecraftServer).StartUpInfo(infoCtx)
 
 	successMsg := models.NewAdmineMessage([]string{"server_on"}, startInfo)
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
@@ -87,7 +96,11 @@ func (eh *EventHandler) serverOff() {
 	responseMsg := models.NewAdmineMessage([]string{"notification"}, "Stopping server")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-	err := (*ctx.MinecraftServer).Stop(*ctx.MainCtx)
+	// Create context with timeout for server stop operation
+	stopCtx, cancel := context.WithTimeout(*ctx.MainCtx, ctx.Config.MinecraftServer.ServerOffTimeout)
+	defer cancel()
+
+	err := (*ctx.MinecraftServer).Stop(stopCtx)
 	if err != nil {
 		slog.Error("Error stopping server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Error stopping server: "+err.Error())
@@ -114,17 +127,20 @@ func (eh *EventHandler) serverDown() {
 	responseMsg := models.NewAdmineMessage([]string{"notification"}, "Removing server")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-	// Execute stop command through the server interface
-	_, err := (*ctx.MinecraftServer).ExecuteCommand(*ctx.MainCtx, "/stop")
+	// Execute stop command through the server interface with timeout
+	cmdCtx, cmdCancel := context.WithTimeout(*ctx.MainCtx, ctx.Config.MinecraftServer.ServerCommandExecTimeout)
+	defer cmdCancel()
+
+	_, err := (*ctx.MinecraftServer).ExecuteCommand(cmdCtx, "/stop")
 	if err != nil {
 		slog.Error("Error executing stop command", "error", err.Error())
 	}
 
-	// Wait for graceful shutdown (simplified approach)
-	// In a real implementation, you might want to monitor server logs
-	// or implement a more sophisticated shutdown detection
+	// Create context with timeout for server down operation
+	downCtx, downCancel := context.WithTimeout(*ctx.MainCtx, ctx.Config.MinecraftServer.ServerOffTimeout)
+	defer downCancel()
 
-	err = (*ctx.MinecraftServer).Down(*ctx.MainCtx)
+	err = (*ctx.MinecraftServer).Down(downCtx)
 	if err != nil {
 		slog.Error("Error stopping server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Error removing server: "+err.Error())
@@ -140,6 +156,7 @@ func (eh *EventHandler) serverDown() {
 
 func (eh *EventHandler) restart() {
 	ctx := internal.Get()
+
 	if ctx.MinecraftServer == nil {
 		slog.Error("MinecraftServer is not initialized")
 		responseMsg := models.NewAdmineMessage([]string{"notification"}, "Server not initialized")
@@ -153,21 +170,18 @@ func (eh *EventHandler) restart() {
 
 	slog.Info("Starting server restart process")
 
-	// Use the Restart method from the MinecraftServer interface
-	err := (*ctx.MinecraftServer).Restart(*ctx.MainCtx)
+	// Create context with timeout for command execution
+	cmdCtx, cancel := context.WithTimeout(*ctx.MainCtx, ctx.Config.MinecraftServer.ServerCommandExecTimeout)
+	defer cancel()
+
+	// Execute stop command and let Docker restart the container
+	_, err := (*ctx.MinecraftServer).ExecuteCommand(cmdCtx, "/stop")
 	if err != nil {
-		slog.Error("Error restarting server", "error", err.Error())
+		slog.Error("Error executing stop command for restart", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Failed to restart server: "+err.Error())
 		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
 		return
 	}
-
-	// Get server startup info after restart
-	startInfo := (*ctx.MinecraftServer).StartUpInfo(*ctx.MainCtx)
-
-	// Send restart success message
-	successMsg := models.NewAdmineMessage([]string{"restart_complete"}, startInfo)
-	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
 
 	slog.Info("Server restarted successfully")
 }
@@ -181,8 +195,12 @@ func (eh *EventHandler) command(message string) {
 		return
 	}
 
+	// Create context with timeout for command execution
+	cmdCtx, cancel := context.WithTimeout(*appContext.MainCtx, appContext.Config.MinecraftServer.ServerCommandExecTimeout)
+	defer cancel()
+
 	// Execute the command through the MinecraftServer interface
-	result, err := (*appContext.MinecraftServer).ExecuteCommand(*appContext.MainCtx, message)
+	result, err := (*appContext.MinecraftServer).ExecuteCommand(cmdCtx, message)
 	if err != nil {
 		slog.Error("Error executing command", "command", message, "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Failed to execute command: "+err.Error())

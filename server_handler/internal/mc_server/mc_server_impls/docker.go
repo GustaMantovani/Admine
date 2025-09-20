@@ -2,10 +2,8 @@ package mcserver
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
@@ -28,9 +26,6 @@ func (d *DockerMinecraftServer) Start(ctx context.Context) error {
 }
 
 func (d *DockerMinecraftServer) Stop(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-
 	done := make(chan error, 1)
 
 	if _, err := d.ExecuteCommand(ctx, "/stop"); err != nil {
@@ -51,7 +46,7 @@ func (d *DockerMinecraftServer) Stop(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("timeout esperando shutdown do minecraft")
+		return ctx.Err()
 	case err := <-done:
 		if err != nil {
 			return err
