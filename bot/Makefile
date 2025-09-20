@@ -108,6 +108,63 @@ git-hooks: ## Install git hooks using the pre-commit framework
 	@poetry run pre-commit install
 	@echo "Git hooks installed!"
 
+# Build
+build: ## Build portable executable
+	@echo "Building portable executable..."
+	@poetry run pyinstaller src/main.py --onefile --name admine-bot --clean
+	@echo "Executable created in dist/admine-bot"
+
+build-console: ## Build portable executable with console
+	@echo "Building portable executable with console..."
+	@poetry run pyinstaller src/main.py --onefile --name admine-bot --console --clean
+	@echo "Executable created in dist/admine-bot"
+
+build-advanced: ## Build with advanced options (smaller size)
+	@echo "Building optimized executable..."
+	@poetry run pyinstaller src/main.py \
+		--onefile \
+		--name admine-bot \
+		--clean \
+		--strip \
+		--exclude-module tkinter \
+		--exclude-module matplotlib \
+		--exclude-module numpy \
+		--exclude-module pandas \
+		--optimize 2
+	@echo "Optimized executable created in dist/admine-bot"
+
+build-spec: ## Build using spec file (most control)
+	@echo "Building using spec file..."
+	@poetry run pyinstaller admine-bot.spec --clean
+	@echo "Executable created in dist/admine-bot"
+
+build-test: ## Test the built executable
+	@echo "Testing executable..."
+	@if [ -f dist/admine-bot ]; then \
+		echo "Executable found. Size: $$(du -h dist/admine-bot | cut -f1)"; \
+		echo "File info:"; \
+		file dist/admine-bot; \
+		echo "Dependencies:"; \
+		ldd dist/admine-bot 2>/dev/null || echo "Static binary or dependencies not found"; \
+	else \
+		echo "Executable not found. Run 'make build' first."; \
+	fi
+
+clean-build: ## Clean build artifacts
+	@echo "Cleaning build artifacts..."
+	@rm -rf build/ dist/ *.spec __pycache__/
+	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@echo "Build artifacts cleaned!"
+
+package: ## Create distribution package
+	@echo "Creating distribution package..."
+	@make build-spec
+	@mkdir -p release
+	@cp dist/admine-bot release/
+	@echo "Creating tarball..."
+	@tar -czf release/admine-bot-$(shell date +%Y%m%d-%H%M%S).tar.gz -C release admine-bot
+	@echo "Package created in release/"
+
 # All-in-one commands
 start: ## Quick start (install + run)
 	@make install

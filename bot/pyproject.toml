@@ -6,7 +6,7 @@ authors = [
     {name = "Gustavo Mantovani",email = "mantovanig000@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "redis (>=6.4.0,<7.0.0)",
     "discord-py (>=2.5.2,<3.0.0)",
@@ -22,6 +22,7 @@ packages = [{include = "bot", from = "src"}]
 pytest = "^8.4.1"
 ruff = "^0.12.9"
 mypy = "^1.17.1"
+pyinstaller = "^6.3.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
