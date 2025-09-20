@@ -7,6 +7,7 @@ import (
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
+	"github.com/gorcon/rcon"
 )
 
 type DockerMinecraftServer struct {
@@ -85,5 +86,22 @@ func (d *DockerMinecraftServer) StartUpInfo(ctx context.Context) string {
 }
 
 func (d *DockerMinecraftServer) ExecuteCommand(ctx context.Context, command string) (string, error) {
-	return "nil", pkg.WriteToContainer(ctx, d.DockerConfig.ServiceName, command)
+	conn, err := rcon.Dial(d.DockerConfig.RconAddress, d.DockerConfig.RconPassword)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer conn.Close()
+
+	response, err := conn.Execute(command)
+
+	if err != nil {
+		return "", err
+	}
+
+	slog.Debug(response)
+
+	return response, nil
+
 }
