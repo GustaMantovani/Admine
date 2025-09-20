@@ -31,7 +31,7 @@ func Init(configPath string, mainCtx *context.Context) (*AppContext, error) {
 			return
 		}
 
-		mc, e := mcserver.CreateMinecraftServer(cfg.MinecraftServer, *mainCtx)
+		mc, e := mcserver.CreateMinecraftServer(cfg.MinecraftServer)
 		if e != nil {
 			err = fmt.Errorf("failed to load config: %w", e)
 			return

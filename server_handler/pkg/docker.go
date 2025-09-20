@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,19 +63,19 @@ func WriteToContainer(ctx context.Context, containerName string, input string) e
 }
 
 // ReadLastContainerLine reads the last line of logs from a container
-func ReadLastContainerLine(containerName string, ctx context.Context) (string, error) {
+func ReadLastContainerNLines(containerName string, n uint, ctx context.Context) ([]string, error) {
 
 	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer cli.Close()
 
 	// Find container ID by name
 	containerID, err := getContainerID(containerName, cli, ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Get container logs
@@ -82,10 +83,10 @@ func ReadLastContainerLine(containerName string, ctx context.Context) (string, e
 		ShowStdout: true,
 		ShowStderr: false,
 		Timestamps: false,
-		Tail:       "1", // Read only the last line
+		Tail:       strconv.FormatUint(uint64(n), 10),
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer out.Close()
 
@@ -94,29 +95,29 @@ func ReadLastContainerLine(containerName string, ctx context.Context) (string, e
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, out)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	scanner := bufio.NewScanner(&buf)
-	var lastLine string
+	var lines []string
 	for scanner.Scan() {
 		line := scanner.Text()
 		// Skip Docker header bytes (usually starts with special characters)
 		if len(line) > 8 && line[0] < 32 {
 			line = line[8:]
 		}
-		lastLine = line
+		lines = append(lines, line)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if lastLine == "" {
-		return "", fmt.Errorf("no lines found")
+	if len(lines) == 0 || (len(lines) == 1 && lines[0] == "") {
+		return nil, fmt.Errorf("no lines found")
 	}
 
-	return lastLine, nil
+	return lines, nil
 }
 
 // GetZeroTierNodeID gets the ZeroTier node ID from a container
@@ -213,4 +214,35 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 			}
 		}
 	}
+}
+
+// StreamContainerLogs streams logs from a container and passes each line to a callback.
+func StreamContainerLogs(ctx context.Context, containerName string, onLine func(string)) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+
+	out, err := cli.ContainerLogs(ctx, containerName, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: false,
+		Follow:     true,
+		Tail:       "1",
+	})
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	scanner := bufio.NewScanner(out)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 8 && line[0] < 32 {
+			line = line[8:]
+		}
+		println(line)
+		onLine(line)
+	}
+	return scanner.Err()
 }
