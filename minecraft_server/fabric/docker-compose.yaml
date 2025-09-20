@@ -13,6 +13,7 @@ services:
     ports:
       - 25565:25565
       - 9993:9993
+      - 25575:25575
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
