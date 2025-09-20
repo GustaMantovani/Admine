@@ -12,7 +12,7 @@ The configuration file is `server_handler_config.yaml` in the project directory.
 
 ```yaml
 app:
-  self_origin_name: "server_handler"
+  self_origin_name: "server"
   log_file_path: "/tmp/server_handler.log"
   log_level: "DEBUG"
 
