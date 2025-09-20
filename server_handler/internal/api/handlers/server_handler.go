@@ -30,7 +30,7 @@ func (h *ServerHandler) GetInfo(c *gin.Context) {
 	}
 
 	// Get server info through the MinecraftServer interface
-	_, err := (*ctx.MinecraftServer).Info()
+	_, err := (*ctx.MinecraftServer).Info(*ctx.MainCtx)
 	if err != nil {
 		slog.Error("Failed to get server info", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server info: "+err.Error()))
@@ -63,7 +63,7 @@ func (h *ServerHandler) GetStatus(c *gin.Context) {
 	}
 
 	// Get server status through the MinecraftServer interface
-	statusStr, err := (*ctx.MinecraftServer).Status()
+	statusStr, err := (*ctx.MinecraftServer).Status(*ctx.MainCtx)
 	if err != nil {
 		slog.Error("Failed to get server status", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server status: "+err.Error()))
@@ -118,7 +118,7 @@ func (h *ServerHandler) PostCommand(c *gin.Context) {
 	}
 
 	// Execute command through the MinecraftServer interface
-	output, err := (*ctx.MinecraftServer).ExecuteCommand(command.Command)
+	output, err := (*ctx.MinecraftServer).ExecuteCommand(*ctx.MainCtx, command.Command)
 	if err != nil {
 		slog.Error("Failed to execute command", "command", command.Command, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to execute command: "+err.Error()))

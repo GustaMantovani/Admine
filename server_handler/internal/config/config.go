@@ -42,15 +42,17 @@ type RedisConfig struct {
 }
 
 type MinecraftServerConfig struct {
-	RuntimeType string       `yaml:"runtime_type"`
-	Docker      DockerConfig `yaml:"docker"`
+	RuntimeType              string        `yaml:"runtime_type"`
+	Docker                   DockerConfig  `yaml:"docker"`
+	ServerOnTimeout          time.Duration `yaml:"server_up_timeout"`
+	ServerOffTimeout         time.Duration `yaml:"server_off_timeout"`
+	ServerCommandExecTimeout time.Duration `yaml:"server_command_exec_timeout"`
 }
 
 type DockerConfig struct {
-	ComposePath        string        `yaml:"compose_path"`
-	ContainerName      string        `yaml:"container_name"`
-	ServiceName        string        `yaml:"service_name"`
-	ContainerUpTimeout time.Duration `yaml:"container_up_timeout"`
+	ComposePath   string `yaml:"compose_path"`
+	ContainerName string `yaml:"container_name"`
+	ServiceName   string `yaml:"service_name"`
 }
 
 type WebServerConfig struct {

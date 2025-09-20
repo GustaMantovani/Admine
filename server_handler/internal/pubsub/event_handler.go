@@ -57,7 +57,7 @@ func (eh *EventHandler) serverUp() {
 	responseMsg := models.NewAdmineMessage([]string{"notification"}, "Starting server")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-	err := (*ctx.MinecraftServer).Start()
+	err := (*ctx.MinecraftServer).Start(*ctx.MainCtx)
 	if err != nil {
 		slog.Error("Error starting server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Failed to start server: "+err.Error())
@@ -66,7 +66,7 @@ func (eh *EventHandler) serverUp() {
 	}
 
 	// Get server startInfo (this might include network information)
-	startInfo := (*ctx.MinecraftServer).StartUpInfo()
+	startInfo := (*ctx.MinecraftServer).StartUpInfo(*ctx.MainCtx)
 
 	successMsg := models.NewAdmineMessage([]string{"server_on"}, startInfo)
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
@@ -87,7 +87,7 @@ func (eh *EventHandler) serverOff() {
 	responseMsg := models.NewAdmineMessage([]string{"notification"}, "Stopping server")
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
-	err := (*ctx.MinecraftServer).Stop()
+	err := (*ctx.MinecraftServer).Stop(*ctx.MainCtx)
 	if err != nil {
 		slog.Error("Error stopping server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Error stopping server: "+err.Error())
@@ -115,7 +115,7 @@ func (eh *EventHandler) serverDown() {
 	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 
 	// Execute stop command through the server interface
-	_, err := (*ctx.MinecraftServer).ExecuteCommand("/stop")
+	_, err := (*ctx.MinecraftServer).ExecuteCommand(*ctx.MainCtx, "/stop")
 	if err != nil {
 		slog.Error("Error executing stop command", "error", err.Error())
 	}
@@ -124,7 +124,7 @@ func (eh *EventHandler) serverDown() {
 	// In a real implementation, you might want to monitor server logs
 	// or implement a more sophisticated shutdown detection
 
-	err = (*ctx.MinecraftServer).Down()
+	err = (*ctx.MinecraftServer).Down(*ctx.MainCtx)
 	if err != nil {
 		slog.Error("Error stopping server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Error removing server: "+err.Error())
@@ -154,7 +154,7 @@ func (eh *EventHandler) restart() {
 	slog.Info("Starting server restart process")
 
 	// Use the Restart method from the MinecraftServer interface
-	err := (*ctx.MinecraftServer).Restart()
+	err := (*ctx.MinecraftServer).Restart(*ctx.MainCtx)
 	if err != nil {
 		slog.Error("Error restarting server", "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Failed to restart server: "+err.Error())
@@ -163,7 +163,7 @@ func (eh *EventHandler) restart() {
 	}
 
 	// Get server startup info after restart
-	startInfo := (*ctx.MinecraftServer).StartUpInfo()
+	startInfo := (*ctx.MinecraftServer).StartUpInfo(*ctx.MainCtx)
 
 	// Send restart success message
 	successMsg := models.NewAdmineMessage([]string{"restart_complete"}, startInfo)
@@ -173,20 +173,20 @@ func (eh *EventHandler) restart() {
 }
 
 func (eh *EventHandler) command(message string) {
-	ctx := internal.Get()
-	if ctx.MinecraftServer == nil {
+	appContext := internal.Get()
+	if appContext.MinecraftServer == nil {
 		slog.Error("MinecraftServer is not initialized")
 		responseMsg := models.NewAdmineMessage([]string{"notification"}, "Server not initialized")
-		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
+		eh.pubsub.Publish(appContext.Config.PubSub.AdmineChannelsMap.ServerChannel, responseMsg)
 		return
 	}
 
 	// Execute the command through the MinecraftServer interface
-	result, err := (*ctx.MinecraftServer).ExecuteCommand(message)
+	result, err := (*appContext.MinecraftServer).ExecuteCommand(*appContext.MainCtx, message)
 	if err != nil {
 		slog.Error("Error executing command", "command", message, "error", err.Error())
 		errorMsg := models.NewAdmineMessage([]string{"notification"}, "Failed to execute command: "+err.Error())
-		eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
+		eh.pubsub.Publish(appContext.Config.PubSub.AdmineChannelsMap.ServerChannel, errorMsg)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (eh *EventHandler) command(message string) {
 	}
 
 	successMsg := models.NewAdmineMessage([]string{"command_result"}, responseMessage)
-	eh.pubsub.Publish(ctx.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
+	eh.pubsub.Publish(appContext.Config.PubSub.AdmineChannelsMap.ServerChannel, successMsg)
 
 	slog.Info("Executed command successfully", "command", message)
 }
