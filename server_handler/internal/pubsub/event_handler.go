@@ -188,8 +188,8 @@ func (eh *EventHandler) command(message string) {
 
 	// Send command result
 	var responseMessage string
-	if strings.TrimSpace(result) != "" {
-		responseMessage = result
+	if strings.TrimSpace(result.Output) != "" {
+		responseMessage = result.Output
 	} else {
 		responseMessage = "Command executed successfully"
 	}

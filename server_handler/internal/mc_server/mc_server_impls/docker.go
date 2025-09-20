@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
+	"github.com/GustaMantovani/Admine/server_handler/internal/mc_server/models"
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
 	"github.com/gorcon/rcon"
 )
@@ -68,12 +69,75 @@ func (d *DockerMinecraftServer) Restart(ctx context.Context) error {
 	return d.Start(ctx)
 }
 
-func (d *DockerMinecraftServer) Status(ctx context.Context) (string, error) {
-	return "nil", nil
+func (d *DockerMinecraftServer) Status(ctx context.Context) (*models.ServerStatus, error) {
+	conn, err := rcon.Dial(d.DockerConfig.RconAddress, d.DockerConfig.RconPassword)
+	if err != nil {
+		return models.NewServerStatus(
+			models.HealthUnknown,
+			models.StatusOffline,
+			"Server is offline - cannot connect via RCON",
+			"0h 0m",
+			0.0,
+		), nil
+	}
+	defer conn.Close()
+
+	listResponse, err := conn.Execute("list")
+	if err != nil {
+		return models.NewServerStatus(
+			models.HealthCritical,
+			models.StatusUnknown,
+			"Server RCON error: "+err.Error(),
+			"Unknown",
+			0.0,
+		), nil
+	}
+
+	tps := 20.0 // Default
+	if tpsResponse, err := conn.Execute("forge tps"); err == nil {
+		if strings.Contains(tpsResponse, "TPS") {
+			tps = 20.0
+		}
+	}
+
+	return models.NewServerStatus(
+		models.HealthHealthy,
+		models.StatusOnline,
+		"Server is online - "+listResponse,
+		"Unknown",
+		tps,
+	), nil
 }
 
-func (d *DockerMinecraftServer) Info(ctx context.Context) (string, error) {
-	return "nil", nil
+func (d *DockerMinecraftServer) Info(ctx context.Context) (*models.ServerInfo, error) {
+	conn, err := rcon.Dial(d.DockerConfig.RconAddress, d.DockerConfig.RconPassword)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	seed := "Unknown"
+	if seedResponse, err := conn.Execute("seed"); err == nil {
+		seed = seedResponse
+	}
+
+	minecraftVersion := "1.20.1"
+	javaVersion := "17.0.2"
+	modEngine := "Vanilla"
+	maxPlayers := 20
+
+	if listResponse, err := conn.Execute("list"); err == nil {
+		if strings.Contains(listResponse, "max of") {
+		}
+	}
+
+	return models.NewServerInfo(
+		minecraftVersion,
+		javaVersion,
+		modEngine,
+		seed,
+		maxPlayers,
+	), nil
 }
 
 func (d *DockerMinecraftServer) StartUpInfo(ctx context.Context) string {
@@ -85,23 +149,19 @@ func (d *DockerMinecraftServer) StartUpInfo(ctx context.Context) string {
 	return id
 }
 
-func (d *DockerMinecraftServer) ExecuteCommand(ctx context.Context, command string) (string, error) {
+func (d *DockerMinecraftServer) ExecuteCommand(ctx context.Context, command string) (*models.CommandResult, error) {
 	conn, err := rcon.Dial(d.DockerConfig.RconAddress, d.DockerConfig.RconPassword)
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
 	defer conn.Close()
 
 	response, err := conn.Execute(command)
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	slog.Debug(response)
 
-	return response, nil
-
+	return models.NewCommandResultWithOutput(response), nil
 }
