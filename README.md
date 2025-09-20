@@ -1,5 +1,7 @@
 ## Core Components
 
+![Admine](.readme/Admine.drawio.svg)
+
 ### 1. Server Handler (Go)
 The `server_handler` component manages Minecraft server containers:
 
