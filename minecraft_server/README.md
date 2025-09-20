@@ -1,23 +1,95 @@
 # Minecraft Server with ZeroTier
 
-The Minecraft Server with ZeroTier is a Docker-based solution for running a Minecraft server with VPN connectivity provided by ZeroTier.
+Docker-based Minecraft server solution with VPN connectivity provided by ZeroTier. Supports both Forge and Fabric mod loaders.
 
-## Environment Variables
+## Available Server Types
 
-The following environment variables are used to configure the Docker build:
+### Forge Server
+Located in `forge/` directory - supports Forge mods for enhanced gameplay.
 
-```bash
-export JAVA_VERSION=17
-export FORGE_VERSION=1.20.1-47.4.0
-export NETWORK_ID=a123b456c789
-```
+### Fabric Server  
+Located in `fabric/` directory - supports Fabric mods with better performance.
+
+## Quick Start
+
+1. **Choose your server type** (forge or fabric)
+2. **Navigate to the directory**:
+   ```bash
+   cd forge/  # or cd fabric/
+   ```
+
+3. **Set up configuration files**:
+   ```bash
+   ./setup.sh
+   ```
+
+4. **Configure environment variables** in `.env`:
+   ```bash
+   NETWORK_ID=your_zerotier_network_id
+   JAVA_VERSION=17
+   MINECRAFT_VERSION=1.20.1
+   # For Forge:
+   FORGE_VERSION=1.20.1-47.4.0
+   # For Fabric:
+   FABRIC_VERSION=0.14.21
+   FRABRIC_INSTALLER_VERSION=0.11.2
+   ```
+
+5. **Start the server**:
+   ```bash
+   docker-compose up -d
+   ```
 
 ## Configuration Files
 
-Configuration files for the Minecraft server should be placed in the `config` directory. These files will be mounted as volumes in the Docker container.
+### Required Files (created by setup.sh)
+- `config/eula.txt` - Minecraft EULA agreement
+- `config/server.properties` - Server configuration
+- `config/user_jvm_args.txt` - JVM memory and performance settings
 
-### Configuration Files
+### Data Directories
+- `data/world/` - World save files
+- `data/player-management/` - Player data (ops, whitelist, bans)
+- `data/cache/` - Server cache files
+- `mods/` - Mod files (JAR format)
 
-- `config/eula.txt`: Contains the EULA agreement for the Minecraft server.
-- `config/server.properties`: Contains the server properties configuration.
-- `config/user_jvm_args.txt`: Contains JVM arguments for the Minecraft server.
+## Network Configuration
+
+The server runs with ZeroTier VPN integration:
+- **Port 25565**: Minecraft game port
+- **Port 25575**: RCON port (for remote commands)
+- **Port 9993**: ZeroTier VPN port
+
+## Adding Mods
+
+1. Download mod files (.jar format)
+2. Place them in the `mods/` directory
+3. Restart the server: `docker-compose restart`
+
+## Server Management
+
+### Start server
+```bash
+docker-compose up -d
+```
+
+### Stop server
+```bash
+docker-compose down
+```
+
+### View logs
+```bash
+docker-compose logs -f mine_server
+```
+
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NETWORK_ID` | ZeroTier network ID | `1c33c1ced0613a58` |
+| `JAVA_VERSION` | Java version | `17` |
+| `MINECRAFT_VERSION` | Minecraft version | `1.20.1` |
+| `FORGE_VERSION` | Forge version (forge only) | `1.20.1-47.4.0` |
+| `FABRIC_VERSION` | Fabric loader version (fabric only) | `0.14.21` |
+| `FRABRIC_INSTALLER_VERSION` | Fabric installer version (fabric only) | `0.11.2` |
