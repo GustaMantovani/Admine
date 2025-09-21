@@ -13,16 +13,9 @@ import (
 	"github.com/GustaMantovani/Admine/server_handler/internal/api"
 	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub"
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-
-	// Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		// Don't fail if .env doesn't exist, just log it
-		log.Printf("Warning: Could not load .env file: %v", err)
-	}
 
 	// Create context for graceful shutdown
 	mainCtx, cancel := context.WithCancel(context.Background())
