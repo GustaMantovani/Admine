@@ -18,7 +18,7 @@ The system is designed for server administrators who want to host Minecraft serv
 
 ## System Architecture
 
-![Admine](.readme/Admine.drawio.svg)
+![Admine](.readme/Admine.png)
 
 The architecture demonstrates how Admine enables players to connect to private Minecraft servers through VPN connectivity:
 
@@ -77,13 +77,6 @@ The `minecraft_server` directory contains Docker configurations for:
 - Fabric servers
 - Support for various Minecraft versions
 
-## Getting Started
-
-1. Configure each component using their respective configuration files
-2. Start Redis (see utils/pubsub/redis/)
-3. Launch the server handler
-4. Launch the VPN handler
-5. Start the Discord bot
 ## Command Interface
 
 Users can interact with the system through Discord commands:
@@ -112,7 +105,3 @@ The VPN handler provides REST API endpoints:
 - `GET /server-ips` - Get server IP addresses in VPN
 - `GET /vpn-id` - Get internal VPN network ID
 - `POST /auth-member` - Authorize a member on VPN network
-
-## Development
-
-Each component has its own build and development workflow. See the `README.md` files in each directory for specific instructions.
