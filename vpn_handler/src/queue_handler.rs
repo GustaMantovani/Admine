@@ -32,31 +32,70 @@ impl Handle {
         let config = AppContext::instance().config();
         let retry_config = config.retry_config();
 
-        // Authenticate the member
-        if let Err(e) = vpn_client.auth_member(member_id.clone(), None).await {
-            error!("Error authenticating member {}: {}", member_id, e);
-            return;
-        }
-        info!("Member {} authenticated successfully.", member_id);
-
-        // Retry logic to fetch member IPs until available
+        // Retry logic to authenticate member and fetch IPs until available
         let mut attempts = *retry_config.attempts();
         let member_ips = loop {
+            // First, try to authenticate the member
+            if let Err(e) = vpn_client.auth_member(member_id.clone(), None).await {
+                if attempts == 0 {
+                    error!(
+                        "Exceeded retry attempts to authenticate member {}: {}",
+                        member_id, e
+                    );
+                    return;
+                }
+                attempts -= 1;
+                error!(
+                    "Error authenticating member {}: {}. Retrying in {:?}... (attempts left: {})",
+                    member_id,
+                    e,
+                    retry_config.delay(),
+                    attempts
+                );
+                sleep(*retry_config.delay()).await;
+                continue;
+            }
+
+            info!("Member {} authenticated successfully.", member_id);
+
+            // Then try to fetch the IPs
             match vpn_client.get_member_ips_in_vpn(member_id.clone()).await {
-                Ok(ips) => break ips,
-                Err(_) => {
+                Ok(ips) => {
+                    if ips.len() == 0 {
+                        if attempts == 0 {
+                            error!(
+                                "Exceeded retry attempts to fetch IPs for member {}",
+                                member_id
+                            );
+                            return;
+                        }
+                        attempts -= 1;
+                        info!(
+                            "No IPs available yet for member {}. Retrying in {:?}... (attempts left: {})",
+                            member_id,
+                            retry_config.delay(),
+                            attempts
+                        );
+                        sleep(*retry_config.delay()).await;
+                        continue; // Continue the loop to retry
+                    }
+
+                    break ips; // Only break when we have IPs
+                }
+                Err(e) => {
                     if attempts == 0 {
                         error!(
-                            "Exceeded retry attempts to fetch IPs for member {}",
-                            member_id
+                            "Exceeded retry attempts to fetch IPs for member {}: {}",
+                            member_id, e
                         );
                         return;
                     }
                     attempts -= 1;
                     info!(
-                        "IPs not available yet for member {}. Retrying in {:?}...",
+                        "IPs not available yet for member {}. Retrying in {:?}... (attempts left: {})",
                         member_id,
-                        retry_config.delay()
+                        retry_config.delay(),
+                        attempts
                     );
                     sleep(*retry_config.delay()).await;
                 }
