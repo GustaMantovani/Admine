@@ -53,7 +53,7 @@ appenders:
 
   file:
     kind: file
-    path: "./zerotier_handler.log"
+    path: "./etc/zerotier_handler.log"
     encoder:
       pattern: "{d} - {l} - {m}{n}"
 
