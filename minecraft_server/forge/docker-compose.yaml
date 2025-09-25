@@ -4,9 +4,9 @@ services:
     build:
       context: .
       args:
-        JAVA_VERSION: ${JAVA_VERSION}
-        FORGE_VERSION: ${FORGE_VERSION}
-        MINECRAFT_VERSION: ${MINECRAFT_VERSION}
+        JAVA_VERSION: ${JAVA_VERSION:-}
+        FORGE_VERSION: ${FORGE_VERSION:-}
+        MINECRAFT_VERSION: ${MINECRAFT_VERSION:-}
     env_file:
       - .env
     ports:
