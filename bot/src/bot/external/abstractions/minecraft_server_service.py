@@ -18,5 +18,5 @@ class MinecraftServerService(ABC):
         pass
 
     @abstractmethod
-    def command(self, command: str) -> str:
+    def command(self, command: str) -> dict:
         pass

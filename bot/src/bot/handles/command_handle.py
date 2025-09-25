@@ -109,7 +109,7 @@ class CommandHandle:
         try:
             return await self.__minecraft_info_service.command(" ".join(args))
         except Exception:
-            return "Error executing command"
+            return {"error": "Error executing command"}
 
     # @admin_command
     async def __info(self, args: List[str]):
@@ -117,7 +117,7 @@ class CommandHandle:
         try:
             return await self.__minecraft_info_service.get_info()
         except Exception:
-            return "Error getting server info"
+            return {"error": "Error getting server info"}
 
     # admin_command
     async def __status(self, args: List[str]):
@@ -125,7 +125,7 @@ class CommandHandle:
         try:
             return await self.__minecraft_info_service.get_status()
         except Exception:
-            return "Error getting server status"
+            return {"error": "Error getting server status"}
 
     async def __vpn_id(self, args: List[str]):
         self.__logger.debug(f"Getting vpn id off the server with args: {args}")

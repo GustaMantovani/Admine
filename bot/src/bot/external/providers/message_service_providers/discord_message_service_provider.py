@@ -6,6 +6,8 @@ import discord
 from discord.ext import commands
 
 from bot.external.abstractions.message_service import MessageService
+from bot.models.minecraft_server_info import MinecraftServerInfo
+from bot.models.minecraft_server_status import HealthStatus, MinecraftServerStatus, ServerStatus
 
 
 class _DiscordClient(commands.Bot):
@@ -16,6 +18,7 @@ class _DiscordClient(commands.Bot):
         callback_function: Optional[Callable[[str, Optional[List[str]], str, List[str]], None]] = None,
         administrators: Optional[List[str]] = None,
         channels_ids: List[str] = None,
+        provider: Optional["DiscordMessageServiceProvider"] = None,
     ):
         if channels_ids is None:
             channels_ids = []
@@ -27,6 +30,7 @@ class _DiscordClient(commands.Bot):
         self._ready_event = asyncio.Event()
         self._administrators = administrators
         self._channels_ids = channels_ids
+        self._provider = provider
 
     async def on_ready(self):
         self._logger.info(f"Bot connected as {self.user.name} (ID: {self.user.id})")
@@ -202,13 +206,19 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'command'.")
 
-                response = await self.command_handle_function_callback(
+                response_data = await self.command_handle_function_callback(
                     "command",
                     [mine_command],
                     str(interaction.user.id),
                     self._administrators,
                 )
-                await interaction.response.send_message(response)
+                # Format response based on data type
+                if isinstance(response_data, dict):
+                    formatted_response = self._provider._format_command_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+
+                await interaction.response.send_message(formatted_response)
                 self._logger.info("Sent confirmation message for 'command' command.")
             else:
                 self._logger.warning("Callback function not set for 'command' command.")
@@ -224,11 +234,19 @@ class _DiscordClient(commands.Bot):
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'info'.")
 
-                response = await self.command_handle_function_callback(
+                response_data = await self.command_handle_function_callback(
                     "info", [], str(interaction.user.id), self._administrators
                 )
 
-                await interaction.response.send_message(response)
+                # Format response based on data type
+                if isinstance(response_data, dict) and "error" in response_data:
+                    formatted_response = self._provider._format_info_response(response_data)
+                elif hasattr(response_data, "minecraft_version"):  # MinecraftServerInfo object
+                    formatted_response = self._provider._format_info_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+
+                await interaction.response.send_message(formatted_response)
                 self._logger.info("Sent confirmation message for 'info' command.")
             else:
                 self._logger.warning("Callback function not set for 'info' command.")
@@ -237,14 +255,22 @@ class _DiscordClient(commands.Bot):
         # Command to get a status off the server!
         @self.tree.command(name="status", description="Command to get a status off the server")
         async def status(interaction: discord.Interaction):
-            self._logger.debug(f"Received 'info' command. Callback function: {self.command_handle_function_callback}")
+            self._logger.debug(f"Received 'status' command. Callback function: {self.command_handle_function_callback}")
             if self.command_handle_function_callback is not None:
                 self._logger.info("Calling the command handle callback with 'status'.")
-                response = await self.command_handle_function_callback(
+                response_data = await self.command_handle_function_callback(
                     "status", [], str(interaction.user.id), self._administrators
                 )
 
-                await interaction.response.send_message(response)
+                # Format response based on data type
+                if isinstance(response_data, dict) and "error" in response_data:
+                    formatted_response = self._provider._format_status_response(response_data)
+                elif hasattr(response_data, "status"):  # MinecraftServerStatus object
+                    formatted_response = self._provider._format_status_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+
+                await interaction.response.send_message(formatted_response)
                 self._logger.info("Sent confirmation message for 'status' command.")
             else:
                 self._logger.warning("Callback function not set for 'status' command.")
@@ -289,7 +315,108 @@ class DiscordMessageServiceProvider(MessageService):
             logger=logging,
             administrators=administrators,
             channels_ids=channels_ids,
+            provider=self,
         )
+
+    def _format_command_response(self, command_data: dict) -> str:
+        """Format the command response for Discord display."""
+        if "error" in command_data:
+            return f"❌ **Error:** {command_data['error']}"
+
+        command = command_data.get("command", "")
+        response_data = command_data.get("response", {})
+        output = response_data.get("output", "")
+        exit_code = response_data.get("exitCode")
+
+        # Create a nice formatted response
+        if exit_code is not None:
+            if exit_code == 0:
+                status_emoji = "✅"
+                status_text = "Success"
+            else:
+                status_emoji = "❌"
+                status_text = f"Failed (Exit Code: {exit_code})"
+        else:
+            status_emoji = "ℹ️"
+            status_text = "Executed"
+
+        # Format the response
+        formatted_response = f"{status_emoji} **Command: `{command}`**\n"
+        formatted_response += f"**Status:** {status_text}\n"
+
+        if output:
+            # Limit output length for Discord (max 2000 chars total)
+            max_output_length = 1800 - len(formatted_response)
+            if len(output) > max_output_length:
+                truncated_output = output[: max_output_length - 3] + "..."
+            else:
+                truncated_output = output
+
+            formatted_response += f"**Output:**\n```\n{truncated_output}\n```"
+        else:
+            formatted_response += "**Output:** No output returned"
+
+        return formatted_response
+
+    def _format_status_response(self, status: MinecraftServerStatus) -> str:
+        """Format the server status response for Discord display."""
+        if hasattr(status, "get") and "error" in status:
+            return f"❌ **Error:** {status['error']}"
+
+        # Status emoji based on server status
+        if status.status == ServerStatus.ONLINE:
+            status_emoji = "🟢"
+        elif status.status == ServerStatus.OFFLINE:
+            status_emoji = "🔴"
+        elif status.status == ServerStatus.MAINTENANCE:
+            status_emoji = "🟡"
+        else:
+            status_emoji = "⚪"
+
+        # Health emoji based on health status
+        if status.health == HealthStatus.HEALTHY:
+            health_emoji = "💚"
+        elif status.health == HealthStatus.SICK:
+            health_emoji = "💛"
+        elif status.health == HealthStatus.CRITICAL:
+            health_emoji = "❤️"
+        else:
+            health_emoji = "🤍"
+
+        formatted_response = f"{status_emoji} **Server Status**\n"
+        formatted_response += f"**Status:** {status.status.value.title()}\n"
+        formatted_response += f"**Health:** {health_emoji} {status.health.value.title()}\n"
+
+        if status.description:
+            formatted_response += f"**Description:** {status.description}\n"
+
+        if status.online_players is not None:
+            formatted_response += f"**Players Online:** {status.online_players}\n"
+
+        if status.uptime:
+            formatted_response += f"**Uptime:** {status.uptime}\n"
+
+        if status.tps is not None:
+            tps_emoji = "🟢" if status.tps >= 19.0 else "🟡" if status.tps >= 15.0 else "🔴"
+            formatted_response += f"**TPS:** {tps_emoji} {status.tps:.1f}\n"
+
+        return formatted_response.rstrip()
+
+    def _format_info_response(self, info: MinecraftServerInfo) -> str:
+        """Format the server info response for Discord display."""
+        if hasattr(info, "get") and "error" in info:
+            return f"❌ **Error:** {info['error']}"
+
+        formatted_response = "ℹ️ **Server Information**\n"
+        formatted_response += f"**Minecraft Version:** {info.minecraft_version}\n"
+        formatted_response += f"**Java Version:** {info.java_version}\n"
+        formatted_response += f"**Mod Engine:** {info.mod_engine}\n"
+        formatted_response += f"**Max Players:** {info.max_players}\n"
+
+        if info.seed:
+            formatted_response += f"**Seed:** `{info.seed}`\n"
+
+        return formatted_response.rstrip()
 
     @property
     def token(self) -> str:
