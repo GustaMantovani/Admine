@@ -85,7 +85,6 @@ func (d *DockerMinecraftServer) getServerUptime(ctx context.Context) string {
 		return "N/A - Cannot Query Container"
 	}
 
-	println(results[d.DockerConfig.ServiceName])
 	startTimeStr := strings.TrimSpace(results[d.DockerConfig.ServiceName])
 	startTime, err := strconv.ParseInt(startTimeStr, 10, 64)
 	if err != nil {
