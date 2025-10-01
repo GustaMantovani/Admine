@@ -13,3 +13,7 @@ updates:
     directory: "/server_handler" # Location of package manifests
     schedule:
       interval: "monthly"
+  - package-ecosystem: "pip"
+    directory: "/bot"
+    schedule:
+      interval: "monthly"
