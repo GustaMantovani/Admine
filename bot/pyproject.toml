@@ -20,7 +20,7 @@ packages = [{include = "bot", from = "src"}]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.2"
-ruff = "^0.12.9"
+ruff = "^0.13.2"
 mypy = "^1.17.1"
 pyinstaller = "^6.3.0"
 
