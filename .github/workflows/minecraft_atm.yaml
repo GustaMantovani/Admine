@@ -18,11 +18,11 @@ on:
       atm_server_url:
         description: 'ATM Server Files Download URL'
         required: true
-        default: 'https://mediafilez.forgecdn.net/files/6986/129/Server-Files-1.1.0.zip'
+        default: 'https://mediafilez.forgecdn.net/files/6587/699/ServerFiles-1.1.8.zip'
       server_files_version:
         description: 'Server Files Version'
         required: true
-        default: '1.1.0'
+        default: '1.1.8'
 
 env:
   REGISTRY: ghcr.io
