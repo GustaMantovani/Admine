@@ -36,7 +36,6 @@ WORKDIR /srv/minecraft
 
 RUN curl -O ${ATM_SERVER_FILES_DOWNLOAD_URL} && \
     unzip ServerFiles-${SERVER_FILES_VERSION}.zip && \
-    rm ServerFiles-${SERVER_FILES_VERSION}.zip && \
-    java -jar forge-${MINECRAFT_VERSION}-${FORGE_VERSION}-installer.jar --installServer
+    rm ServerFiles-${SERVER_FILES_VERSION}.zip
 
-CMD zerotier-one & sleep 1 && if [ -n "$NETWORK_ID" ]; then zerotier-cli join $NETWORK_ID; fi && ./run.sh
+CMD zerotier-one & sleep 1 && if [ -n "$NETWORK_ID" ]; then zerotier-cli join $NETWORK_ID; fi && ./startserver.sh
