@@ -8,9 +8,10 @@ services:
         FORGE_VERSION: ${FORGE_VERSION:-}
         MINECRAFT_VERSION: ${MINECRAFT_VERSION:-}
         ATM_SERVER_FILES_DOWNLOAD_URL: ${ATM_SERVER_FILES_DOWNLOAD_URL:-}
-        SERVER_FILES_VERSION: ${SERVER_FILES_VERSION:-}
     env_file:
       - .env
+    environment:
+      - OVERRIDE_SERVER_PROPERTIES=false
     ports:
       - 25565:25565
       - 9993:9993
@@ -28,6 +29,7 @@ services:
       # Server configuration files
       - ./config/eula.txt:/srv/minecraft/eula.txt
       - ./config/server.properties:/srv/minecraft/server.properties
+      - ./config/server.properties:/srv/minecraft/default-server.properties
       - ./config/user_jvm_args.txt:/srv/minecraft/user_jvm_args.txt
 
       # Player management files
