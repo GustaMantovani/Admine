@@ -1,0 +1,58 @@
+name: Bot CI
+
+on:
+    pull_request:
+        paths:
+            - "bot/**"
+    workflow_dispatch:
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.12"
+
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
+              with:
+                  version: latest
+                  virtualenvs-create: true
+                  virtualenvs-in-project: true
+
+            - name: Load cached venv
+              id: cached-poetry-dependencies
+              uses: actions/cache@v3
+              with:
+                  path: bot/.venv
+                  key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+            - name: Install dependencies
+              working-directory: ./bot
+              run: poetry install --no-interaction --no-root
+              if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+
+            - name: Run linting with Ruff
+              working-directory: ./bot
+              run: poetry run ruff check .
+
+            - name: Run formatting check with Ruff
+              working-directory: ./bot
+              run: poetry run ruff format --check .
+
+            # - name: Run type checking with MyPy
+            #   working-directory: ./bot
+            #   run: poetry run mypy src/
+
+            # - name: Run tests with pytest
+            #   working-directory: ./bot
+            #   run: poetry run pytest tests/
+
+            - name: Build binary
+              working-directory: ./bot
+              run: poetry run pyinstaller src/main.py --onefile --name admine-bot --clean --strip --exclude-module tkinter --exclude-module matplotlib --exclude-module numpy --exclude-module pandas --optimize 2
