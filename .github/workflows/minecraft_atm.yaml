@@ -71,7 +71,6 @@ jobs:
             FORGE_VERSION=${{ inputs.forge_version }}
             MINECRAFT_VERSION=${{ inputs.minecraft_version }}
             ATM_SERVER_FILES_DOWNLOAD_URL=${{ inputs.atm_server_url }}
-            SERVER_FILES_VERSION=${{ inputs.server_files_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Generate artifact attestation
