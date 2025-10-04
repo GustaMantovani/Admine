@@ -1,0 +1,84 @@
+name: Build and Push Minecraft ATM Server Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      minecraft_version:
+        description: 'Minecraft version'
+        required: true
+        default: '1.20.1'
+      forge_version:
+        description: 'Forge version'
+        required: true
+        default: '47.4.0'
+      java_version:
+        description: 'Java version'
+        required: true
+        default: '21'
+      atm_server_url:
+        description: 'ATM Server Files Download URL'
+        required: true
+        default: 'https://mediafilez.forgecdn.net/files/6986/129/Server-Files-1.1.0.zip'
+      server_files_version:
+        description: 'Server Files Version'
+        required: true
+        default: '1.1.0'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/minecraft_server
+
+jobs:
+  build-and-push-atm:
+    name: Build and Push Minecraft ATM Image
+    runs-on: ubuntu-latest
+    environment: Admine
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest-atm
+            type=raw,value=atm-${{ inputs.server_files_version }}-mc${{ inputs.minecraft_version }}-forge${{ inputs.forge_version }}-java${{ inputs.java_version }}-graalvm-zerotier
+            type=sha,prefix={{date 'YYYYMMDD'}}-atm-
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./minecraft_server/atm
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            JAVA_VERSION=${{ inputs.java_version }}
+            FORGE_VERSION=${{ inputs.forge_version }}
+            MINECRAFT_VERSION=${{ inputs.minecraft_version }}
+            ATM_SERVER_FILES_DOWNLOAD_URL=${{ inputs.atm_server_url }}
+            SERVER_FILES_VERSION=${{ inputs.server_files_version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+      - name: Image digest
+        run: echo "Image digest:" ${{ steps.push.outputs.digest }}

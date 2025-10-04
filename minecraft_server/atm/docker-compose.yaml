@@ -1,0 +1,44 @@
+services:
+  mine_server:
+    container_name: mine_server
+    build:
+      context: .
+      args:
+        JAVA_VERSION: ${JAVA_VERSION:-}
+        FORGE_VERSION: ${FORGE_VERSION:-}
+        MINECRAFT_VERSION: ${MINECRAFT_VERSION:-}
+        ATM_SERVER_FILES_DOWNLOAD_URL: ${ATM_SERVER_FILES_DOWNLOAD_URL:-}
+        SERVER_FILES_VERSION: ${SERVER_FILES_VERSION:-}
+    env_file:
+      - .env
+    ports:
+      - 25565:25565
+      - 9993:9993
+      - 25575:25575
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      # Game data and world
+      - ./data/world:/srv/minecraft/world
+      # - ./mods:/srv/minecraft/mods
+
+      # Server configuration files
+      - ./config/eula.txt:/srv/minecraft/eula.txt
+      - ./config/server.properties:/srv/minecraft/server.properties
+      - ./config/user_jvm_args.txt:/srv/minecraft/user_jvm_args.txt
+
+      # Player management files
+      - ./data/player-management/banned-ips.json:/srv/minecraft/banned-ips.json
+      - ./data/player-management/banned-players.json:/srv/minecraft/banned-players.json
+      - ./data/player-management/ops.json:/srv/minecraft/ops.json
+      - ./data/player-management/whitelist.json:/srv/minecraft/whitelist.json
+
+      # Cache files
+      - ./data/cache/usercache.json:/srv/minecraft/usercache.json
+      - ./data/cache/usernamecache.json:/srv/minecraft/usernamecache.json
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
