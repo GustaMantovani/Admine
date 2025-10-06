@@ -5,6 +5,7 @@ from typing import Callable, List, Optional
 import discord
 from discord.ext import commands
 
+from bot.exceptions import MessageServiceError
 from bot.external.abstractions.message_service import MessageService
 from bot.models.minecraft_server_info import MinecraftServerInfo
 from bot.models.minecraft_server_status import HealthStatus, MinecraftServerStatus, ServerStatus
@@ -17,13 +18,17 @@ class _DiscordClient(commands.Bot):
         logger: Logger,
         callback_function: Optional[Callable[[str, Optional[List[str]], str, List[str]], None]] = None,
         administrators: Optional[List[str]] = None,
-        channels_ids: List[str] = None,
+        channels_ids: Optional[List[str]] = None,
         provider: Optional["DiscordMessageServiceProvider"] = None,
     ):
         if channels_ids is None:
             channels_ids = []
         if administrators is None:
             administrators = []
+
+        if not administrators:
+            raise MessageServiceError("At least one administrator must be configured for Discord bot security")
+
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
         self.command_handle_function_callback = callback_function
         self._logger = logger
@@ -302,9 +307,17 @@ class DiscordMessageServiceProvider(MessageService):
         logging: Logger,
         token: str,
         command_prefix: str = "!mc",
-        channels_ids: Optional[list[str]] = [],
-        administrators: Optional[list[str]] = [],
+        channels_ids: Optional[list[str]] = None,
+        administrators: Optional[list[str]] = None,
     ):
+        if administrators is None:
+            administrators = []
+        if channels_ids is None:
+            channels_ids = []
+
+        if not administrators:
+            raise MessageServiceError("At least one administrator must be configured for Discord bot security")
+
         super().__init__(logging, channels_ids, administrators)
         self.__token = token
         self.__command_prefix = command_prefix
