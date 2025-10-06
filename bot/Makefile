@@ -1,4 +1,4 @@
-.PHONY: help install run dev test lint format check clean logs setup
+.PHONY: help install run dev test lint format check clean logs setup lint-fix format-check fix git-hooks build build-release build-spec package dev-setup
 
 # Variables
 PYTHON_VERSION = 3.12
