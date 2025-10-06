@@ -33,35 +33,6 @@ class Config:
                 raise ConfigFileError(config_file, f"Error reading file: {str(e)}")
         return None
 
-    def __load_from_env(self) -> Dict[str, Any]:
-        base_config = {
-            "providers": {
-                "messaging": os.getenv("PROVIDERS_MESSAGING", "DISCORD"),
-                "pubsub": os.getenv("PROVIDERS_PUBSUB", "REDIS"),
-                "minecraft": os.getenv("PROVIDERS_MINECRAFT", "REST"),
-                "vpn": os.getenv("PROVIDERS_VPN", "REST"),
-            },
-            "discord": {
-                "token": os.getenv("DISCORD_TOKEN"),
-                "commandprefix": os.getenv("DISCORD_COMMAND_PREFIX", "!mc"),
-                "administrators": os.getenv("DISCORD_ADMINISTRATORS", "").split(","),
-                "channel_ids": os.getenv("CHANNEL_IDS").split(","),
-            },
-            "redis": {
-                "connectionstring": os.getenv("REDIS_CONNECTION_STRING", "localhost:6379"),
-            },
-            "minecraft": {
-                "connectionstring": os.getenv("MINECRAFT_CONNECTION_STRING", "http://localhost:3000"),
-                "token": os.getenv("MINECRAFT_TOKEN", ""),
-            },
-            "vpn": {
-                "connectionstring": os.getenv("VPN_CONNECTION_STRING", "http://localhost:9000"),
-                "token": os.getenv("VPN_TOKEN", ""),
-            },
-        }
-
-        return {k: v for k, v in base_config.items() if v is not None}
-
     def get(self, key: str, default: str = None) -> str:
         keys = key.split(".")
         value = self.__config

@@ -88,14 +88,14 @@ git-hooks: ## Install git hooks using the pre-commit framework
 # Build
 build: ## Build portable executable
 	@echo "Building portable executable..."
-	@poetry run pyinstaller src/main.py --onefile --name admine-bot --clean
-	@echo "Executable created in dist/admine-bot"
+	@poetry run pyinstaller src/main.py --onefile --name bot --clean
+	@echo "Executable created in dist/bot"
 
 build-release: ## Build release executable
 	@echo "Building optimized executable..."
 	@poetry run pyinstaller src/main.py \
 		--onefile \
-		--name admine-bot \
+		--name bot \
 		--clean \
 		--strip \
 		--exclude-module tkinter \
@@ -103,20 +103,20 @@ build-release: ## Build release executable
 		--exclude-module numpy \
 		--exclude-module pandas \
 		--optimize 2
-	@echo "Optimized executable created in dist/admine-bot"
+	@echo "Optimized executable created in dist/bot"
 
 build-spec: ## Build using spec file (most control)
 	@echo "Building using spec file..."
-	@poetry run pyinstaller admine-bot.spec --clean
-	@echo "Executable created in dist/admine-bot"
+	@poetry run pyinstaller bot.spec --clean
+	@echo "Executable created in dist/bot"
 
 package: ## Create distribution package
 	@echo "Creating distribution package..."
 	@make build-spec
 	@mkdir -p release
-	@cp dist/admine-bot release/
+	@cp dist/bot release/
 	@echo "Creating tarball..."
-	@tar -czf release/admine-bot-$(shell date +%Y%m%d-%H%M%S).tar.gz -C release admine-bot
+	@tar -czf release/bot-$(shell date +%Y%m%d-%H%M%S).tar.gz -C release bot
 	@echo "Package created in release/"
 
 dev-setup: ## Complete development setup
