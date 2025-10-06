@@ -64,14 +64,6 @@ test: ## Run tests
 	@echo "Running tests..."
 	@poetry run pytest
 
-test-verbose: ## Run tests with verbose output
-	@echo "Running tests (verbose)..."
-	@poetry run pytest -v
-
-test-watch: ## Run tests in watch mode
-	@echo "Running tests in watch mode..."
-	@poetry run pytest-watch
-
 # Utilities
 clean: ## Clean cache and temporary files
 	@echo "Cleaning cache and temporary files..."
@@ -79,28 +71,13 @@ clean: ## Clean cache and temporary files
 	@find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	@find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@rm -rf build/ dist/ *.spec __pycache__/
 	@echo "Cleanup complete!"
 
 logs: ## Show bot logs
 	@echo "Showing bot logs..."
 	@tail -f /tmp/bot.log 2>/dev/null || echo "No log file found at /tmp/bot.log"
-
-logs-follow: ## Follow bot logs in real-time
-	@echo "Following bot logs..."
-	@tail -f /tmp/bot.log 2>/dev/null || echo "No log file found at /tmp/bot.log"
-
-# Environment
-env-info: ## Show environment information
-	@echo "Environment Information:"
-	@echo "Poetry version: $(shell poetry --version 2>/dev/null || echo 'Not installed')"
-	@echo "Python version: $(shell python --version 2>/dev/null || echo 'Not found')"
-	@echo "Virtual env path: $(VENV_PATH)"
-	@echo "Project dependencies:"
-	@poetry show --tree 2>/dev/null || echo "Run 'make install' first"
-
-shell: ## Open a shell in the virtual environment
-	@echo "Opening shell in virtual environment..."
-	@poetry shell
 
 # Git helpers
 git-hooks: ## Install git hooks using the pre-commit framework
@@ -114,12 +91,7 @@ build: ## Build portable executable
 	@poetry run pyinstaller src/main.py --onefile --name admine-bot --clean
 	@echo "Executable created in dist/admine-bot"
 
-build-console: ## Build portable executable with console
-	@echo "Building portable executable with console..."
-	@poetry run pyinstaller src/main.py --onefile --name admine-bot --console --clean
-	@echo "Executable created in dist/admine-bot"
-
-build-advanced: ## Build with advanced options (smaller size)
+build-release: ## Build release executable
 	@echo "Building optimized executable..."
 	@poetry run pyinstaller src/main.py \
 		--onefile \
@@ -138,24 +110,6 @@ build-spec: ## Build using spec file (most control)
 	@poetry run pyinstaller admine-bot.spec --clean
 	@echo "Executable created in dist/admine-bot"
 
-build-test: ## Test the built executable
-	@echo "Testing executable..."
-	@if [ -f dist/admine-bot ]; then \
-		echo "Executable found. Size: $$(du -h dist/admine-bot | cut -f1)"; \
-		echo "File info:"; \
-		file dist/admine-bot; \
-		echo "Dependencies:"; \
-		ldd dist/admine-bot 2>/dev/null || echo "Static binary or dependencies not found"; \
-	else \
-		echo "Executable not found. Run 'make build' first."; \
-	fi
-
-clean-build: ## Clean build artifacts
-	@echo "Cleaning build artifacts..."
-	@rm -rf build/ dist/ *.spec __pycache__/
-	@find . -name "*.pyc" -delete 2>/dev/null || true
-	@echo "Build artifacts cleaned!"
-
 package: ## Create distribution package
 	@echo "Creating distribution package..."
 	@make build-spec
@@ -164,11 +118,6 @@ package: ## Create distribution package
 	@echo "Creating tarball..."
 	@tar -czf release/admine-bot-$(shell date +%Y%m%d-%H%M%S).tar.gz -C release admine-bot
 	@echo "Package created in release/"
-
-# All-in-one commands
-start: ## Quick start (install + run)
-	@make install
-	@make run
 
 dev-setup: ## Complete development setup
 	@make setup
