@@ -104,7 +104,7 @@ class _DiscordClient(commands.Bot):
                 await interaction.response.send_message("No processor available for this command.")
 
         # Command to add a channel ID to the list of authorized channels
-        @self.tree.command(name="add_channel", description="Adiciona um channel_id à lista de canais autorizados")
+        @self.tree.command(name="add_channel", description="Add a channel_id to the list of authorized channels")
         async def add_channel(interaction: discord.Interaction):
             channel_id = str(interaction.channel.id)
             self._logger.debug(
@@ -124,8 +124,10 @@ class _DiscordClient(commands.Bot):
                 self._logger.warning("Callback function not set for 'add_channel' command.")
                 await interaction.response.send_message("No processor available for this command.")
 
-        # Command to add a channel ID to the list of authorized channels
-        @self.tree.command(name="remove_channel", description="Remove um channel_id à lista de canais autorizados")
+        # Command to remove a channel ID from the list of authorized channels
+        @self.tree.command(
+            name="remove_channel", description="Remove a channel_id from the list of authorized channels"
+        )
         async def remove_channel(interaction: discord.Interaction):
             channel_id = str(interaction.channel.id)
             self._logger.debug(
@@ -300,13 +302,9 @@ class DiscordMessageServiceProvider(MessageService):
         logging: Logger,
         token: str,
         command_prefix: str = "!mc",
-        channels_ids: Optional[list[str]] = None,
-        administrators: Optional[list[str]] = None,
+        channels_ids: Optional[list[str]] = [],
+        administrators: Optional[list[str]] = [],
     ):
-        if administrators is None:
-            administrators = []
-        if channels_ids is None:
-            channels_ids = []
         super().__init__(logging, channels_ids, administrators)
         self.__token = token
         self.__command_prefix = command_prefix
