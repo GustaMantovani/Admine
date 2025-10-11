@@ -23,7 +23,6 @@ install: ## Install dependencies
 
 # Development
 run: ## Run the bot
-	@echo "Starting the bot..."
 	@poetry run python src/main.py
 
 dev: ## Run the bot in development mode with auto-reload

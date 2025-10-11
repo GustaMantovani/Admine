@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from logging import Logger
 from typing import Callable, Optional
 
 from bot.models.admine_message import AdmineMessage
@@ -8,7 +7,6 @@ from bot.models.admine_message import AdmineMessage
 class PubSubService(ABC):
     def __init__(
         self,
-        logging: Logger,
         host: str,
         port: int,
         subscribed_channels: Optional[list[str]] = None,
@@ -18,7 +16,6 @@ class PubSubService(ABC):
             producer_channels = []
         if subscribed_channels is None:
             subscribed_channels = []
-        self._logger = logging
         self.__host = host
         self.__port = port
         self.__subscribed_channels = subscribed_channels
