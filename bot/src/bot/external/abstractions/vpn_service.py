@@ -1,11 +1,7 @@
 from abc import ABC, abstractmethod
-from logging import Logger
 
 
 class VpnService(ABC):
-    def __init__(self, logging: Logger):
-        self.__logger = logging
-
     @abstractmethod
     def get_server_ips(self) -> str:
         pass

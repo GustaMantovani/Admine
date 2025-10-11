@@ -1,5 +1,6 @@
-from logging import Logger
 from typing import Any, Callable, Dict
+
+from loguru import logger
 
 from bot.config import Config
 from bot.exceptions import VpnServiceFactoryException
@@ -15,23 +16,22 @@ from bot.external.providers.vpn_service_providers.vpn_service_provider_type impo
 
 
 class VpnServiceFactory:
-    __PROVIDER_FACTORIES: Dict[VpnServiceProviderType, Callable[[Logger, Config], Any]] = {
-        VpnServiceProviderType.REST: lambda logging, config: ApiVpnServiceProviders(
-            logging,
+    __PROVIDER_FACTORIES: Dict[VpnServiceProviderType, Callable[[Config], Any]] = {
+        VpnServiceProviderType.REST: lambda config: ApiVpnServiceProviders(
             config.get("vpn.connectionstring", "http://localhost:9090"),
             config.get("vpn.token", ""),
         ),
     }
 
     @staticmethod
-    def create(logging: Logger, provider_type: VpnServiceProviderType, config: Config) -> VpnService:
+    def create(provider_type: VpnServiceProviderType, config: Config) -> VpnService:
         factory = VpnServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
             try:
-                return factory(logging, config)
+                return factory(config)
             except Exception as e:
-                logging.error(f"Error creating Vpn provider {provider_type}: {e}")
+                logger.error(f"Error creating Vpn provider {provider_type}: {e}")
                 raise VpnServiceFactoryException(provider_type, f"Failed to instantiate provider: {e}") from e
         else:
-            logging.error(f"Unknown VpnServiceProviderType requested: {provider_type}")
+            logger.error(f"Unknown VpnServiceProviderType requested: {provider_type}")
             raise VpnServiceFactoryException(provider_type, "Unknown VpnServiceProviderType")

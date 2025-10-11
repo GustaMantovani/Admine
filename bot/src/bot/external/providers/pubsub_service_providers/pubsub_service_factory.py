@@ -1,5 +1,6 @@
-from logging import Logger
 from typing import Any, Callable, Dict
+
+from loguru import logger
 
 from bot.config import Config
 from bot.exceptions import PubSubServiceFactoryException
@@ -12,9 +13,8 @@ from bot.external.providers.pubsub_service_providers.redis_pubsub_service_provid
 
 
 class PubSubServiceFactory:
-    __PROVIDER_FACTORIES: Dict[PubSubServiceProviderType, Callable[[Logger, Config], Any]] = {
-        PubSubServiceProviderType.REDIS: lambda logging, config: RedisPubSubServiceProvider(
-            logging=logging,
+    __PROVIDER_FACTORIES: Dict[PubSubServiceProviderType, Callable[[Config], Any]] = {
+        PubSubServiceProviderType.REDIS: lambda config: RedisPubSubServiceProvider(
             host=config.get("redis.connectionstring").split(":")[0],
             port=int(config.get("redis.connectionstring").split(":")[1]),
             subscribed_channels=config.get("redis.subscribedchannels", ["server_channel", "vpn_channel"]),
@@ -23,14 +23,14 @@ class PubSubServiceFactory:
     }
 
     @staticmethod
-    def create(logging: Logger, provider_type: PubSubServiceProviderType, config: Config) -> RedisPubSubServiceProvider:
+    def create(provider_type: PubSubServiceProviderType, config: Config) -> RedisPubSubServiceProvider:
         factory = PubSubServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
         if factory:
             try:
-                return factory(logging, config)
+                return factory(config)
             except Exception as e:
-                logging.error(f"Error creating PubSub provider {provider_type}: {e}")
+                logger.error(f"Error creating PubSub provider {provider_type}: {e}")
                 raise PubSubServiceFactoryException(provider_type, f"Failed to instantiate provider: {e}") from e
         else:
-            logging.error(f"Unknown PubSubServiceProviderType requested: {provider_type}")
+            logger.error(f"Unknown PubSubServiceProviderType requested: {provider_type}")
             raise PubSubServiceFactoryException(provider_type, "Unknown PubSubServiceProviderType")

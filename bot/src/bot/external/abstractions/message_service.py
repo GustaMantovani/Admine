@@ -1,16 +1,13 @@
 from abc import ABC, abstractmethod
-from logging import Logger
 from typing import Callable, List, Optional
 
 
 class MessageService(ABC):
     def __init__(
         self,
-        logger: Logger,
         channels_ids: Optional[list[str]] = [],
         administrators: Optional[list[str]] = [],
     ):
-        self._logger = logger
         self.__channels_ids = channels_ids
         self.__administrators = administrators
 

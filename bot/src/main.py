@@ -1,22 +1,21 @@
 import sys
 import traceback
 
-from dotenv import load_dotenv
+from loguru import logger
 
 from bot.bot import Bot
-from bot.logger import CustomLogger
-
-load_dotenv()
+from bot.logger import setup_logging
 
 
 async def main():
-    logger = CustomLogger(logger_name="Admine Bot", log_file="/tmp/bot.log")
+    setup_logging(log_file="/tmp/bot.log")
+    logger.info("Starting Admine Bot")
 
     try:
-        bot = Bot(logger.get_logger())
+        bot = Bot()
         await bot.start()
     except Exception as e:
-        logger.get_logger().error(f"Unexpected error: {e}\n{traceback.format_exc()}")
+        logger.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
         sys.exit(1)
 
 
