@@ -23,7 +23,7 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
             logger.debug(f"Status response received: {resp_json}")
             return MinecraftServerStatus.from_json(resp_json)
         except Exception as e:
-            logger.warning(f"Error fetching server status: {e}")
+            logger.error(f"Error fetching server status: {e}")
             raise
 
     async def get_info(self) -> MinecraftServerInfo:
@@ -37,7 +37,7 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
             logger.debug(f"Info response received: {resp_json}")
             return MinecraftServerInfo.from_json(resp_json)
         except Exception as e:
-            logger.warning(f"Error fetching server info: {e}")
+            logger.error(f"Error fetching server info: {e}")
             raise
 
     async def command(self, command: str) -> dict:
@@ -52,7 +52,7 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
             logger.debug(f"Command response received: {resp_json}")
             return {"command": command, "response": resp_json}
         except Exception as e:
-            logger.warning(f"Error sending command to server: {e}")
+            logger.error(f"Error sending command to server: {e}")
             raise
 
     def __str__(self):
