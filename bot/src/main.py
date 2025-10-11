@@ -4,11 +4,14 @@ import traceback
 from loguru import logger
 
 from bot.bot import Bot
+from bot.config import Config
 from bot.logger import setup_logging
 
 
 async def main():
-    setup_logging(log_file="/tmp/bot.log")
+    config = Config()
+    log_level = config.get("logging.level", "INFO")
+    setup_logging(log_file="/tmp/bot.log", log_level=log_level)
     logger.info("Starting Admine Bot")
 
     try:

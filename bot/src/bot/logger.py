@@ -2,7 +2,7 @@ from loguru import logger
 
 
 def setup_logging(
-    log_file: str = "/tmp/bot.log", max_size: str = "10 MB", backup_count: int = 5, log_level: str = "DEBUG"
+    log_file: str = "/tmp/bot.log", max_size: str = "10 MB", backup_count: int = 5, log_level: str = "INFO"
 ):
     """Setup global Loguru logging configuration.
 
@@ -12,6 +12,12 @@ def setup_logging(
         backup_count: Number of backup files to keep
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
+    # Validate and normalize log level
+    valid_levels = ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
+    log_level = log_level.upper()
+    if log_level not in valid_levels:
+        log_level = "INFO"
+
     # Remove default handler
     logger.remove()
 
@@ -33,7 +39,7 @@ def setup_logging(
         compression="zip",
     )
 
-    logger.info("Logging configured successfully")
+    logger.info(f"Logging configured successfully with level: {log_level}")
 
 
 def get_logger():
