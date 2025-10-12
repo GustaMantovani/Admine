@@ -49,6 +49,40 @@ jobs:
             #   working-directory: ./bot
             #   run: poetry run mypy src/
 
+            - name: Create test configuration file
+              working-directory: ./bot
+              run: |
+                cat > bot_config.json << EOF
+                {
+                  "providers": {
+                    "messaging": "DISCORD", 
+                    "pubsub": "REDIS", 
+                    "minecraft": "REST", 
+                    "vpn": "REST"
+                  },
+                  "logging": {
+                    "level": "DEBUG"
+                  },
+                  "discord": {
+                    "token": "test_token", 
+                    "commandprefix": "!mc", 
+                    "administrators": ["123", "456"], 
+                    "channel_ids": []
+                  },
+                  "redis": {
+                    "connectionstring": "localhost:6379"
+                  },
+                  "minecraft": {
+                    "connectionstring": "http://localhost:3000/",
+                    "token": ""
+                  },
+                  "vpn": {
+                    "connectionstring": "http://localhost:9000",
+                    "token": ""
+                  }
+                }
+                EOF
+
             - name: Run tests with pytest
               working-directory: ./bot
               run: poetry run pytest tests/
