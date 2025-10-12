@@ -49,9 +49,9 @@ jobs:
             #   working-directory: ./bot
             #   run: poetry run mypy src/
 
-            # - name: Run tests with pytest
-            #   working-directory: ./bot
-            #   run: poetry run pytest tests/
+            - name: Run tests with pytest
+              working-directory: ./bot
+              run: poetry run pytest tests/
 
             - name: Build binary
               working-directory: ./bot
