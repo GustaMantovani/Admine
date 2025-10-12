@@ -21,6 +21,7 @@ packages = [{include = "bot", from = "src"}]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.2"
+pytest-asyncio = "^0.24.0"
 ruff = "^0.12.9"
 mypy = "^1.18.2"
 pyinstaller = "^6.3.0"
@@ -28,6 +29,11 @@ pyinstaller = "^6.3.0"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:discord.player",
+]
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py"]
