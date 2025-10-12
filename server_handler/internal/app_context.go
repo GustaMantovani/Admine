@@ -53,3 +53,9 @@ func Init(configPath string, mainCtx *context.Context) (*AppContext, error) {
 func Get() *AppContext {
 	return instance
 }
+
+// SetInstanceForTest sets the instance for testing purposes
+// This should only be used in tests
+func SetInstanceForTest(ctx *AppContext) {
+	instance = ctx
+}

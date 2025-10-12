@@ -27,9 +27,9 @@ jobs:
         run: go vet ./...
         working-directory: server_handler
 
-      # - name: Run tests
-      #   run: go test ./... -v
-      #   working-directory: server_handler
+      - name: Run tests
+        run: go test ./... -v
+        working-directory: server_handler
 
       - name: Build binary
         run: go build -o server_handler cmd/server_handler/main.go

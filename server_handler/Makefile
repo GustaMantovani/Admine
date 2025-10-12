@@ -17,7 +17,7 @@ GOMOD=$(GOCMD) mod
 # Build flags
 LDFLAGS=-ldflags "-s -w"
 
-.PHONY: all build clean deps run dev install fmt vet lint setup help
+.PHONY: all build clean deps run dev install fmt vet lint setup test test-coverage help
 
 # Help target
 # Default target
@@ -72,6 +72,18 @@ vet: ## Vet Go code
 lint: ## Run golangci-lint
 	@echo "Running linter..."
 	golangci-lint run
+
+# Run tests
+test: ## Run tests
+	@echo "Running tests..."
+	$(GOTEST) -v ./...
+
+# Run tests with coverage
+test-coverage: ## Run tests with coverage report
+	@echo "Running tests with coverage..."
+	$(GOTEST) -v -coverprofile=coverage.out ./...
+	$(GOCMD) tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
 
 check: ## Run all code checks
 	@make vet
