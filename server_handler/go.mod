@@ -3,7 +3,7 @@ module github.com/GustaMantovani/Admine/server_handler
 go 1.24.6
 
 require (
-	github.com/docker/docker v28.4.0+incompatible
+	github.com/docker/docker v28.5.1+incompatible
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gorcon/rcon v1.4.0
 	github.com/redis/go-redis/v9 v9.14.0
