@@ -36,7 +36,7 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-include = ["pyproject.toml", "src/**/*.py"]
+include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
