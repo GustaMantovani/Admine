@@ -145,13 +145,13 @@ class _DiscordClient(commands.Bot):
                 await interaction.response.send_message("No processor available for this command.")
 
         # Command to authorizing a member in the server!
-        @self.tree.command(name="auth", description="Command to authorizing a member in the server")
-        async def auth(interaction: discord.Interaction, vpn_id: str):
+        @self.tree.command(name="auth", description="Authenticate your VPN client ID on the server")
+        async def auth(interaction: discord.Interaction, vpn_client_id: str):
             logger.debug(f"Received 'auth' command. Callback function: {self.command_handle_function_callback}")
             if self.command_handle_function_callback is not None:
                 logger.info("Calling the command handle callback with 'auth'.")
                 response = await self.command_handle_function_callback(
-                    "auth", [vpn_id], str(interaction.user.id), self._administrators
+                    "auth", [vpn_client_id], str(interaction.user.id), self._administrators
                 )
 
                 await interaction.response.send_message(response)
@@ -268,6 +268,126 @@ class _DiscordClient(commands.Bot):
             else:
                 logger.warning("Callback function not set for 'status' command.")
                 await interaction.response.send_message("No processor available for this command.")
+
+        # Help command - comprehensive guide for new players
+        @self.tree.command(name="help", description="Complete guide on how to play on the server")
+        async def help_command(interaction: discord.Interaction):
+            logger.debug("Received 'help' command.")
+
+            help_embed = discord.Embed(
+                title="🎮 **Admine Minecraft Server - Complete Guide**",
+                description="Everything you need to know to start playing!",
+                color=0x00FF00,
+            )
+
+            # Step-by-step guide for new players
+            help_embed.add_field(
+                name="📋 **Getting Started (New Players)**",
+                value=(
+                    "**1.** Get the VPN network ID:\n"
+                    "   • Use `/vpn_id` to get the VPN network ID\n"
+                    "   • Save this ID for VPN connection\n\n"
+                    "**2.** Connect to the VPN:\n"
+                    "   • Use the VPN client with the ID from step 1\n"
+                    "   • Make sure you're connected before proceeding\n\n"
+                    "**3.** Authenticate your VPN client:\n"
+                    "   • Use `/auth <your_vpn_client_id>` command\n"
+                    "   • Use your VPN client ID (like ZeroTier client ID)\n"
+                    "   • Ask an admin for your VPN client ID if you don't have one\n\n"
+                    "**4.** Get the server IP address:\n"
+                    "   • Use `/server_ips` to get current server IPs\n\n"
+                    "**5.** Check if the server is online:\n"
+                    "   • Use `/status` to see if the server is running\n"
+                    "   • If offline, ask an admin to start it with `/on`\n\n"
+                    "**6.** Connect to Minecraft:\n"
+                    "   • Open Minecraft and go to Multiplayer\n"
+                    "   • Add new server with the IP from step 4\n"
+                    "   • Join and have fun! 🎉"
+                ),
+                inline=False,
+            )
+
+            # Server management commands
+            help_embed.add_field(
+                name="🔧 **Server Management** (Admin Only)",
+                value=(
+                    "`/on` - Start the Minecraft server\n"
+                    "`/off` - Stop the Minecraft server\n"
+                    "`/restart` - Restart the server\n"
+                    "`/status` - Check server status and health\n"
+                    "`/info` - Get detailed server information"
+                ),
+                inline=True,
+            )
+
+            # Minecraft commands
+            help_embed.add_field(
+                name="⚡ **Minecraft Commands** (Admin Only)",
+                value=(
+                    "`/command <minecraft_command>` - Execute server commands\n\n"
+                    "**Examples:**\n"
+                    "• `/command say Hello everyone!`\n"
+                    "• `/command tp player1 player2`\n"
+                    "• `/command give @a minecraft:diamond 1`\n"
+                    "• `/command weather clear`\n"
+                    "• `/command time set day`"
+                ),
+                inline=True,
+            )
+
+            # VPN management
+            help_embed.add_field(
+                name="🌐 **VPN & Network**",
+                value=(
+                    "`/vpn_id` - Get the VPN network ID (for VPN connection)\n"
+                    "`/auth <vpn_client_id>` - Authenticate your VPN client\n"
+                    "`/server_ips` - Get current server IP addresses\n\n"
+                    "**Important:** Network ID ≠ Client ID!\n"
+                    "• VPN Network ID: Used to connect to the VPN network\n"
+                    "• VPN Client ID: Your personal client ID for authentication (like ZeroTier)"
+                ),
+                inline=True,
+            )
+
+            # Admin commands
+            help_embed.add_field(
+                name="👑 **Administration** (Admin Only)",
+                value=(
+                    "`/adm @user` - Grant admin privileges to a user\n"
+                    "`/add_channel` - Add current channel to bot's allowed channels\n"
+                    "`/remove_channel` - Remove current channel from allowed channels"
+                ),
+                inline=True,
+            )
+
+            # Important notes
+            help_embed.add_field(
+                name="⚠️ **Important Notes**",
+                value=(
+                    "• **VPN Required:** You must be connected to the VPN to access the server\n"
+                    "• **Admin Commands:** Server control commands require admin privileges\n"
+                    "• **Server Status:** Always check `/status` before trying to connect\n"
+                    "• **IP Changes:** Server IPs may change, use `/server_ips` to get current ones\n"
+                    "• **Help:** Use this `/help` command anytime you need guidance!"
+                ),
+                inline=False,
+            )
+
+            # Quick start summary
+            help_embed.add_field(
+                name="🚀 **Quick Start Summary**",
+                value=(
+                    "**New Player:** `/vpn_id` → Connect VPN → `/auth <vpn_client_id>` → `/server_ips` → `/status` → Play!\n"
+                    "**Regular Player:** Check VPN → `/server_ips` → `/status` → Play!\n"
+                    "**Admin:** Use `/on` if server is offline, `/command` for server management"
+                ),
+                inline=False,
+            )
+
+            help_embed.set_footer(text="💡 Tip: Bookmark the server IPs and VPN info for quick access!")
+
+            await interaction.response.send_message(embed=help_embed)
+            logger.info("Sent comprehensive help message.")
 
         await self.tree.sync()
         logger.info("Discord commands synced successfully.")
