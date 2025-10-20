@@ -57,6 +57,10 @@ Create your configuration in `bot_config.json`:
 
 ```json
 {
+    "logging": {
+        "level": "DEBUG",
+        "file": "./bot.log"
+    },
     "providers": {
         "messaging": "DISCORD",
         "pubsub": "REDIS",

@@ -1,6 +1,6 @@
 # Minecraft Server with ZeroTier
 
-Docker-based Minecraft server solution with VPN connectivity provided by ZeroTier. Supports both Forge and Fabric mod loaders.
+ Docker-based Minecraft server solution with VPN connectivity provided by ZeroTier. Supports Forge, Fabric, and All The Mods (ATM) modpack.
 
 ## Available Server Types
 
@@ -10,12 +10,15 @@ Located in `forge/` directory - supports Forge mods for enhanced gameplay.
 ### Fabric Server  
 Located in `fabric/` directory - supports Fabric mods with better performance.
 
+### ATM Server (All The Mods)
+Located in `atm/` directory - packaged modpack with pre-configured mods and scripts.
+
 ## Quick Start
 
-1. **Choose your server type** (forge or fabric)
+1. **Choose your server type** (forge, fabric, or atm)
 2. **Navigate to the directory**:
    ```bash
-   cd forge/  # or cd fabric/
+   cd forge/  # or cd fabric/ or cd atm/
    ```
 
 3. **Set up configuration files**:
@@ -33,6 +36,9 @@ Located in `fabric/` directory - supports Fabric mods with better performance.
    # For Fabric:
    FABRIC_VERSION=0.14.21
    FRABRIC_INSTALLER_VERSION=0.11.2
+   # For ATM:
+   ATM_SERVER_FILES_DOWNLOAD_URL=https://mediafilez.forgecdn.net/files/6986/129/Server-Files-1.1.0.zip
+   SERVER_FILES_VERSION=1.1.0
    ```
 
 5. **Start the server**:
@@ -52,6 +58,8 @@ Located in `fabric/` directory - supports Fabric mods with better performance.
 - `data/player-management/` - Player data (ops, whitelist, bans)
 - `data/cache/` - Server cache files
 - `mods/` - Mod files (JAR format)
+
+Note for ATM: the modpack includes its own set of mods and scripts; you typically don't need to add mods manually. Use `atm/`'s `docker-compose.yaml` and `Dockerfile`.
 
 ## Network Configuration
 
@@ -83,6 +91,10 @@ docker-compose down
 docker-compose logs -f mine_server
 ```
 
+### ATM specifics
+- The `atm/` image downloads the modpack server files automatically using `ATM_SERVER_FILES_DOWNLOAD_URL` and `SERVER_FILES_VERSION`.
+- If you mount `config/server.properties` via volume (as in `atm/docker-compose.yaml`), your settings are preserved by the entrypoint.
+
 ## Environment Variables
 
 | Variable | Description | Example |
@@ -93,3 +105,5 @@ docker-compose logs -f mine_server
 | `FORGE_VERSION` | Forge version (forge only) | `1.20.1-47.4.0` |
 | `FABRIC_VERSION` | Fabric loader version (fabric only) | `0.14.21` |
 | `FRABRIC_INSTALLER_VERSION` | Fabric installer version (fabric only) | `0.11.2` |
+| `ATM_SERVER_FILES_DOWNLOAD_URL` | ATM server files zip URL (atm only) | `https://mediafilez.forgecdn.net/files/6986/129/Server-Files-1.1.0.zip` |
+| `SERVER_FILES_VERSION` | ATM server files version (atm only) | `1.1.0` |

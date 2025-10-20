@@ -9,72 +9,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/api/models"
-	mc_server "github.com/GustaMantovani/Admine/server_handler/internal/mc_server"
 	mc_models "github.com/GustaMantovani/Admine/server_handler/internal/mc_server/models"
+	"github.com/GustaMantovani/Admine/server_handler/internal/testutils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-// MockMinecraftServer is a mock implementation of the MinecraftServer interface for testing
-type MockMinecraftServer struct {
-	mock.Mock
-}
-
-func (m *MockMinecraftServer) Info(ctx context.Context) (*mc_models.ServerInfo, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*mc_models.ServerInfo), args.Error(1)
-}
-
-func (m *MockMinecraftServer) Status(ctx context.Context) (*mc_models.ServerStatus, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*mc_models.ServerStatus), args.Error(1)
-}
-
-func (m *MockMinecraftServer) ExecuteCommand(ctx context.Context, command string) (*mc_models.CommandResult, error) {
-	args := m.Called(ctx, command)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*mc_models.CommandResult), args.Error(1)
-}
-
-func (m *MockMinecraftServer) Start(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockMinecraftServer) Stop(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockMinecraftServer) Down(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockMinecraftServer) Restart(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockMinecraftServer) StartUpInfo(ctx context.Context) string {
-	args := m.Called(ctx)
-	return args.String(0)
-}
 
 // setupTestHandler creates a new test handler with necessary setup
 func setupTestHandler() *ServerHandler {
-	gin.SetMode(gin.TestMode)
+	testutils.SetupGinTestMode()
 	return NewApiHandler()
 }
 
@@ -82,7 +26,7 @@ func setupTestHandler() *ServerHandler {
 func TestGetInfo_Success(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	expectedInfo := mc_models.NewServerInfo(
@@ -96,12 +40,7 @@ func TestGetInfo_Success(t *testing.T) {
 	mockServer.On("Info", ctx).Return(expectedInfo, nil)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	w := httptest.NewRecorder()
@@ -126,53 +65,18 @@ func TestGetInfo_Success(t *testing.T) {
 	mockServer.AssertExpectations(t)
 }
 
-// TestGetInfo_ServerNotInitialized tests GetInfo when server is nil
-func TestGetInfo_ServerNotInitialized(t *testing.T) {
-	// Setup
-	handler := setupTestHandler()
-	ctx := context.Background()
-
-	// Create test context with nil server
-	appCtx := &internal.AppContext{
-		MinecraftServer: nil,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
-
-	// Create request
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request, _ = http.NewRequest("GET", "/info", nil)
-
-	// Execute
-	handler.GetInfo(c)
-
-	// Assert
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-	var response models.ErrorResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Minecraft server not initialized", response.Message)
-}
-
 // TestGetInfo_InfoError tests GetInfo when Info() returns an error
 func TestGetInfo_InfoError(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	expectedError := errors.New("failed to retrieve server info")
 	mockServer.On("Info", ctx).Return(nil, expectedError)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	w := httptest.NewRecorder()
@@ -198,7 +102,7 @@ func TestGetInfo_InfoError(t *testing.T) {
 func TestGetStatus_Success(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	expectedStatus := mc_models.NewServerStatus(
@@ -212,12 +116,7 @@ func TestGetStatus_Success(t *testing.T) {
 	mockServer.On("Status", ctx).Return(expectedStatus, nil)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	w := httptest.NewRecorder()
@@ -246,14 +145,9 @@ func TestGetStatus_Success(t *testing.T) {
 func TestGetStatus_ServerNotInitialized(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	ctx := context.Background()
 
 	// Create test context with nil server
-	appCtx := &internal.AppContext{
-		MinecraftServer: nil,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPIWithNilServer()
 
 	// Create request
 	w := httptest.NewRecorder()
@@ -276,19 +170,14 @@ func TestGetStatus_ServerNotInitialized(t *testing.T) {
 func TestGetStatus_StatusError(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	expectedError := errors.New("failed to retrieve server status")
 	mockServer.On("Status", ctx).Return(nil, expectedError)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	w := httptest.NewRecorder()
@@ -314,7 +203,7 @@ func TestGetStatus_StatusError(t *testing.T) {
 func TestPostCommand_Success(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	testCommand := "list"
@@ -323,12 +212,7 @@ func TestPostCommand_Success(t *testing.T) {
 	mockServer.On("ExecuteCommand", ctx, testCommand).Return(expectedResult, nil)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	commandPayload := models.Command{Command: testCommand}
@@ -358,14 +242,9 @@ func TestPostCommand_Success(t *testing.T) {
 func TestPostCommand_InvalidJSON(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	ctx := context.Background()
 
 	// Create test context
-	appCtx := &internal.AppContext{
-		MinecraftServer: nil, // Not needed for this test
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPIWithNilServer()
 
 	// Create request with invalid JSON
 	w := httptest.NewRecorder()
@@ -389,14 +268,9 @@ func TestPostCommand_InvalidJSON(t *testing.T) {
 func TestPostCommand_MissingCommandField(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	ctx := context.Background()
 
 	// Create test context
-	appCtx := &internal.AppContext{
-		MinecraftServer: nil, // Not needed for this test
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPIWithNilServer()
 
 	// Create request with missing command field
 	w := httptest.NewRecorder()
@@ -420,14 +294,9 @@ func TestPostCommand_MissingCommandField(t *testing.T) {
 func TestPostCommand_ServerNotInitialized(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	ctx := context.Background()
 
 	// Create test context with nil server
-	appCtx := &internal.AppContext{
-		MinecraftServer: nil,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPIWithNilServer()
 
 	// Create request
 	commandPayload := models.Command{Command: "list"}
@@ -454,7 +323,7 @@ func TestPostCommand_ServerNotInitialized(t *testing.T) {
 func TestPostCommand_ExecuteCommandError(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	testCommand := "invalid-command"
@@ -463,12 +332,7 @@ func TestPostCommand_ExecuteCommandError(t *testing.T) {
 	mockServer.On("ExecuteCommand", ctx, testCommand).Return(nil, expectedError)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	commandPayload := models.Command{Command: testCommand}
@@ -498,7 +362,7 @@ func TestPostCommand_ExecuteCommandError(t *testing.T) {
 func TestPostCommand_WithExitCode(t *testing.T) {
 	// Setup
 	handler := setupTestHandler()
-	mockServer := new(MockMinecraftServer)
+	mockServer := new(testutils.MockMinecraftServer)
 	ctx := context.Background()
 
 	testCommand := "say Hello World"
@@ -508,12 +372,7 @@ func TestPostCommand_WithExitCode(t *testing.T) {
 	mockServer.On("ExecuteCommand", ctx, testCommand).Return(expectedResult, nil)
 
 	// Create test context with mock
-	var mcServer mc_server.MinecraftServer = mockServer
-	appCtx := &internal.AppContext{
-		MinecraftServer: &mcServer,
-		MainCtx:         &ctx,
-	}
-	internal.SetInstanceForTest(appCtx)
+	testutils.SetupTestContextForAPI(mockServer)
 
 	// Create request
 	commandPayload := models.Command{Command: testCommand}

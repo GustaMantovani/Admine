@@ -11,7 +11,7 @@ from bot.logger import setup_logging
 async def main():
     config = Config()
     log_level = config.get("logging.level", "INFO")
-    setup_logging(log_file="/tmp/bot.log", log_level=log_level)
+    setup_logging(config.get("logging.file", "/tmp/bot.log"), log_level=log_level)
     logger.info("Starting Admine Bot")
 
     try:
