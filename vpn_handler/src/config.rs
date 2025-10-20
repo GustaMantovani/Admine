@@ -76,3 +76,10 @@ impl Config {
         Ok(toml::from_str(&content)?)
     }
 }
+
+impl RetryConfig {
+    #[cfg(test)]
+    pub fn new(attempts: usize, delay: Duration) -> Self {
+        Self { attempts, delay }
+    }
+}
