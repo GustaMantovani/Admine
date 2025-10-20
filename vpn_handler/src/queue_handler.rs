@@ -308,11 +308,11 @@ impl Handle {
 mod tests {
     use super::*;
     use crate::config::RetryConfig;
+    use crate::errors::{PubSubError, VpnError};
     use crate::models::admine_message::AdmineMessage;
     use crate::persistence::key_value_storage::KeyValueStore;
     use crate::pub_sub::pub_sub::{PubSubProvider, TPublisher, TSubscriber};
     use crate::vpn::vpn::TVpnClient;
-    use crate::errors::{VpnError, PubSubError};
     use mockall::{mock, predicate::*};
     use std::net::IpAddr;
     use std::sync::{Arc, Mutex};
@@ -321,7 +321,7 @@ mod tests {
     // Mock implementations
     mock! {
         TestVpn {}
-        
+
         #[async_trait::async_trait]
         impl TVpnClient for TestVpn {
             async fn auth_member(&self, member_id: String, member_token: Option<String>) -> Result<(), VpnError>;
@@ -332,7 +332,7 @@ mod tests {
 
     mock! {
         TestStorage {}
-        
+
         impl KeyValueStore for TestStorage {
             fn set(&self, key: String, value: String) -> Result<(), Box<dyn std::error::Error>>;
             fn get(&self, key: &str) -> Option<String>;
@@ -341,7 +341,7 @@ mod tests {
 
     mock! {
         TestPubSub {}
-        
+
         impl TSubscriber for TestPubSub {
             fn subscribe(&mut self, topics: Vec<String>) -> Result<(), PubSubError>;
             fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError>;
@@ -359,34 +359,40 @@ mod tests {
     #[tokio::test]
     async fn test_update_server_id_success() {
         let mut mock_storage = MockTestStorage::new();
-        
+
         mock_storage
             .expect_set()
-            .with(eq("server_member_id".to_string()), eq("test_member_123".to_string()))
+            .with(
+                eq("server_member_id".to_string()),
+                eq("test_member_123".to_string()),
+            )
             .times(1)
             .returning(|_, _| Ok(()));
 
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        
+
         let result = Handle::update_server_id("test_member_123", &storage).await;
-        
+
         assert!(result.is_ok());
     }
 
     #[tokio::test]
     async fn test_update_server_id_failure() {
         let mut mock_storage = MockTestStorage::new();
-        
+
         mock_storage
             .expect_set()
-            .with(eq("server_member_id".to_string()), eq("test_member_123".to_string()))
+            .with(
+                eq("server_member_id".to_string()),
+                eq("test_member_123".to_string()),
+            )
             .times(1)
             .returning(|_, _| Err("Database error".into()));
 
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        
+
         let result = Handle::update_server_id("test_member_123", &storage).await;
-        
+
         assert!(result.is_err());
     }
 
@@ -394,7 +400,7 @@ mod tests {
     async fn test_process_auth_member_success() {
         let mut mock_vpn = MockTestVpn::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         mock_vpn
             .expect_auth_member()
             .with(eq("test_member_123".to_string()), eq(None))
@@ -409,20 +415,21 @@ mod tests {
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
-        
+
         Handle::process_auth_member(
             "test_member_123".to_string(),
             &vpn,
             &pubsub_mutex,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
     async fn test_process_auth_member_auth_failure() {
         let mut mock_vpn = MockTestVpn::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         mock_vpn
             .expect_auth_member()
             .with(eq("test_member_123".to_string()), eq(None))
@@ -430,19 +437,18 @@ mod tests {
             .returning(|_, _| Err(VpnError::InternalError("Auth failed".to_string())));
 
         // Should not publish when auth fails
-        mock_pubsub
-            .expect_publish()
-            .times(0);
+        mock_pubsub.expect_publish().times(0);
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
-        
+
         Handle::process_auth_member(
             "test_member_123".to_string(),
             &vpn,
             &pubsub_mutex,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
@@ -450,10 +456,10 @@ mod tests {
         let mut mock_vpn = MockTestVpn::new();
         let mut mock_storage = MockTestStorage::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         let test_ips = vec![
             "192.168.1.100".parse().unwrap(),
-            "10.0.0.50".parse().unwrap()
+            "10.0.0.50".parse().unwrap(),
         ];
 
         mock_vpn
@@ -476,7 +482,10 @@ mod tests {
 
         mock_storage
             .expect_set()
-            .with(eq("server_member_id".to_string()), eq("test_member_123".to_string()))
+            .with(
+                eq("server_member_id".to_string()),
+                eq("test_member_123".to_string()),
+            )
             .times(1)
             .returning(|_, _| Ok(()));
 
@@ -490,15 +499,16 @@ mod tests {
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_server_up(
             "test_member_123".to_string(),
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
@@ -506,17 +516,15 @@ mod tests {
         let mut mock_vpn = MockTestVpn::new();
         let mut mock_storage = MockTestStorage::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         let test_ips = vec!["192.168.1.100".parse().unwrap()];
 
-        mock_vpn
-            .expect_auth_member()
-            .returning(|_, _| Ok(()));
-        
+        mock_vpn.expect_auth_member().returning(|_, _| Ok(()));
+
         mock_vpn
             .expect_get_member_ips_in_vpn()
             .returning(move |_| Ok(test_ips.clone()));
-        
+
         mock_vpn
             .expect_delete_member()
             .with(eq("old_member_456".to_string()))
@@ -529,27 +537,24 @@ mod tests {
             .times(1)
             .returning(|_| Some("old_member_456".to_string()));
 
-        mock_storage
-            .expect_set()
-            .returning(|_, _| Ok(()));
+        mock_storage.expect_set().returning(|_, _| Ok(()));
 
-        mock_pubsub
-            .expect_publish()
-            .returning(|_, _| Ok(()));
+        mock_pubsub.expect_publish().returning(|_, _| Ok(()));
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_server_up(
             "test_member_123".to_string(),
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
@@ -557,53 +562,43 @@ mod tests {
         let mut mock_vpn = MockTestVpn::new();
         let mut mock_storage = MockTestStorage::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         let empty_ips: Vec<IpAddr> = vec![];
         let final_ips = vec!["192.168.1.100".parse().unwrap()];
 
-        mock_vpn
-            .expect_auth_member()
-            .returning(|_, _| Ok(()));
-        
-        // First call returns empty IPs, second call returns actual IPs
-        mock_vpn
-            .expect_get_member_ips_in_vpn()
-            .times(2)
-            .returning({
-                let mut call_count = 0;
-                move |_| {
-                    call_count += 1;
-                    if call_count == 1 {
-                        Ok(empty_ips.clone())
-                    } else {
-                        Ok(final_ips.clone())
-                    }
-                }
-            });
+        mock_vpn.expect_auth_member().returning(|_, _| Ok(()));
 
-        mock_storage
-            .expect_get()
-            .returning(|_| None);
-        mock_storage
-            .expect_set()
-            .returning(|_, _| Ok(()));
-        mock_pubsub
-            .expect_publish()
-            .returning(|_, _| Ok(()));
+        // First call returns empty IPs, second call returns actual IPs
+        mock_vpn.expect_get_member_ips_in_vpn().times(2).returning({
+            let mut call_count = 0;
+            move |_| {
+                call_count += 1;
+                if call_count == 1 {
+                    Ok(empty_ips.clone())
+                } else {
+                    Ok(final_ips.clone())
+                }
+            }
+        });
+
+        mock_storage.expect_get().returning(|_| None);
+        mock_storage.expect_set().returning(|_, _| Ok(()));
+        mock_pubsub.expect_publish().returning(|_, _| Ok(()));
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_server_up(
             "test_member_123".to_string(),
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
@@ -611,44 +606,35 @@ mod tests {
         let mut mock_vpn = MockTestVpn::new();
         let mut mock_storage = MockTestStorage::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         let test_ips = vec!["192.168.1.100".parse().unwrap()];
 
-        mock_vpn
-            .expect_auth_member()
-            .returning(|_, _| Ok(()));
+        mock_vpn.expect_auth_member().returning(|_, _| Ok(()));
         mock_vpn
             .expect_get_member_ips_in_vpn()
             .returning(move |_| Ok(test_ips.clone()));
-        mock_storage
-            .expect_get()
-            .returning(|_| None);
-        mock_storage
-            .expect_set()
-            .returning(|_, _| Ok(()));
-        mock_pubsub
-            .expect_publish()
-            .returning(|_, _| Ok(()));
+        mock_storage.expect_get().returning(|_| None);
+        mock_storage.expect_set().returning(|_, _| Ok(()));
+        mock_pubsub.expect_publish().returning(|_, _| Ok(()));
 
-        let mut message = AdmineMessage::new(
-            vec!["server_on".to_string()],
-            "test_member_123".to_string()
-        );
+        let mut message =
+            AdmineMessage::new(vec!["server_on".to_string()], "test_member_123".to_string());
         message.set_origin("server".to_string());
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
@@ -656,7 +642,7 @@ mod tests {
         let mut mock_vpn = MockTestVpn::new();
         let mock_storage = MockTestStorage::new();
         let mut mock_pubsub = MockTestPubSub::new();
-        
+
         mock_vpn
             .expect_auth_member()
             .with(eq("test_member_123".to_string()), eq(None))
@@ -670,7 +656,7 @@ mod tests {
 
         let mut message = AdmineMessage::new(
             vec!["auth_member".to_string()],
-            "test_member_123".to_string()
+            "test_member_123".to_string(),
         );
         message.set_origin("bot".to_string());
 
@@ -678,15 +664,16 @@ mod tests {
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
     }
 
     #[tokio::test]
@@ -694,26 +681,25 @@ mod tests {
         let mock_vpn = MockTestVpn::new();
         let mock_storage = MockTestStorage::new();
         let mock_pubsub = MockTestPubSub::new();
-        
-        let mut message = AdmineMessage::new(
-            vec!["some_tag".to_string()],
-            "test_message".to_string()
-        );
+
+        let mut message =
+            AdmineMessage::new(vec!["some_tag".to_string()], "test_message".to_string());
         message.set_origin("unknown_channel".to_string());
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
         // This test mainly checks that the function doesn't panic with unknown channels
     }
 
@@ -722,10 +708,10 @@ mod tests {
         let mock_vpn = MockTestVpn::new();
         let mock_storage = MockTestStorage::new();
         let mock_pubsub = MockTestPubSub::new();
-        
+
         let mut message = AdmineMessage::new(
             vec!["server_on".to_string()],
-            "".to_string() // Empty message
+            "".to_string(), // Empty message
         );
         message.set_origin("server".to_string());
 
@@ -733,15 +719,16 @@ mod tests {
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
         let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
         let retry_config = create_test_retry_config();
-        
+
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
             &pubsub_mutex,
             &retry_config,
-            "vpn_channel"
-        ).await;
+            "vpn_channel",
+        )
+        .await;
         // This test checks that empty messages are ignored
     }
 }
