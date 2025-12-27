@@ -23,7 +23,7 @@ pub_sub_type = "Redis"
 api_url = "https://api.zerotier.com/api/v1"
 api_key = "your_api_key_here"
 network_id = "your_network_id_here"
-vpn_type = "ZeroTier"
+vpn_type = "Zerotier"
 
 [db_config]
 path = "./etc/sled/vpn_store.db"
