@@ -5,8 +5,6 @@ It listens to Redis pubsub channels for server commands and provides a REST API.
 
 ## Configuration
 
-The server handler can be configured via YAML file or environment variables.
-
 ### YAML
 The configuration file is `server_handler_config.yaml` in the project directory.
 
