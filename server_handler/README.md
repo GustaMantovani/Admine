@@ -43,16 +43,3 @@ web_server:
   host: "0.0.0.0"
   port: 3000
 ```
-
-## API Endpoints
-- `GET /info` - Get server information (version, Java, mods, seed, max players)
-- `GET /status` - Get server status (health, uptime, TPS, player count)
-- `POST /command` - Execute commands on the server
-
-## PubSub Commands
-Listens for messages with tags:
-- `server_on` - Start the server
-- `server_off` - Stop the server gracefully
-- `server_down` - Remove server containers
-- `restart` - Restart the server
-- `command` - Execute server command
