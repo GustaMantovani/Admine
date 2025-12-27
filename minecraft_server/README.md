@@ -1,6 +1,6 @@
 # Minecraft Server with ZeroTier
 
- Docker-based Minecraft server solution with VPN connectivity provided by ZeroTier. Supports Forge, Fabric, and All The Mods (ATM) modpack.
+ Docker-based Minecraft server solution. Supports Forge, Fabric, and All The Mods (ATM) modpack.
 
 ## Available Server Types
 
@@ -73,23 +73,6 @@ The server runs with ZeroTier VPN integration:
 1. Download mod files (.jar format)
 2. Place them in the `mods/` directory
 3. Restart the server: `docker-compose restart`
-
-## Server Management
-
-### Start server
-```bash
-docker-compose up -d
-```
-
-### Stop server
-```bash
-docker-compose down
-```
-
-### View logs
-```bash
-docker-compose logs -f mine_server
-```
 
 ### ATM specifics
 - The `atm/` image downloads the modpack server files automatically using `ATM_SERVER_FILES_DOWNLOAD_URL` and `SERVER_FILES_VERSION`.
