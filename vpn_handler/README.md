@@ -2,9 +2,7 @@
 
 # VPN Handler
 
-The VPN Handler is a Rust-based component of the Admine infrastructure management solution. It is responsible for managing network configurations and member authorizations within a VPN network. This handler automates the process of adding and removing network members.
-
-Além disso, este handler possui uma API para operações síncronas.
+The VPN Handler is a Rust-based component of the Admine. It is responsible for managing network configurations and member authorizations within a VPN network. This handler automates the process of adding and removing network members.
 
 ## Configuration file:
 
