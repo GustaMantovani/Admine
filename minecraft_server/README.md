@@ -1,6 +1,6 @@
 # Minecraft Server with ZeroTier
 
- Docker-based Minecraft server solution. Supports Forge, Fabric, and All The Mods (ATM) modpack.
+ Docker-based Minecraft server. Supports Forge, Fabric, and All The Mods (ATM) modpack.
 
 ## Available Server Types
 

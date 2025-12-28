@@ -1,6 +1,6 @@
 # Admine Discord Bot
 
-Discord bot for managing Minecraft servers through the Admine infrastructure. Provides a user-friendly interface for server control via Discord slash commands.
+Discord bot for managing Minecraft servers through the Admine. Provides a user-friendly interface for server control via Discord commands.
 
 ## Available Commands
 
