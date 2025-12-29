@@ -1,6 +1,6 @@
 def main [network_id?: string] {
     ls *-templates* | get name | each {|f| 
-        let new_name = ($f | str replace "-template" "")
+        let new_name = ($f | str replace "-templates" "")
         cp -r $f $new_name
     }
 
