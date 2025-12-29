@@ -1,4 +1,4 @@
-.PHONY: help install run dev test lint format check clean logs setup lint-fix format-check fix git-hooks build build-release build-spec package dev-setup
+.PHONY: help install run test lint lint-fix format format-check check clean logs setup fix git-hooks build-release
 
 # Variables
 PYTHON_VERSION = 3.12
@@ -9,25 +9,22 @@ help: ## Show this help message
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-# Setup and Installation
-setup: ## Setup the project (install poetry if needed and dependencies)
-	@echo "Setting up the project..."
-	@command -v poetry >/dev/null 2>&1 || { echo "Installing poetry..."; curl -sSL https://install.python-poetry.org | python3 -; }
-	@poetry install
-	@echo "Project setup complete!"
-
 install: ## Install dependencies
 	@echo "Installing dependencies..."
 	@poetry install
 	@echo "Dependencies installed!"
 
+setup: ## Complete development setup
+	@echo "Installing python with pyenv..."
+	@pyenv install
+	@echo "Python installed"
+	@make install
+	@make git-hooks
+	@echo "Development environment ready!"
+
 # Development
 run: ## Run the bot
 	@poetry run python src/main.py
-
-dev: ## Run the bot in development mode with auto-reload
-	@echo "Starting bot in development mode..."
-	@poetry run python -u src/main.py
 
 # Code Quality
 lint: ## Run linter (ruff check)
@@ -46,17 +43,18 @@ format-check: ## Check if code is formatted correctly
 	@echo "Checking code formatting..."
 	@poetry run ruff format --check .
 
-check: ## Run all code quality checks
-	@echo "Running all code quality checks..."
-	@make lint
-	@make format-check
-	@echo "All checks passed!"
-
 fix: ## Fix all auto-fixable issues
 	@echo "Fixing all auto-fixable issues..."
 	@make lint-fix
 	@make format
 	@echo "All fixes applied!"
+
+
+check: ## Run all code quality checks
+	@echo "Running all code quality checks..."
+	@make lint
+	@make format-check
+	@echo "All checks passed!"
 
 # Testing
 test: ## Run tests
@@ -84,12 +82,6 @@ git-hooks: ## Install git hooks using the pre-commit framework
 	@poetry run pre-commit install
 	@echo "Git hooks installed!"
 
-# Build
-build: ## Build portable executable
-	@echo "Building portable executable..."
-	@poetry run pyinstaller src/main.py --onefile --name bot --clean
-	@echo "Executable created in dist/bot"
-
 build-release: ## Build release executable
 	@echo "Building optimized executable..."
 	@poetry run pyinstaller src/main.py \
@@ -103,23 +95,3 @@ build-release: ## Build release executable
 		--exclude-module pandas \
 		--optimize 2
 	@echo "Optimized executable created in dist/bot"
-
-build-spec: ## Build using spec file (most control)
-	@echo "Building using spec file..."
-	@poetry run pyinstaller bot.spec --clean
-	@echo "Executable created in dist/bot"
-
-package: ## Create distribution package
-	@echo "Creating distribution package..."
-	@make build-spec
-	@mkdir -p release
-	@cp dist/bot release/
-	@echo "Creating tarball..."
-	@tar -czf release/bot-$(shell date +%Y%m%d-%H%M%S).tar.gz -C release bot
-	@echo "Package created in release/"
-
-dev-setup: ## Complete development setup
-	@make setup
-	@make git-hooks
-	@echo "Development environment ready!"
-

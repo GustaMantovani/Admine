@@ -2,9 +2,7 @@
 
 # VPN Handler
 
-The VPN Handler is a Rust-based component of the Admine infrastructure management solution. It is responsible for managing network configurations and member authorizations within a VPN network. This handler automates the process of adding and removing network members.
-
-Além disso, este handler possui uma API para operações síncronas.
+The VPN Handler is a Rust-based component of the Admine. It is responsible for managing network configurations and member authorizations within a VPN network. This handler automates the process of adding and removing network members.
 
 ## Configuration file:
 
@@ -25,7 +23,7 @@ pub_sub_type = "Redis"
 api_url = "https://api.zerotier.com/api/v1"
 api_key = "your_api_key_here"
 network_id = "your_network_id_here"
-vpn_type = "ZeroTier"
+vpn_type = "Zerotier"
 
 [db_config]
 path = "./etc/sled/vpn_store.db"

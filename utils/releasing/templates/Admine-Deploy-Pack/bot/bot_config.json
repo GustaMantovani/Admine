@@ -1,0 +1,25 @@
+{
+    "providers": {
+        "messaging": "DISCORD",
+        "pubsub": "REDIS",
+        "minecraft": "REST",
+        "vpn": "REST"
+    },
+    "discord": {
+        "token": "",
+        "commandprefix": "!mc",
+        "administrators": [],
+        "channel_ids": []
+    },
+    "redis": {
+        "connectionstring": "localhost:6379"
+    },
+    "minecraft": {
+        "connectionstring": "http://localhost:3000/api/v1/",
+        "token": ""
+    },
+    "vpn": {
+        "connectionstring": "http://localhost:9000",
+        "token": ""
+    }
+}

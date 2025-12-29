@@ -1,18 +1,7 @@
-# SERVER HANDLER
-
-The server handler manages Minecraft servers through Docker Compose.
-It listens to Redis pubsub channels for server commands and provides a REST API.
-
-## Configuration
-
-### YAML
-The configuration file is `server_handler_config.yaml` in the project directory.
-
-```yaml
 app:
   self_origin_name: "server"
   log_file_path: "/tmp/server_handler.log"
-  log_level: "DEBUG"
+  log_level: "INFO"
 
 pubsub:
   type: "redis"
@@ -31,7 +20,7 @@ minecraft_server:
   server_off_timeout: "1m"
   server_command_exec_timeout: "30s"
   docker:
-    compose_path: "/path/to/docker-compose.yaml"
+    compose_path: "../minecraft_server/fabric/docker-compose.yaml"
     container_name: "mine_server"
     service_name: "mine_server"
     rcon_address: "127.0.0.1:25575"
@@ -40,4 +29,3 @@ minecraft_server:
 web_server:
   host: "0.0.0.0"
   port: 3000
-```
