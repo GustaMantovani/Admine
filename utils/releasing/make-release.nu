@@ -25,7 +25,7 @@ def main [
     release_bot $output_path $clean
     
     print "🗜️  Creating archives..."
-    create_compress_archives $output_path $clean
+    create_compress_archives $output_path
     
     if (not $dev) { create_git_tag $version $push_tags $force }
 
@@ -38,7 +38,8 @@ def setup_tamplate [template_path: path, output_path: path, force: bool] {
         if (not $force) { 
             error make { msg: "Output path already exists" } 
         } else {
-            print "⚠️  Warning: Overriding existing output directory..."
+            print "⚠️  Warning: Removing existing output directory..."
+            mkdir $output_path
         }
     } else {
         mkdir $output_path
@@ -118,7 +119,7 @@ def release_bot [output_path: path, clean: bool] {
     print "  ✓ Bot ready"
 }
 
-def create_compress_archives [output_path: path, clean: bool] {
+def create_compress_archives [output_path: path] {
     let parent_dir = $output_path | path dirname
     let folder_name = $output_path | path basename
     let tar_file = $'($folder_name).tar.gz'
@@ -126,14 +127,12 @@ def create_compress_archives [output_path: path, clean: bool] {
     
     cd $parent_dir
     
-    if (not ($tar_file | path exists) or $clean) { 
-        print "  📦 Creating tar.gz..."
-        tar -czf $tar_file $folder_name 
-    }
-    if (not ($zip_file | path exists) or $clean) { 
-        print "  📦 Creating zip..."
-        ^zip -r $zip_file $folder_name 
-    }
+    print "  📦 Creating tar.gz..."
+    tar -czf $tar_file $folder_name
+
+    print "  📦 Creating zip..."
+    ^zip -r $zip_file $folder_name
+
     print "  ✓ Archives created"
 }
 
