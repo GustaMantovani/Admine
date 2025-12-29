@@ -2,6 +2,7 @@ const TEMPLATE_PATH = './utils/releasing/templates/Admine-Deploy-Pack' | path ex
 
 def main [version: string, output_path: path, clean?: bool] {
     let do_clean = ($clean | default false)
+    let output_path = $output_path | path expand
     let $output_path  = $'($output_path)/admine-deploy-pack-linux-x86_64-($version)'
 
     print $"🚀 Starting Admine release ($version)"
