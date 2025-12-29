@@ -3,6 +3,8 @@ const TEMPLATE_PATH = './utils/releasing/templates/Admine-Deploy-Pack' | path ex
 def main [version: string, output_path: path, clean?: bool] {
     let do_clean = ($clean | default false)
 
+    let $output_path  = $'($output_path)/admine-deploy-pack-linux-x86_64-($version)'
+
     setup_tamplate $TEMPLATE_PATH $output_path
     release_vpn_handler $output_path $do_clean
     release_server_handler $output_path $do_clean
@@ -13,8 +15,16 @@ def main [version: string, output_path: path, clean?: bool] {
 
 # Release
 def setup_tamplate [template_path: path, output_path: path] {
-    if ( ($output_path | path exists)) { error make {msg: "Output path already exists", } }
-    cp -r $'($template_path)' $output_path
+    if ($output_path | path exists) {
+        error make { msg: "Output path already exists" }
+    } else {
+        mkdir $output_path
+    }
+
+    cd $template_path
+    ls | par-each { |row| 
+        cp -r $'($template_path)/($row.name)' $output_path 
+    }
 }
 
 # VPN Handler
@@ -59,7 +69,11 @@ def compile_bot [clean: bool] {
 
 def release_bot [output_path: path, clean: bool] {
     cd ./bot
-    compile_bot $clean
+
+    if (not ( './dist/bot' | path exists) or $clean) {
+        compile_bot $clean
+    }
+
     let target_dir = $'($output_path)/bot'
     if (not ($target_dir | path exists)) { mkdir $target_dir }
     cp ./dist/bot $'($target_dir)/bot'
@@ -74,13 +88,17 @@ def setup_minecraft_server_options [output_path: path] {
     cp -r ./minecraft_server/* $minecraft_output_path
 
     cd $minecraft_output_path
-    for minecraft_folder in (ls | get name) {
-        if ($'./($minecraft_folder)/setup.nu' | path exists) {
-            cd $minecraft_folder
-            nu setup.nu
-            rm -rf *-templates*
-            rm -rf setup.nu
-            cd ..
+
+    (ls | get name) | par-each { |minecraft_folder|
+        {
+            if ($'./($minecraft_folder)/setup.nu' | path exists) {
+                cd $minecraft_folder
+                nu setup.nu
+                rm -rf *-templates*
+                rm setup.nu
+                rm README.md
+                cd ..
+            }
         }
     }
 }
