@@ -147,6 +147,19 @@ def create_git_tag [tag_name: string, push_tags: bool, force: bool] {
         if (git ls-remote --tags origin $tag_name | is-not-empty) {
             error make { msg: $"Tag ($tag_name) already exists on remote" }
         }
+    } else {
+        print "⚠️  Force enabled: checking existing tags..."
+        git fetch --tags
+
+        if (git tag -l $tag_name | is-not-empty) {
+            print $"  ⚠️  Deleting existing local tag ($tag_name)..."
+            git tag -d $tag_name
+        }
+
+        if (git ls-remote --tags origin $tag_name | is-not-empty) {
+            print $"  ⚠️  Deleting existing remote tag ($tag_name)..."
+            git push origin $':refs/tags/($tag_name)'
+        }
     }
 
     let current_branch = (git branch --show-current | str trim)
