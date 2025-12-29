@@ -17,9 +17,6 @@ def main [version: string, output_path: path, clean?: bool] {
     print "📦 Building Bot..."
     release_bot $output_path $do_clean
     
-    print "🎮 Setting up Minecraft servers..."
-    setup_minecraft_server_options $output_path
-    
     print "🗜️  Creating archives..."
     create_compress_archives $output_path $do_clean
     
@@ -106,32 +103,6 @@ def release_bot [output_path: path, clean: bool] {
     if (not ($target_dir | path exists)) { mkdir $target_dir }
     cp $binary_path $'($target_dir)/bot'
     print "  ✓ Bot ready"
-}
-
-# Minecraft server
-def setup_minecraft_server_options [output_path: path] {
-    let minecraft_output_path  = $'($output_path)/minecraft_server'
-    if (not ($minecraft_output_path | path exists)) { mkdir $minecraft_output_path }
-
-    # copy variants from repo to output pack
-    cp -r ./minecraft_server/* $minecraft_output_path
-
-    cd $minecraft_output_path
-
-    print "  🔧 Configuring server variants..."
-    (ls | get name) | par-each { |minecraft_folder|
-        {
-            if ($'./($minecraft_folder)/setup.nu' | path exists) {
-                cd $minecraft_folder
-                nu setup.nu
-                rm -rf *-templates*
-                rm setup.nu
-                rm README.md
-                cd ..
-            }
-        }
-    }
-    print "  ✓ Minecraft servers configured"
 }
 
 def create_compress_archives [output_path: path, clean: bool] {
