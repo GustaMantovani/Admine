@@ -126,5 +126,22 @@ def create_compress_archives [output_path: path, clean: bool] {
 }
 
 def create_git_tag [tag_name: string] {
+    if (git tag -l $tag_name | is-not-empty) {
+        error make { msg: $"Tag ($tag_name) already exists" }
+    }
+
+    git fetch --tags
+    if (git ls-remote --tags origin $tag_name | is-not-empty) {
+        error make { msg: $"Tag ($tag_name) already exists on remote" }
+    }
+
+    let current_branch = (git branch --show-current | str trim)
+    if $current_branch not-in ["main" "master"] {
+        error make { 
+            msg: $"You can only create tags from main/master branch. Current branch: ($current_branch)" 
+        }
+    }
+
     git tag -a $tag_name -m $'Admine ($tag_name)'
+    git push origin $tag_name
 }
