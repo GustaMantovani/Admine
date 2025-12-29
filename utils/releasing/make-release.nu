@@ -33,7 +33,7 @@ def main [
 }
 
 # Release
-def setup_tamplate [template_path: path, output_path: path, force: bool] {
+def setup_template [template_path: path, output_path: path, force: bool] {
     if ($output_path | path exists) {
         if (not $force) { 
             error make { msg: "Output path already exists" } 
