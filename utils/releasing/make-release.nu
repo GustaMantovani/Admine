@@ -10,6 +10,7 @@ def main [version: string, output_path: path, clean?: bool] {
     release_server_handler $output_path $do_clean
     release_bot $output_path $do_clean
     setup_minecraft_server_options $output_path
+    create_compress_archives $output_path $clean
     create_git_tag $version
 }
 
@@ -103,7 +104,18 @@ def setup_minecraft_server_options [output_path: path] {
     }
 }
 
+def create_compress_archives [output_path: path, clean: bool] {
+    let parent_dir = $output_path | path dirname
+    let folder_name = $output_path | path basename
+    let tar_file = $'($folder_name).tar.gz'
+    let zip_file = $'($folder_name).zip'
+    
+    cd $parent_dir
+    
+    if (not ($tar_file | path exists) or $clean) { tar -czf $tar_file $folder_name }
+    if (not ($zip_file | path exists) or $clean) { ^zip -r $zip_file $folder_name }
+}
+
 def create_git_tag [tag_name: string] {
-    git tag -a $tag_name -m $'Admine release ($tag_name)'
-    git push --tags
+    git tag -a $tag_name -m $'Admine ($tag_name)'
 }
