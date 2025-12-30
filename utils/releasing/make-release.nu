@@ -137,7 +137,6 @@ def create_compress_archives [output_path: path] {
 }
 
 def create_git_tag [tag_name: string, push_tags: bool, force: bool] {
-
     if (not $force) {
         if (git tag -l $tag_name | is-not-empty) {
             error make { msg: $"Tag ($tag_name) already exists" }
