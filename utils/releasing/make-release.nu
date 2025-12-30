@@ -2,7 +2,7 @@ const TEMPLATE_PATH = './utils/releasing/templates/Admine-Deploy-Pack' | path ex
 
 def main [
     version: string
-    output_path: path
+    output_path?: path = './releases'
     --clean = false
     --force = false
     --dev = false
@@ -13,7 +13,7 @@ def main [
 
     print $"🚀 Starting Admine release ($version)"
 
-    setup_tamplate $TEMPLATE_PATH $output_path $force
+    setup_template $TEMPLATE_PATH $output_path $force
     
     print "📦 Building VPN Handler..."
     release_vpn_handler $output_path $clean
