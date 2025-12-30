@@ -281,28 +281,25 @@ class _DiscordClient(commands.Bot):
             )
 
             # Step-by-step guide for new players
+            # Keep each embed field under Discord's 1024-char limit to avoid rejection
             help_embed.add_field(
                 name="📋 **Getting Started (New Players)**",
                 value=(
-                    "**1.** Get the VPN network ID:\n"
-                    "   • Use `/vpn_id` to get the VPN network ID\n"
-                    "   • Save this ID for VPN connection\n\n"
-                    "**2.** Connect to the VPN:\n"
-                    "   • Use the VPN client with the ID from step 1\n"
-                    "   • Make sure you're connected before proceeding\n\n"
-                    "**3.** Authenticate your VPN client:\n"
-                    "   • Use `/auth <your_vpn_client_id>` command\n"
-                    "   • Use your VPN client ID (like ZeroTier client ID)\n"
-                    "   • Ask an admin for your VPN client ID if you don't have one\n\n"
-                    "**4.** Get the server IP address:\n"
-                    "   • Use `/server_ips` to get current server IPs\n\n"
-                    "**5.** Check if the server is online:\n"
-                    "   • Use `/status` to see if the server is running\n"
-                    "   • If offline, ask an admin to start it with `/on`\n\n"
-                    "**6.** Connect to Minecraft:\n"
-                    "   • Open Minecraft and go to Multiplayer\n"
-                    "   • Add new server with the IP from step 4\n"
-                    "   • Join and have fun! 🎉"
+                    "**1. Get the VPN Network ID**\n"
+                    "• `/vpn_id` → copy the network ID\n\n"
+                    "**2. Connect to the VPN (ZeroTier)**\n"
+                    "• Install ZeroTier One: https://www.zerotier.com/download/\n"
+                    "• Windows/macOS: Tray/Menu icon → 'Join New Network...' → paste ID\n"
+                    "• Linux: `sudo zerotier-cli join <network_id>`\n"
+                    "• Stay connected and wait for authorization\n\n"
+                    "**3. Authenticate your VPN client**\n"
+                    "• `/auth <vpn_client_id>` (use your client ID)\n\n"
+                    "**4. Get the server IP**\n"
+                    "• `/server_ips`\n\n"
+                    "**5. Check server status**\n"
+                    "• `/status` (ask admin to `/on` if offline)\n\n"
+                    "**6. Connect to Minecraft**\n"
+                    "• Multiplayer → add server with IP from step 4"
                 ),
                 inline=False,
             )
