@@ -99,5 +99,6 @@ setup: ## Setup development environment
 setup: deps
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
 	go install honnef.co/go/tools/cmd/staticcheck@latest
+	curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.7.2
 	@echo "Development setup complete!"
 	@echo "Edit $(CONFIG_FILE) with your configuration, then run 'make dev' to start development"
