@@ -19,12 +19,12 @@ minecraft_server:
   server_up_timeout: "2m"
   server_off_timeout: "1m"
   server_command_exec_timeout: "30s"
+  rcon_address: "127.0.0.1:25575"
+  rcon_password: "password"
   docker:
     compose_path: "../minecraft_server/fabric/docker-compose.yaml"
     container_name: "mine_server"
     service_name: "mine_server"
-    rcon_address: "127.0.0.1:25575"
-    rcon_password: "password"
 
 web_server:
   host: "0.0.0.0"
