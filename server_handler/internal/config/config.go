@@ -1,8 +1,11 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 
 	"gopkg.in/yaml.v3"
 )
@@ -62,19 +65,76 @@ type WebServerConfig struct {
 	Port int    `yaml:"port"`
 }
 
-// LoadConfig reads YAML file into Config
+// NewDefaultConfig returns a Config with default values
+func NewDefaultConfig() *Config {
+	return &Config{
+		App: AppConfig{
+			SelfOriginName: "server",
+			LogFilePath:    "/tmp/server_handler.log",
+			LogLevel:       "INFO",
+		},
+		PubSub: PubSubConfig{
+			Type: "redis",
+			Redis: RedisConfig{
+				Addr:     "localhost:6379",
+				Password: "",
+				Db:       0,
+			},
+			AdmineChannelsMap: AdmineChannelsMap{
+				ServerChannel:  "server_channel",
+				CommandChannel: "command_channel",
+				VpnChannel:     "vpn_channel",
+			},
+		},
+		MinecraftServer: MinecraftServerConfig{
+			RuntimeType:              "docker",
+			ServerOnTimeout:          2 * time.Minute,
+			ServerOffTimeout:         1 * time.Minute,
+			ServerCommandExecTimeout: 30 * time.Second,
+			RconAddress:              "127.0.0.1:25575",
+			RconPassword:             "admineRconPassword!",
+			Docker: DockerConfig{
+				ComposePath:   "./docker-compose.yaml",
+				ContainerName: "minecraft_server",
+				ServiceName:   "minecraft_server",
+			},
+		},
+		WebSever: WebServerConfig{
+			Host: "0.0.0.0",
+			Port: 3000,
+		},
+	}
+}
+
+// LoadConfig reads YAML file into Config with default values
 func LoadConfig(path string) (*Config, error) {
+	// Start with default configuration
+	cfg := NewDefaultConfig()
+
+	fmt.Printf("Default config created: %+v\n", cfg)
+
+	exists, err := pkg.PathExists(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		return cfg, nil
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var cfg Config
+	// Override defaults with values from YAML file
 	decoder := yaml.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
-		return nil, err
+	if err := decoder.Decode(cfg); err != nil {
+		return cfg, nil
 	}
 
-	return &cfg, nil
+	fmt.Printf("New config loaded: %+v\n", cfg)
+	return cfg, nil
 }
