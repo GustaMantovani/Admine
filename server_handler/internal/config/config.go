@@ -47,14 +47,14 @@ type MinecraftServerConfig struct {
 	ServerOnTimeout          time.Duration `yaml:"server_up_timeout"`
 	ServerOffTimeout         time.Duration `yaml:"server_off_timeout"`
 	ServerCommandExecTimeout time.Duration `yaml:"server_command_exec_timeout"`
+	RconAddress   string `yaml:"rcon_address"`
+	RconPassword  string `yaml:"rcon_password"`
 }
 
 type DockerConfig struct {
 	ComposePath   string `yaml:"compose_path"`
 	ContainerName string `yaml:"container_name"`
 	ServiceName   string `yaml:"service_name"`
-	RconAddress   string `yaml:"rcon_address"`
-	RconPassword  string `yaml:"rcon_password"`
 }
 
 type WebServerConfig struct {
