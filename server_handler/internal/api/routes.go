@@ -35,6 +35,7 @@ func SetupRoutes() *gin.Engine {
 		api.GET("/info", serverHandler.GetInfo)
 		api.GET("/status", serverHandler.GetStatus)
 		api.POST("/command", serverHandler.PostCommand)
+		api.GET("/resources", serverHandler.GetResourceUsage)
 	}
 
 	// Health check endpoint

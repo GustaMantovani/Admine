@@ -102,7 +102,7 @@ func NewDefaultConfig() *Config {
 			RconAddress:              "127.0.0.1:25575",
 			RconPassword:             "admineRconPassword!",
 			Docker: DockerConfig{
-				ComposePath:   "",
+				ComposePath:   "../minecraft_server/fabric/docker-compose.yaml",
 				ContainerName: "minecraft_server",
 				ServiceName:   "minecraft_server",
 			},
@@ -128,6 +128,9 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	if !exists {
+		if cfg.MinecraftServer.Docker.ComposePath == "" {
+			cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
+		}
 		return cfg, nil
 	}
 
@@ -140,6 +143,9 @@ func LoadConfig(path string) (*Config, error) {
 	// Override defaults with values from YAML file
 	decoder := yaml.NewDecoder(file)
 	if err := decoder.Decode(cfg); err != nil {
+		if cfg.MinecraftServer.Docker.ComposePath == "" {
+			cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
+		}
 		return cfg, nil
 	}
 
