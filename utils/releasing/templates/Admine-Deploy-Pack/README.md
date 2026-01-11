@@ -120,11 +120,24 @@ This file contains the main server settings. Key configurations include:
 2. **Server Handler Configuration** (`server_handler/server_handler_config.yaml`):
    ```yaml
    minecraft_server:
+     runtime_type: "docker"
+     server_type: "fabric"  # or "forge" - used to auto-generate compose_path
+     rcon_address: "127.0.0.1:25575"
+     rcon_password: "your_secure_password"
      docker:
-       rcon_password: "your_secure_password"
+       compose_path: "../minecraft_server/fabric/docker-compose.yaml"  # Optional: auto-generated if omitted
+       container_name: "mine_server"
+       service_name: "mine_server"
    ```
 
 **Make sure both passwords match exactly**, otherwise the server handler won't be able to communicate with the Minecraft server.
+
+**Configuration Notes**:
+- The `server_handler_config.yaml` file has **default values for all fields**
+- If the config file doesn't exist, the system will use sensible defaults
+- The `compose_path` is **optional** - if not specified, it will be automatically generated as `../minecraft_server/{server_type}/docker-compose.yaml`
+- You only need to specify fields that differ from the defaults
+- Minimum recommended configuration: `server_type` and `rcon_password`
 
 #### `user_jvm_args.txt` Configuration:
 
