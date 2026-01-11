@@ -46,6 +46,7 @@ type RedisConfig struct {
 
 type MinecraftServerConfig struct {
 	RuntimeType              string        `yaml:"runtime_type"`
+	ServerType               string        `yaml:"server_type"`
 	Docker                   DockerConfig  `yaml:"docker"`
 	ServerOnTimeout          time.Duration `yaml:"server_up_timeout"`
 	ServerOffTimeout         time.Duration `yaml:"server_off_timeout"`
@@ -63,6 +64,12 @@ type DockerConfig struct {
 type WebServerConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
+}
+
+const MINECRAFT_MANIFESTS_DEFAULT_PATH = "../minecraft_server"
+
+func generateComposePath(serverType string) string {
+	return fmt.Sprintf("%s/%s/docker-compose.yaml", MINECRAFT_MANIFESTS_DEFAULT_PATH, serverType)
 }
 
 // NewDefaultConfig returns a Config with default values
@@ -88,13 +95,14 @@ func NewDefaultConfig() *Config {
 		},
 		MinecraftServer: MinecraftServerConfig{
 			RuntimeType:              "docker",
+			ServerType:               "fabric",
 			ServerOnTimeout:          2 * time.Minute,
 			ServerOffTimeout:         1 * time.Minute,
 			ServerCommandExecTimeout: 30 * time.Second,
 			RconAddress:              "127.0.0.1:25575",
 			RconPassword:             "admineRconPassword!",
 			Docker: DockerConfig{
-				ComposePath:   "./docker-compose.yaml",
+				ComposePath:   "",
 				ContainerName: "minecraft_server",
 				ServiceName:   "minecraft_server",
 			},
@@ -133,6 +141,10 @@ func LoadConfig(path string) (*Config, error) {
 	decoder := yaml.NewDecoder(file)
 	if err := decoder.Decode(cfg); err != nil {
 		return cfg, nil
+	}
+
+	if cfg.MinecraftServer.Docker.ComposePath == "" {
+		cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
 	}
 
 	fmt.Printf("New config loaded: %+v\n", cfg)
