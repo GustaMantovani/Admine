@@ -3,10 +3,14 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/api/models"
 	"github.com/gin-gonic/gin"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 // ServerHandler handles server-related API endpoints
@@ -92,4 +96,43 @@ func (h *ServerHandler) PostCommand(c *gin.Context) {
 
 	slog.Info("Successfully executed command", "command", command.Command)
 	c.JSON(http.StatusOK, result)
+}
+
+// GetResourceUsage handles GET /resources endpoint
+func (h *ServerHandler) GetResourceUsage(c *gin.Context) {
+	slog.Info("GET /resources endpoint called")
+
+	cpuPercentages, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		slog.Error("Failed to get CPU usage", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get CPU usage: "+err.Error()))
+		return
+	}
+
+	memInfo, err := mem.VirtualMemory()
+	if err != nil {
+		slog.Error("Failed to get memory usage", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get memory usage: "+err.Error()))
+		return
+	}
+
+	diskInfo, err := disk.Usage("/")
+	if err != nil {
+		slog.Error("Failed to get disk usage", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get disk usage: "+err.Error()))
+		return
+	}
+
+	resourceUsage := models.ResourceUsage{
+		CPUUsage:        cpuPercentages[0],
+		MemoryUsed:      memInfo.Used,
+		MemoryTotal:     memInfo.Total,
+		MemoryUsedPercent: memInfo.UsedPercent,
+		DiskUsed:        diskInfo.Used,
+		DiskTotal:       diskInfo.Total,
+		DiskUsedPercent: diskInfo.UsedPercent,
+	}
+
+	slog.Info("Successfully retrieved resource usage")
+	c.JSON(http.StatusOK, resourceUsage)
 }
