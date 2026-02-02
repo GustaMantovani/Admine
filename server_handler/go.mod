@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gorcon/rcon v1.4.0
 	github.com/redis/go-redis/v9 v9.17.3
-	github.com/samber/slog-gin v1.18.0
+	github.com/samber/slog-gin v1.19.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
