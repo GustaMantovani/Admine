@@ -23,7 +23,7 @@ packages = [{include = "bot", from = "src"}]
 pytest = "^8.4.2"
 pytest-asyncio = "^1.3.0"
 ruff = "^0.14.14"
-mypy = "^1.19.0"
+mypy = "^1.19.1"
 pyinstaller = "^6.18.0"
 
 [build-system]
