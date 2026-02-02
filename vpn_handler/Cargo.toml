@@ -14,7 +14,7 @@ url = "2.5"
 reqwest = { version = "0.12", features = ["json", "multipart"] }
 log = "0.4"
 log4rs = "1.4"
-thiserror = "2.0.17"
+thiserror = "2.0.18"
 async-trait = "0.1"
 sled = "0.34"
 actix-web = "4"
