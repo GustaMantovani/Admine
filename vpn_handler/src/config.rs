@@ -52,6 +52,7 @@ pub struct RetryConfig {
 
 #[derive(Debug, Clone, Deserialize, Getters, Setters)]
 #[getset(get = "pub", set = "pub")]
+#[allow(dead_code)]
 pub struct Config {
     self_origin_name: String,
     api_config: ApiConfig,
