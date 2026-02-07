@@ -39,6 +39,14 @@ attempts = 5
 delay = { secs = 3, nanos = 0 }
 ```
 
+The minimal configuration is:
+
+```toml
+[vpn_config]
+api_key = "your_api_key_here"
+network_id = "your_network_id_here"
+```
+
 ## Log Configuration
 
 The application uses log4rs for logging. No configuration is required for logs to work and for the application to start, since default values already exist. Still, you can define individual configuration entries or the entire configuration as you prefer. The log configuration is specified in the `./etc/log4rs.yaml` file. Below is an example configuration:
