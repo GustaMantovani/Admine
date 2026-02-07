@@ -5,6 +5,8 @@ It listens to Redis pubsub channels for server commands and provides a REST API.
 
 ## Configuration
 
+All configuration fields have default values. You don't need to set everything: you can override individual fields or provide a fully defined configuration.
+
 ### Default Values
 The server handler comes with sensible defaults for all configuration fields. If the configuration file doesn't exist or if specific fields are missing, the following defaults will be used:
 
