@@ -114,8 +114,8 @@ impl Default for VpnConfig {
     fn default() -> Self {
         Self {
             api_url: "https://api.zerotier.com/api/v1".to_string(),
-            api_key: "Kw5oE9HO7sVx2DqjAOt0hHyDXDfULdbm".to_string(),
-            network_id: "3efa5cb78a2dcd13".to_string(),
+            api_key: "".to_string(),
+            network_id: "".to_string(),
             vpn_type: VpnType::Zerotier,
         }
     }
