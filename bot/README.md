@@ -38,7 +38,27 @@ Type `/` in Discord to see all available commands.
 
 ### Configuration
 
-Create your configuration in `bot_config.json`:
+You can define only the required `discord` section. All other sections will fall back to sensible defaults identical to the example below (logging, providers, redis, minecraft, vpn). This means you do **not** need to define the full file unless you want to override defaults.
+
+**Minimal config (required only):**
+
+```json
+{
+    "discord": {
+        "token": "YOUR_DISCORD_BOT_TOKEN",
+        "commandprefix": "!mc",
+        "administrators": [
+            "admin_user_id_1",
+            "admin_user_id_2"
+        ],
+        "channel_ids": [
+            "allowed_channel_id_1"
+        ]
+    }
+}
+```
+
+**Full config example (overrides defaults):**
 
 ```json
 {
