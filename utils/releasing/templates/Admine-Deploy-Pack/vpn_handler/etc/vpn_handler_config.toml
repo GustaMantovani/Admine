@@ -1,28 +1,3 @@
-self_origin_name = "vpn"
-
-[api_config]
-host = "localhost"
-port = 9000
-
-[pub_sub_config]
-url = "redis://localhost:6379"
-pub_sub_type = "Redis"
-
 [vpn_config]
-api_url = "https://api.zerotier.com/api/v1"
 api_key = ""
 network_id = ""
-vpn_type = "Zerotier"
-
-[db_config]
-path = "./etc/sled/vpn_store.db"
-store_type = "Sled"
-
-[admine_channels_map]
-server_channel = "server_channel"
-command_channel = "command_channel"
-vpn_channel = "vpn_channel"
-
-[retry_config]
-attempts = 5
-delay = { secs = 3, nanos = 0 }
