@@ -50,6 +50,14 @@ func (m *MockMinecraftServer) Info(ctx context.Context) (*mcmodels.ServerInfo, e
 	return args.Get(0).(*mcmodels.ServerInfo), args.Error(1)
 }
 
+func (m *MockMinecraftServer) Logs(ctx context.Context, n int) ([]string, error) {
+	args := m.Called(ctx, n)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func (m *MockMinecraftServer) StartUpInfo(ctx context.Context) string {
 	args := m.Called(ctx)
 	return args.String(0)

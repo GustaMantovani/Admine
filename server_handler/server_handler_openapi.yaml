@@ -7,6 +7,29 @@ info:
 servers:
   - url: 'http://localhost:3000'
 paths:
+  /api/v1/logs:
+    get:
+      summary: Get latest server logs
+      tags: []
+      operationId: get-logs
+      description: Get the last N lines from Minecraft server logs.
+      parameters:
+        - name: n
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+          description: Number of latest log lines to return.
+      responses:
+        '200':
+          $ref: '#/components/responses/LogsResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
   /info:
     get:
       summary: Your GET endpoint
@@ -121,6 +144,19 @@ components:
           type: string
       required:
         - output
+    LogsResponse:
+      title: LogsResponse
+      type: object
+      properties:
+        lines:
+          type: array
+          items:
+            type: string
+        total:
+          type: integer
+      required:
+        - lines
+        - total
     Server-Info:
       type: object
       x-examples:
@@ -185,6 +221,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CommandResult'
+    LogsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LogsResponse'
   requestBodies:
     CommandRequestBody:
       content:

@@ -28,7 +28,7 @@ The server handler comes with sensible defaults for all configuration fields. If
   - `server_command_exec_timeout`: 30s
   - `rcon_address`: "127.0.0.1:25575"
   - `rcon_password`: "admineRconPassword!"
-  - Docker: `compose_path`: auto-generated based on server_type, `container_name`: "minecraft_server", `service_name`: "minecraft_server"
+  - Docker: `compose_path`: auto-generated based on server_type, `container_name`: "mine_server", `service_name`: "mine_server"
 
 - **Web Server**
   - `host`: "0.0.0.0"
@@ -73,3 +73,5 @@ web_server:
 ```
 
 **Note:** If `compose_path` is not specified, it will be automatically generated as `../minecraft_server/{server_type}/docker-compose.yaml`.
+
+**Logs endpoint note:** `GET /api/v1/logs` reads logs via `docker compose logs` using `minecraft_server.docker.service_name`. Ensure this value matches the service in your compose file.

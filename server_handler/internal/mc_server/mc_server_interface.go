@@ -13,6 +13,7 @@ type MinecraftServer interface {
 	Restart(ctx context.Context) error
 	Status(ctx context.Context) (*models.ServerStatus, error)
 	Info(ctx context.Context) (*models.ServerInfo, error)
+	Logs(ctx context.Context, n int) ([]string, error)
 	StartUpInfo(ctx context.Context) string
 	ExecuteCommand(ctx context.Context, command string) (*models.CommandResult, error)
 }

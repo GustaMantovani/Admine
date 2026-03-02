@@ -12,6 +12,8 @@ Type `/` in Discord to see all available commands.
 - `/restart` - Restart the Minecraft server
 - `/status` - Get current server status
 - `/info` - Get detailed server information
+- `/resources` - Get host CPU, memory and disk usage
+- `/logs [n]` - Show latest server logs (`n` optional, default: 20, range: 1-100, admin-only)
 
 ### Server Commands
 - `/command <mine_command>` - Execute a Minecraft command on the server

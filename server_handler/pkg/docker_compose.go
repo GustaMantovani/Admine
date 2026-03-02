@@ -1,9 +1,11 @@
 package pkg
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // DockerCompose is a wrapper for docker compose commands
@@ -89,6 +91,42 @@ func (dc *DockerCompose) Logs(services ...string) error {
 		args = append(args, services...)
 	}
 	return dc.run(args...)
+}
+
+// ReadLastServiceLogs returns the last n log lines for services (or all services if none provided)
+func (dc *DockerCompose) ReadLastServiceLogs(n uint, services ...string) ([]string, error) {
+	baseArgs := []string{"compose"}
+	if dc.File != "" {
+		baseArgs = append(baseArgs, "-f", dc.File)
+	}
+
+	cmdArgs := append(baseArgs, "logs", "--tail", fmt.Sprintf("%d", n))
+	if len(services) > 0 {
+		cmdArgs = append(cmdArgs, services...)
+	}
+
+	slog.Info("Running command", "cmd", "docker", "args", cmdArgs)
+
+	cmd := exec.Command("docker", cmdArgs...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		rawOutput := strings.TrimSpace(string(output))
+		slog.Error("Command failed", "cmd", "docker", "args", cmdArgs, "error", err, "output", rawOutput)
+		if rawOutput != "" {
+			return nil, fmt.Errorf("%w: %s", err, rawOutput)
+		}
+		return nil, err
+	}
+
+	rawOutput := strings.TrimSpace(string(output))
+	if rawOutput == "" {
+		return []string{}, nil
+	}
+
+	lines := strings.Split(rawOutput, "\n")
+	slog.Info("Command succeeded", "cmd", "docker", "args", cmdArgs)
+
+	return lines, nil
 }
 
 // Exec runs a command for each specified service

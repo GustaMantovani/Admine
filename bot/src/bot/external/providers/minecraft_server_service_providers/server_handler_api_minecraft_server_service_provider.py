@@ -4,8 +4,10 @@ import requests
 from loguru import logger
 
 from bot.external.abstractions.minecraft_server_service import MinecraftServerService
+from bot.models.logs_response import LogsResponse
 from bot.models.minecraft_server_info import MinecraftServerInfo
 from bot.models.minecraft_server_status import MinecraftServerStatus
+from bot.models.resource_usage import ResourceUsage
 
 
 class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
@@ -38,6 +40,34 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
             return MinecraftServerInfo.from_json(resp_json)
         except Exception as e:
             logger.error(f"Error fetching server info: {e}")
+            raise
+
+    async def get_resources(self) -> ResourceUsage:
+        url = f"{self.api_url}/resources"
+        logger.info("Requesting host resource usage.")
+        logger.debug(f"GET {url}")
+        try:
+            response = await asyncio.to_thread(requests.get, url)
+            response.raise_for_status()
+            resp_json = response.json()
+            logger.debug(f"Resources response received: {resp_json}")
+            return ResourceUsage.from_json(resp_json)
+        except Exception as e:
+            logger.error(f"Error fetching resource usage: {e}")
+            raise
+
+    async def get_logs(self, n: int) -> LogsResponse:
+        url = f"{self.api_url}/logs?n={n}"
+        logger.info(f"Requesting latest Minecraft server logs with n={n}.")
+        logger.debug(f"GET {url}")
+        try:
+            response = await asyncio.to_thread(requests.get, url)
+            response.raise_for_status()
+            resp_json = response.json()
+            logger.debug(f"Logs response received: {resp_json}")
+            return LogsResponse.from_json(resp_json)
+        except Exception as e:
+            logger.error(f"Error fetching server logs: {e}")
             raise
 
     async def command(self, command: str) -> dict:

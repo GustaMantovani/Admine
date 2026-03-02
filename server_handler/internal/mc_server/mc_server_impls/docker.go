@@ -352,6 +352,25 @@ func (d *DockerMinecraftServer) Info(ctx context.Context) (*models.ServerInfo, e
 	), nil
 }
 
+func (d *DockerMinecraftServer) Logs(ctx context.Context, n int) ([]string, error) {
+	if d.MinecraftServerConfig.Docker.ServiceName != "" {
+		logs, err := d.DockerCompose.ReadLastServiceLogs(uint(n), d.MinecraftServerConfig.Docker.ServiceName)
+		if err == nil {
+			return logs, nil
+		}
+
+		slog.Warn("Failed to read logs for configured service, retrying without service filter", "service", d.MinecraftServerConfig.Docker.ServiceName, "error", err)
+		fallbackLogs, fallbackErr := d.DockerCompose.ReadLastServiceLogs(uint(n))
+		if fallbackErr == nil {
+			return fallbackLogs, nil
+		}
+
+		return nil, fmt.Errorf("failed to read logs for service %q: %w; fallback failed: %v", d.MinecraftServerConfig.Docker.ServiceName, err, fallbackErr)
+	}
+
+	return d.DockerCompose.ReadLastServiceLogs(uint(n))
+}
+
 func (d *DockerMinecraftServer) StartUpInfo(ctx context.Context) string {
 	id, err := pkg.GetZeroTierNodeID(d.MinecraftServerConfig.Docker.ContainerName)
 	if err != nil {

@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal"
@@ -11,6 +12,11 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
+)
+
+const (
+	defaultLogLines = 100
+	maxLogLines     = 100
 )
 
 // ServerHandler handles server-related API endpoints
@@ -66,6 +72,46 @@ func (h *ServerHandler) GetStatus(c *gin.Context) {
 
 	slog.Info("Successfully retrieved server status")
 	c.JSON(http.StatusOK, serverStatus)
+}
+
+// GetLogs handles GET /logs endpoint
+func (h *ServerHandler) GetLogs(c *gin.Context) {
+	slog.Info("GET /logs endpoint called")
+
+	ctx := internal.Get()
+	if ctx.MinecraftServer == nil {
+		slog.Error("MinecraftServer is not initialized")
+		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
+		return
+	}
+
+	n := defaultLogLines
+	nRaw := c.Query("n")
+	if nRaw != "" {
+		parsedN, err := strconv.Atoi(nRaw)
+		if err != nil {
+			slog.Error("Invalid query param n", "n", nRaw, "error", err.Error())
+			c.JSON(http.StatusBadRequest, models.NewErrorResponse("Invalid query param 'n': must be an integer between 1 and 100"))
+			return
+		}
+
+		n = parsedN
+	}
+
+	if n < 1 || n > maxLogLines {
+		c.JSON(http.StatusBadRequest, models.NewErrorResponse("Invalid query param 'n': must be an integer between 1 and 100"))
+		return
+	}
+
+	logs, err := (*ctx.MinecraftServer).Logs(*ctx.MainCtx, n)
+	if err != nil {
+		slog.Error("Failed to get server logs", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server logs: "+err.Error()))
+		return
+	}
+
+	slog.Info("Successfully retrieved server logs", "lines", len(logs))
+	c.JSON(http.StatusOK, models.NewLogsResponse(logs))
 }
 
 // PostCommand handles POST /command endpoint
@@ -124,13 +170,13 @@ func (h *ServerHandler) GetResourceUsage(c *gin.Context) {
 	}
 
 	resourceUsage := models.ResourceUsage{
-		CPUUsage:        cpuPercentages[0],
-		MemoryUsed:      memInfo.Used,
-		MemoryTotal:     memInfo.Total,
+		CPUUsage:          cpuPercentages[0],
+		MemoryUsed:        memInfo.Used,
+		MemoryTotal:       memInfo.Total,
 		MemoryUsedPercent: memInfo.UsedPercent,
-		DiskUsed:        diskInfo.Used,
-		DiskTotal:       diskInfo.Total,
-		DiskUsedPercent: diskInfo.UsedPercent,
+		DiskUsed:          diskInfo.Used,
+		DiskTotal:         diskInfo.Total,
+		DiskUsedPercent:   diskInfo.UsedPercent,
 	}
 
 	slog.Info("Successfully retrieved resource usage")

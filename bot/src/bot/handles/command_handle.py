@@ -43,6 +43,8 @@ class CommandHandle:
             "command": self.__command,
             "info": self.__info,
             "status": self.__status,
+            "resources": self.__resources,
+            "logs": self.__logs,
             "adm": self.__turn_admin,
             "vpn_id": self.__vpn_id,
             "server_ips": self.__server_ips,
@@ -123,6 +125,32 @@ class CommandHandle:
             return await self.__minecraft_info_service.get_status()
         except Exception:
             return {"error": "Error getting server status"}
+
+    async def __resources(self, args: List[str]):
+        logger.debug(f"Getting resource usage with args: {args}")
+        try:
+            return await self.__minecraft_info_service.get_resources()
+        except Exception:
+            return {"error": "Error getting resource usage"}
+
+    @admin_command
+    async def __logs(self, args: List[str]):
+        logger.debug(f"Getting server logs with args: {args}")
+
+        n = 20
+        if args and args[0]:
+            try:
+                n = int(args[0])
+            except Exception:
+                return {"error": "Invalid logs line count. Use a number between 1 and 100."}
+
+        if n < 1 or n > 100:
+            return {"error": "Invalid logs line count. Use a number between 1 and 100."}
+
+        try:
+            return await self.__minecraft_info_service.get_logs(n)
+        except Exception:
+            return {"error": "Error getting server logs"}
 
     async def __vpn_id(self, args: List[str]):
         logger.debug(f"Getting vpn id off the server with args: {args}")

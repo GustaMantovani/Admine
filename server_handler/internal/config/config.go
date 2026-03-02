@@ -103,8 +103,8 @@ func NewDefaultConfig() *Config {
 			RconPassword:             "admineRconPassword!",
 			Docker: DockerConfig{
 				ComposePath:   "../minecraft_server/fabric/docker-compose.yaml",
-				ContainerName: "minecraft_server",
-				ServiceName:   "minecraft_server",
+				ContainerName: "mine_server",
+				ServiceName:   "mine_server",
 			},
 		},
 		WebSever: WebServerConfig{

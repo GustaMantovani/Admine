@@ -4,6 +4,8 @@ import pytest
 
 from bot.handles.command_handle import CommandHandle
 from bot.models.admine_message import AdmineMessage
+from bot.models.logs_response import LogsResponse
+from bot.models.resource_usage import ResourceUsage
 
 
 @pytest.fixture
@@ -16,6 +18,23 @@ def mock_services():
     minecraft_service.command = AsyncMock(return_value={"exit_code": 0, "output": "Command executed"})
     minecraft_service.get_info = AsyncMock(return_value={"version": "1.20", "players": 5})
     minecraft_service.get_status = AsyncMock(return_value={"status": "running", "health": "healthy"})
+    minecraft_service.get_resources = AsyncMock(
+        return_value=ResourceUsage(
+            cpu_usage=12.5,
+            memory_used=2 * 1024**3,
+            memory_total=8 * 1024**3,
+            memory_used_percent=25.0,
+            disk_used=50 * 1024**3,
+            disk_total=256 * 1024**3,
+            disk_used_percent=19.5,
+        )
+    )
+    minecraft_service.get_logs = AsyncMock(
+        return_value=LogsResponse(
+            lines=["[12:00:01] server started", "[12:00:05] player joined"],
+            total=2,
+        )
+    )
 
     vpn_service = MagicMock()
     vpn_service.auth_member = AsyncMock(return_value="Member authorized")
@@ -179,6 +198,58 @@ class TestMinecraftCommands:
         result = await command_handle.process_command("status", [])
 
         assert result == {"error": "Error getting server status"}
+
+    @pytest.mark.asyncio
+    async def test_logs_command_with_default_lines(self, command_handle, mock_services):
+        """Tests logs command with default n=20."""
+        result = await command_handle.process_command("logs", [], user_id="admin", administrators=["admin"])
+
+        mock_services["minecraft"].get_logs.assert_called_once_with(20)
+        assert isinstance(result, LogsResponse)
+        assert result.total == 2
+
+    @pytest.mark.asyncio
+    async def test_logs_command_with_explicit_lines(self, command_handle, mock_services):
+        """Tests logs command with explicit n value."""
+        result = await command_handle.process_command("logs", ["50"], user_id="admin", administrators=["admin"])
+
+        mock_services["minecraft"].get_logs.assert_called_once_with(50)
+        assert isinstance(result, LogsResponse)
+
+    @pytest.mark.asyncio
+    async def test_logs_command_invalid_lines(self, command_handle, mock_services):
+        """Tests logs command validation for invalid n values."""
+        result = await command_handle.process_command("logs", ["abc"], user_id="admin", administrators=["admin"])
+
+        assert result == {"error": "Invalid logs line count. Use a number between 1 and 100."}
+        mock_services["minecraft"].get_logs.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_logs_command_out_of_range(self, command_handle, mock_services):
+        """Tests logs command validation for out-of-range n values."""
+        result = await command_handle.process_command("logs", ["101"], user_id="admin", administrators=["admin"])
+
+        assert result == {"error": "Invalid logs line count. Use a number between 1 and 100."}
+        mock_services["minecraft"].get_logs.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_logs_command_with_error(self, command_handle, mock_services):
+        """Tests error handling in logs command."""
+        mock_services["minecraft"].get_logs.side_effect = Exception("Logs endpoint down")
+
+        result = await command_handle.process_command("logs", ["10"], user_id="admin", administrators=["admin"])
+
+        assert result == {"error": "Error getting server logs"}
+
+    @pytest.mark.asyncio
+    async def test_logs_command_unauthorized_user(self, command_handle, mock_services):
+        """Verifies that non-admin users cannot use logs command."""
+        result = await command_handle.process_command(
+            "logs", ["10"], user_id="regular_user", administrators=["admin_user"]
+        )
+
+        assert result == "Unauthorized command usage"
+        mock_services["minecraft"].get_logs.assert_not_called()
 
 
 class TestVPNCommands:

@@ -6,8 +6,10 @@ from discord.ext import commands
 from loguru import logger
 
 from bot.external.abstractions.message_service import MessageService
+from bot.models.logs_response import LogsResponse
 from bot.models.minecraft_server_info import MinecraftServerInfo
 from bot.models.minecraft_server_status import HealthStatus, MinecraftServerStatus, ServerStatus
+from bot.models.resource_usage import ResourceUsage
 
 
 class _DiscordClient(commands.Bot):
@@ -269,6 +271,57 @@ class _DiscordClient(commands.Bot):
                 logger.warning("Callback function not set for 'status' command.")
                 await interaction.response.send_message("No processor available for this command.")
 
+        # Command to get host resource usage (CPU, memory, disk)
+        @self.tree.command(
+            name="resources",
+            description="Get host resource usage (CPU, memory, disk)",
+        )
+        async def resources(interaction: discord.Interaction):
+            logger.debug(f"Received 'resources' command. Callback function: {self.command_handle_function_callback}")
+            if self.command_handle_function_callback is not None:
+                logger.info("Calling the command handle callback with 'resources'.")
+                response_data = await self.command_handle_function_callback(
+                    "resources", [], str(interaction.user.id), self._administrators
+                )
+                if isinstance(response_data, dict) and "error" in response_data:
+                    formatted_response = self._provider._format_resources_response(response_data)
+                elif hasattr(response_data, "cpu_usage"):
+                    formatted_response = self._provider._format_resources_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+                await interaction.response.send_message(formatted_response)
+                logger.info("Sent confirmation message for 'resources' command.")
+            else:
+                logger.warning("Callback function not set for 'resources' command.")
+                await interaction.response.send_message("No processor available for this command.")
+
+        # Command to get latest server logs
+        @self.tree.command(
+            name="logs",
+            description="Show latest Minecraft server logs",
+        )
+        async def logs(interaction: discord.Interaction, n: Optional[int] = None):
+            logger.debug(f"Received 'logs' command. Callback function: {self.command_handle_function_callback}")
+            if self.command_handle_function_callback is not None:
+                logger.info("Calling the command handle callback with 'logs'.")
+                args = [str(n)] if n is not None else []
+                response_data = await self.command_handle_function_callback(
+                    "logs", args, str(interaction.user.id), self._administrators
+                )
+
+                if isinstance(response_data, dict) and "error" in response_data:
+                    formatted_response = self._provider._format_logs_response(response_data)
+                elif hasattr(response_data, "lines"):
+                    formatted_response = self._provider._format_logs_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+
+                await interaction.response.send_message(formatted_response)
+                logger.info("Sent confirmation message for 'logs' command.")
+            else:
+                logger.warning("Callback function not set for 'logs' command.")
+                await interaction.response.send_message("No processor available for this command.")
+
         # Help command - comprehensive guide for new players
         @self.tree.command(name="help", description="Complete guide on how to play on the server")
         async def help_command(interaction: discord.Interaction):
@@ -312,7 +365,9 @@ class _DiscordClient(commands.Bot):
                     "`/off` - Stop the Minecraft server\n"
                     "`/restart` - Restart the server\n"
                     "`/status` - Check server status and health\n"
-                    "`/info` - Get detailed server information"
+                    "`/info` - Get detailed server information\n"
+                    "`/resources` - Host CPU, memory and disk usage\n"
+                    "`/logs [n]` - Show latest server logs"
                 ),
                 inline=True,
             )
@@ -521,6 +576,52 @@ class DiscordMessageServiceProvider(MessageService):
             formatted_response += f"**Seed:** `{info.seed}`\n"
 
         return formatted_response.rstrip()
+
+    def _format_resources_response(self, data: ResourceUsage | dict) -> str:
+        """Format the resource usage response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        def bytes_to_gb(b: int) -> float:
+            return b / (1024**3)
+
+        mem_used_gb = bytes_to_gb(data.memory_used)
+        mem_total_gb = bytes_to_gb(data.memory_total)
+        disk_used_gb = bytes_to_gb(data.disk_used)
+        disk_total_gb = bytes_to_gb(data.disk_total)
+
+        formatted_response = "📊 **Host Resource Usage**\n"
+        formatted_response += f"**CPU:** {data.cpu_usage:.1f}%\n"
+        formatted_response += (
+            f"**Memory:** {mem_used_gb:.2f} GB / {mem_total_gb:.2f} GB ({data.memory_used_percent:.1f}%)\n"
+        )
+        formatted_response += (
+            f"**Disk:** {disk_used_gb:.2f} GB / {disk_total_gb:.2f} GB ({data.disk_used_percent:.1f}%)"
+        )
+        return formatted_response
+
+    def _format_logs_response(self, data: LogsResponse | dict) -> str:
+        """Format server logs response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        lines = data.lines if data.lines else ["No logs available"]
+        logs_text = "\n".join(lines)
+
+        header = f"📜 **Server Logs** ({data.total} lines)\n"
+        prefix = header + "```\n"
+        suffix = "\n```"
+
+        max_message_length = 2000
+        available_length = max_message_length - len(prefix) - len(suffix)
+
+        if available_length < 1:
+            return "📜 **Server Logs**\n```\nOutput too large to display\n```"
+
+        if len(logs_text) > available_length:
+            logs_text = logs_text[: max(available_length - 3, 0)] + "..."
+
+        return prefix + logs_text + suffix
 
     @property
     def token(self) -> str:
