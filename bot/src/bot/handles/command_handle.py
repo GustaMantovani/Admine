@@ -126,6 +126,7 @@ class CommandHandle:
         except Exception:
             return {"error": "Error getting server status"}
 
+    @admin_command
     async def __resources(self, args: List[str]):
         logger.debug(f"Getting resource usage with args: {args}")
         try:
