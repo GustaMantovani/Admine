@@ -7,7 +7,7 @@ info:
 servers:
   - url: 'http://localhost:3000'
 paths:
-  /api/v1/logs:
+  /logs:
     get:
       summary: Get latest server logs
       tags: []
