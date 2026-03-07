@@ -47,7 +47,14 @@ class TestConfigSingleton:
         """Verifies that Config correctly implements the Singleton pattern."""
         # Patch the default path to use the temporary file
         with patch("bot.config.Config._Config__load_from_json") as mock_load:
-            mock_load.return_value = {"test": "data"}
+            mock_load.return_value = {
+                "discord": {
+                    "token": "test",
+                    "commandprefix": "!",
+                    "administrators": [],
+                    "channel_ids": [],
+                },
+            }
 
             config1 = Config()
             config2 = Config()
@@ -89,7 +96,7 @@ class TestConfigLoading:
             original_init(self, config_file)
 
         with patch.object(Config, "__init__", patched_init):
-            with pytest.raises(ConfigError, match="Failed to load configuration"):
+            with pytest.raises(ConfigError, match="Missing required"):
                 instance = Config.__new__(Config)
                 instance._initialized = False
                 instance.__init__("nonexistent_file.json")
