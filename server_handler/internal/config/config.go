@@ -51,6 +51,7 @@ type MinecraftServerConfig struct {
 	ServerOnTimeout          time.Duration `yaml:"server_up_timeout"`
 	ServerOffTimeout         time.Duration `yaml:"server_off_timeout"`
 	ServerCommandExecTimeout time.Duration `yaml:"server_command_exec_timeout"`
+	ModInstallTimeout        time.Duration `yaml:"mod_install_timeout"`
 	RconAddress              string        `yaml:"rcon_address"`
 	RconPassword             string        `yaml:"rcon_password"`
 }
@@ -99,6 +100,7 @@ func NewDefaultConfig() *Config {
 			ServerOnTimeout:          2 * time.Minute,
 			ServerOffTimeout:         1 * time.Minute,
 			ServerCommandExecTimeout: 30 * time.Second,
+			ModInstallTimeout:        2 * time.Minute,
 			RconAddress:              "127.0.0.1:25575",
 			RconPassword:             "admineRconPassword!",
 			Docker: DockerConfig{

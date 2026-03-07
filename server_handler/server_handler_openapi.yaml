@@ -66,6 +66,76 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/CommandRequestBody'
       description: Execute a command in Minecraft server.
+  /mods:
+    post:
+      summary: Install a mod
+      operationId: post-install-mod
+      description: Install a mod on the Minecraft server asynchronously. Accepts either a file upload (multipart/form-data) or a URL (application/json).
+      responses:
+        '202':
+          $ref: '#/components/responses/ModInstallAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The .jar mod file to install
+              required:
+                - file
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModInstallRequest'
+    get:
+      summary: List installed mods
+      operationId: get-mods
+      description: List all installed .jar mods on the server.
+      responses:
+        '200':
+          description: List of installed mods
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModListResult'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /mods/{filename}:
+    delete:
+      summary: Remove a mod
+      operationId: delete-mod
+      description: Remove a .jar mod from the server.
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the .jar file to remove
+      responses:
+        '200':
+          description: Mod removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModInstallResult'
+        '400':
+          description: Invalid file type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
 components:
   schemas:
     ServerInfo:
@@ -157,6 +227,26 @@ components:
       required:
         - lines
         - total
+    ModInstallRequest:
+      title: ModInstallRequest
+      type: object
+      properties:
+        url:
+          type: string
+          description: URL to download the .jar mod from
+      required:
+        - url
+    ModInstallResponse:
+      title: ModInstallResponse
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+      required:
+        - status
+        - message
     Server-Info:
       type: object
       x-examples:
@@ -184,6 +274,21 @@ components:
         - modEngine
         - maxPlayers
         - seed
+    ModListResult:
+      title: ModListResult
+      type: object
+      properties:
+        mods:
+          type: array
+          items:
+            type: string
+          description: List of installed .jar mod filenames
+        total:
+          type: integer
+          description: Total number of installed mods
+      required:
+        - mods
+        - total
   responses:
     ErrorResponse:
       description: Example response
@@ -227,6 +332,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LogsResponse'
+    ModInstallAcceptedResponse:
+      description: Mod installation accepted for async processing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ModInstallResponse'
   requestBodies:
     CommandRequestBody:
       content:

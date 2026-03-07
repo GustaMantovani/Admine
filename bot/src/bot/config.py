@@ -9,7 +9,7 @@ class Config:
     _instance = None
 
     __DEFAULT_CONFIG: Dict[str, Any] = {
-        "logging": {"level": "DEBUG", "file": "/tmp/bot.log"},
+        "logging": {"level": "INFO", "file": "/tmp/bot.log"},
         "providers": {
             "messaging": "DISCORD",
             "pubsub": "REDIS",

@@ -322,6 +322,134 @@ class _DiscordClient(commands.Bot):
                 logger.warning("Callback function not set for 'logs' command.")
                 await interaction.response.send_message("No processor available for this command.")
 
+        # Command to install a mod on the server
+        @self.tree.command(name="install_mod", description="Install a mod on the server (.jar file or URL)")
+        async def install_mod(
+            interaction: discord.Interaction,
+            url: Optional[str] = None,
+            file: Optional[discord.Attachment] = None,
+        ):
+            logger.debug(f"Received 'install_mod' command. url={url}, file={file}")
+            if self.command_handle_function_callback is None:
+                await interaction.response.send_message("No processor available for this command.")
+                return
+
+            # Validate: exactly one of url or file must be provided
+            if url and file:
+                await interaction.response.send_message("❌ Please provide either a URL or a file, not both.")
+                return
+            if not url and not file:
+                await interaction.response.send_message("❌ Please provide a mod URL or attach a .jar file.")
+                return
+
+            if file:
+                # Validate .jar extension
+                if not file.filename.lower().endswith(".jar"):
+                    await interaction.response.send_message("❌ Invalid file type: only `.jar` files are accepted.")
+                    return
+
+                await interaction.response.defer(thinking=True)
+                try:
+                    file_bytes = await file.read()
+                    response_data = await self.command_handle_function_callback(
+                        "install_mod",
+                        ["file", file.filename, file_bytes],
+                        str(interaction.user.id),
+                        self._administrators,
+                    )
+                except Exception as e:
+                    await interaction.followup.send(f"❌ Error uploading mod: {e}")
+                    return
+            else:
+                # Validate .jar extension in URL
+                import os
+
+                basename = os.path.basename(url)
+                if not basename.lower().endswith(".jar"):
+                    await interaction.response.send_message("❌ Invalid URL: must point to a `.jar` file.")
+                    return
+
+                await interaction.response.defer(thinking=True)
+                try:
+                    response_data = await self.command_handle_function_callback(
+                        "install_mod",
+                        ["url", url],
+                        str(interaction.user.id),
+                        self._administrators,
+                    )
+                except Exception as e:
+                    await interaction.followup.send(f"❌ Error requesting mod install: {e}")
+                    return
+
+            # Format and send response
+            if isinstance(response_data, dict):
+                formatted_response = self._provider._format_install_mod_response(response_data)
+            else:
+                formatted_response = str(response_data)
+
+            await interaction.followup.send(formatted_response)
+            logger.info("Sent confirmation message for 'install_mod' command.")
+
+        # Command to list installed mods
+        @self.tree.command(name="list_mods", description="List all installed mods on the server")
+        async def list_mods(interaction: discord.Interaction):
+            logger.debug("Received 'list_mods' command.")
+            if self.command_handle_function_callback is None:
+                await interaction.response.send_message("No processor available for this command.")
+                return
+
+            await interaction.response.defer(thinking=True)
+            try:
+                response_data = await self.command_handle_function_callback(
+                    "list_mods",
+                    [],
+                    str(interaction.user.id),
+                    self._administrators,
+                )
+            except Exception as e:
+                await interaction.followup.send(f"❌ Error listing mods: {e}")
+                return
+
+            if isinstance(response_data, dict):
+                formatted_response = self._provider._format_list_mods_response(response_data)
+            else:
+                formatted_response = str(response_data)
+
+            await interaction.followup.send(formatted_response)
+            logger.info("Sent response for 'list_mods' command.")
+
+        # Command to remove a mod
+        @self.tree.command(name="remove_mod", description="Remove a mod from the server")
+        async def remove_mod(interaction: discord.Interaction, filename: str):
+            logger.debug(f"Received 'remove_mod' command. filename={filename}")
+            if self.command_handle_function_callback is None:
+                await interaction.response.send_message("No processor available for this command.")
+                return
+
+            if not filename.lower().endswith(".jar"):
+                await interaction.response.send_message("❌ Invalid file type: only `.jar` files can be removed.")
+                return
+
+            await interaction.response.defer(thinking=True)
+            try:
+                response_data = await self.command_handle_function_callback(
+                    "remove_mod",
+                    [filename],
+                    str(interaction.user.id),
+                    self._administrators,
+                )
+            except Exception as e:
+                await interaction.followup.send(f"❌ Error removing mod: {e}")
+                return
+
+            if isinstance(response_data, dict):
+                formatted_response = self._provider._format_remove_mod_response(response_data)
+            else:
+                formatted_response = str(response_data)
+
+            await interaction.followup.send(formatted_response)
+            logger.info("Sent response for 'remove_mod' command.")
+
         # Help command - comprehensive guide for new players
         @self.tree.command(name="help", description="Complete guide on how to play on the server")
         async def help_command(interaction: discord.Interaction):
@@ -622,6 +750,49 @@ class DiscordMessageServiceProvider(MessageService):
             logs_text = logs_text[: max(available_length - 3, 0)] + "..."
 
         return prefix + logs_text + suffix
+
+    def _format_install_mod_response(self, data: dict) -> str:
+        """Format the mod install response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        status = data.get("status", "")
+        message = data.get("message", "Request accepted")
+
+        if status == "accepted":
+            return f"📦 **Mod Install:** {message}\n\n_The result will be posted here when installation completes._"
+        else:
+            return f"📦 **Mod Install:** {message}"
+
+    def _format_list_mods_response(self, data: dict) -> str:
+        """Format the list mods response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        mods = data.get("mods", [])
+        total = data.get("total", 0)
+
+        if total == 0:
+            return "📦 **Installed Mods:** No mods installed."
+
+        lines = [f"📦 **Installed Mods ({total}):**"]
+        for mod in mods:
+            lines.append(f"  • `{mod}`")
+        return "\n".join(lines)
+
+    def _format_remove_mod_response(self, data: dict) -> str:
+        """Format the remove mod response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        success = data.get("success", False)
+        filename = data.get("fileName", "unknown")
+        message = data.get("message", "")
+
+        if success:
+            return f"🗑️ **Mod Removed:** `{filename}` — {message}"
+        else:
+            return f"❌ **Failed to remove mod:** `{filename}` — {message}"
 
     @property
     def token(self) -> str:

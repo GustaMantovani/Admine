@@ -85,5 +85,63 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
             logger.error(f"Error sending command to server: {e}")
             raise
 
+    async def install_mod_url(self, url: str) -> dict:
+        api_url = f"{self.api_url}/mods"
+        payload = {"url": url}
+        logger.info(f"Requesting mod installation from URL: {url}")
+        logger.debug(f"POST {api_url} | Payload: {payload}")
+        try:
+            response = await asyncio.to_thread(requests.post, api_url, json=payload)
+            response.raise_for_status()
+            resp_json = response.json()
+            logger.debug(f"Mod install response received: {resp_json}")
+            return resp_json
+        except Exception as e:
+            logger.error(f"Error requesting mod installation from URL: {e}")
+            raise
+
+    async def install_mod_file(self, filename: str, file_bytes: bytes) -> dict:
+        api_url = f"{self.api_url}/mods"
+        logger.info(f"Uploading mod file: {filename}")
+        logger.debug(f"POST {api_url} | File: {filename} ({len(file_bytes)} bytes)")
+        try:
+            files = {"file": (filename, file_bytes, "application/java-archive")}
+            response = await asyncio.to_thread(requests.post, api_url, files=files)
+            response.raise_for_status()
+            resp_json = response.json()
+            logger.debug(f"Mod install response received: {resp_json}")
+            return resp_json
+        except Exception as e:
+            logger.error(f"Error uploading mod file: {e}")
+            raise
+
+    async def list_mods(self) -> dict:
+        api_url = f"{self.api_url}/mods"
+        logger.info("Listing installed mods")
+        logger.debug(f"GET {api_url}")
+        try:
+            response = await asyncio.to_thread(requests.get, api_url)
+            response.raise_for_status()
+            resp_json = response.json()
+            logger.debug(f"List mods response received: {resp_json}")
+            return resp_json
+        except Exception as e:
+            logger.error(f"Error listing mods: {e}")
+            raise
+
+    async def remove_mod(self, filename: str) -> dict:
+        api_url = f"{self.api_url}/mods/{filename}"
+        logger.info(f"Removing mod: {filename}")
+        logger.debug(f"DELETE {api_url}")
+        try:
+            response = await asyncio.to_thread(requests.delete, api_url)
+            response.raise_for_status()
+            resp_json = response.json()
+            logger.debug(f"Remove mod response received: {resp_json}")
+            return resp_json
+        except Exception as e:
+            logger.error(f"Error removing mod: {e}")
+            raise
+
     def __str__(self):
         return f"ServerHandlerApiMinecraftServerServiceProvider(api_url={self.api_url})"

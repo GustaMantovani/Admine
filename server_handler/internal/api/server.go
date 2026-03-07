@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub"
 )
 
 // Server represents the HTTP API server
@@ -16,9 +17,9 @@ type Server struct {
 }
 
 // NewServer creates a new API server instance
-func NewServer() *Server {
+func NewServer(pubsubService pubsub.PubSubService) *Server {
 	cfg := internal.Get().Config
-	router := SetupRoutes()
+	router := SetupRoutes(pubsubService)
 
 	address := fmt.Sprintf("%s:%d", cfg.WebSever.Host, cfg.WebSever.Port)
 

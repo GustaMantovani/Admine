@@ -11,7 +11,6 @@ help: ## Show this help message
 
 install: ## Install dependencies
 	@echo "Installing dependencies..."
-	@pyenv install
 	@poetry install
 	@echo "Dependencies installed!"
 

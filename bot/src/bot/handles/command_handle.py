@@ -50,6 +50,9 @@ class CommandHandle:
             "server_ips": self.__server_ips,
             "add_channel": self.__add_channel,
             "remove_channel": self.__remove_channel,
+            "install_mod": self.__install_mod,
+            "list_mods": self.__list_mods,
+            "remove_mod": self.__remove_mod,
         }
 
     async def process_command(
@@ -237,3 +240,47 @@ class CommandHandle:
 
         logger.info(f"Channel ID {channel_id} removed to authorized channels.")
         return f"Channel ID {channel_id} has been removed to authorized channels."
+
+    @admin_command
+    async def __install_mod(self, args: List[str]):
+        if not args:
+            return {"error": "Usage: /install_mod url:<url> or /install_mod file:<attachment>"}
+
+        try:
+            mode = args[0]
+            if mode == "url":
+                url = args[1]
+                logger.debug(f"Installing mod from URL: {url}")
+                return await self.__minecraft_info_service.install_mod_url(url)
+            elif mode == "file":
+                filename = args[1]
+                file_bytes = args[2]
+                logger.debug(f"Installing mod from file: {filename} ({len(file_bytes)} bytes)")
+                return await self.__minecraft_info_service.install_mod_file(filename, file_bytes)
+            else:
+                return {"error": "Invalid mode. Use url or file."}
+        except Exception as e:
+            logger.error(f"Error installing mod: {e}")
+            return {"error": f"Error installing mod: {str(e)}"}
+
+    @admin_command
+    async def __list_mods(self, args: List[str]):
+        logger.debug("Listing installed mods")
+        try:
+            return await self.__minecraft_info_service.list_mods()
+        except Exception as e:
+            logger.error(f"Error listing mods: {e}")
+            return {"error": f"Error listing mods: {str(e)}"}
+
+    @admin_command
+    async def __remove_mod(self, args: List[str]):
+        logger.debug(f"Removing mod with args: {args}")
+        if not args:
+            return {"error": "Usage: /remove_mod <filename.jar>"}
+
+        try:
+            filename = args[0]
+            return await self.__minecraft_info_service.remove_mod(filename)
+        except Exception as e:
+            logger.error(f"Error removing mod: {e}")
+            return {"error": f"Error removing mod: {str(e)}"}
