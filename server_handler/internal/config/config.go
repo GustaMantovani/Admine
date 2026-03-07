@@ -1,8 +1,11 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/GustaMantovani/Admine/server_handler/pkg"
 
 	"gopkg.in/yaml.v3"
 )
@@ -43,18 +46,20 @@ type RedisConfig struct {
 
 type MinecraftServerConfig struct {
 	RuntimeType              string        `yaml:"runtime_type"`
+	ServerType               string        `yaml:"server_type"`
 	Docker                   DockerConfig  `yaml:"docker"`
 	ServerOnTimeout          time.Duration `yaml:"server_up_timeout"`
 	ServerOffTimeout         time.Duration `yaml:"server_off_timeout"`
 	ServerCommandExecTimeout time.Duration `yaml:"server_command_exec_timeout"`
+	ModInstallTimeout        time.Duration `yaml:"mod_install_timeout"`
+	RconAddress              string        `yaml:"rcon_address"`
+	RconPassword             string        `yaml:"rcon_password"`
 }
 
 type DockerConfig struct {
 	ComposePath   string `yaml:"compose_path"`
 	ContainerName string `yaml:"container_name"`
 	ServiceName   string `yaml:"service_name"`
-	RconAddress   string `yaml:"rcon_address"`
-	RconPassword  string `yaml:"rcon_password"`
 }
 
 type WebServerConfig struct {
@@ -62,19 +67,94 @@ type WebServerConfig struct {
 	Port int    `yaml:"port"`
 }
 
-// LoadConfig reads YAML file into Config
+const MINECRAFT_MANIFESTS_DEFAULT_PATH = "../minecraft_server"
+
+func generateComposePath(serverType string) string {
+	return fmt.Sprintf("%s/%s/docker-compose.yaml", MINECRAFT_MANIFESTS_DEFAULT_PATH, serverType)
+}
+
+// NewDefaultConfig returns a Config with default values
+func NewDefaultConfig() *Config {
+	return &Config{
+		App: AppConfig{
+			SelfOriginName: "server",
+			LogFilePath:    "/tmp/server_handler.log",
+			LogLevel:       "INFO",
+		},
+		PubSub: PubSubConfig{
+			Type: "redis",
+			Redis: RedisConfig{
+				Addr:     "localhost:6379",
+				Password: "",
+				Db:       0,
+			},
+			AdmineChannelsMap: AdmineChannelsMap{
+				ServerChannel:  "server_channel",
+				CommandChannel: "command_channel",
+				VpnChannel:     "vpn_channel",
+			},
+		},
+		MinecraftServer: MinecraftServerConfig{
+			RuntimeType:              "docker",
+			ServerType:               "fabric",
+			ServerOnTimeout:          2 * time.Minute,
+			ServerOffTimeout:         1 * time.Minute,
+			ServerCommandExecTimeout: 30 * time.Second,
+			ModInstallTimeout:        2 * time.Minute,
+			RconAddress:              "127.0.0.1:25575",
+			RconPassword:             "admineRconPassword!",
+			Docker: DockerConfig{
+				ComposePath:   "../minecraft_server/fabric/docker-compose.yaml",
+				ContainerName: "mine_server",
+				ServiceName:   "mine_server",
+			},
+		},
+		WebSever: WebServerConfig{
+			Host: "0.0.0.0",
+			Port: 3000,
+		},
+	}
+}
+
+// LoadConfig reads YAML file into Config with default values
 func LoadConfig(path string) (*Config, error) {
+	// Start with default configuration
+	cfg := NewDefaultConfig()
+
+	fmt.Printf("Default config created: %+v\n", cfg)
+
+	exists, err := pkg.PathExists(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		if cfg.MinecraftServer.Docker.ComposePath == "" {
+			cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
+		}
+		return cfg, nil
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var cfg Config
+	// Override defaults with values from YAML file
 	decoder := yaml.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
-		return nil, err
+	if err := decoder.Decode(cfg); err != nil {
+		if cfg.MinecraftServer.Docker.ComposePath == "" {
+			cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
+		}
+		return cfg, nil
 	}
 
-	return &cfg, nil
+	if cfg.MinecraftServer.Docker.ComposePath == "" {
+		cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
+	}
+
+	fmt.Printf("New config loaded: %+v\n", cfg)
+	return cfg, nil
 }

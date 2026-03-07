@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"context"
+	"io"
 
 	mcserver "github.com/GustaMantovani/Admine/server_handler/internal/mc_server"
 	mcmodels "github.com/GustaMantovani/Admine/server_handler/internal/mc_server/models"
@@ -50,6 +51,14 @@ func (m *MockMinecraftServer) Info(ctx context.Context) (*mcmodels.ServerInfo, e
 	return args.Get(0).(*mcmodels.ServerInfo), args.Error(1)
 }
 
+func (m *MockMinecraftServer) Logs(ctx context.Context, n int) ([]string, error) {
+	args := m.Called(ctx, n)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func (m *MockMinecraftServer) StartUpInfo(ctx context.Context) string {
 	args := m.Called(ctx)
 	return args.String(0)
@@ -61,6 +70,30 @@ func (m *MockMinecraftServer) ExecuteCommand(ctx context.Context, command string
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*mcmodels.CommandResult), args.Error(1)
+}
+
+func (m *MockMinecraftServer) InstallMod(ctx context.Context, fileName string, modData io.Reader) (*mcmodels.ModInstallResult, error) {
+	args := m.Called(ctx, fileName, modData)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mcmodels.ModInstallResult), args.Error(1)
+}
+
+func (m *MockMinecraftServer) ListMods(ctx context.Context) (*mcmodels.ModListResult, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mcmodels.ModListResult), args.Error(1)
+}
+
+func (m *MockMinecraftServer) RemoveMod(ctx context.Context, fileName string) (*mcmodels.ModInstallResult, error) {
+	args := m.Called(ctx, fileName)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mcmodels.ModInstallResult), args.Error(1)
 }
 
 // MockPubSubService is a shared mock implementation of PubSubService for testing

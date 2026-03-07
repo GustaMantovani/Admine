@@ -3,7 +3,10 @@ package mcserver
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,14 +19,14 @@ import (
 )
 
 type DockerMinecraftServer struct {
-	DockerCompose *pkg.DockerCompose
-	DockerConfig  config.DockerConfig
+	DockerCompose         *pkg.DockerCompose
+	MinecraftServerConfig config.MinecraftServerConfig
 }
 
-func NewDockerMinecraftServer(compose *pkg.DockerCompose, dockerConfig config.DockerConfig) *DockerMinecraftServer {
+func NewDockerMinecraftServer(compose *pkg.DockerCompose, minecraftServerConfig config.MinecraftServerConfig) *DockerMinecraftServer {
 	return &DockerMinecraftServer{
-		DockerCompose: compose,
-		DockerConfig:  dockerConfig,
+		DockerCompose:         compose,
+		MinecraftServerConfig: minecraftServerConfig,
 	}
 }
 
@@ -39,7 +42,7 @@ func (d *DockerMinecraftServer) Stop(ctx context.Context) error {
 	}
 
 	go func() {
-		err := pkg.StreamContainerLogs(ctx, d.DockerConfig.ContainerName, func(line string) {
+		err := pkg.StreamContainerLogs(ctx, d.MinecraftServerConfig.Docker.ContainerName, func(line string) {
 			slog.Debug("Container line:", "line", line)
 			if strings.Contains(line, "All dimensions are saved") {
 				done <- nil
@@ -75,17 +78,17 @@ func (d *DockerMinecraftServer) Restart(ctx context.Context) error {
 
 // getServerUptime gets the server uptime using Docker exec
 func (d *DockerMinecraftServer) getServerUptime(ctx context.Context) string {
-	if d.DockerConfig.ServiceName == "" {
+	if d.MinecraftServerConfig.Docker.ServiceName == "" {
 		return "N/A - No Service Name"
 	}
 
 	// Try to get container start time using docker inspect
-	results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "stat -c %Y /proc/1"}, d.DockerConfig.ServiceName)
+	results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "stat -c %Y /proc/1"}, d.MinecraftServerConfig.Docker.ServiceName)
 	if err != nil || len(results) == 0 {
 		return "N/A - Cannot Query Container"
 	}
 
-	startTimeStr := strings.TrimSpace(results[d.DockerConfig.ServiceName])
+	startTimeStr := strings.TrimSpace(results[d.MinecraftServerConfig.Docker.ServiceName])
 	startTime, err := strconv.ParseInt(startTimeStr, 10, 64)
 	if err != nil {
 		slog.Error("invalid timestamp", "err", err)
@@ -196,9 +199,9 @@ func (d *DockerMinecraftServer) getMinecraftVersion(ctx context.Context) string 
 	}
 
 	// Try to get from server.properties file
-	if d.DockerConfig.ServiceName != "" {
-		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "grep -E '^minecraft-version=' /data/server.properties 2>/dev/null || echo 'N/A'"}, d.DockerConfig.ServiceName); err == nil {
-			if output := strings.TrimSpace(results[d.DockerConfig.ServiceName]); output != "N/A" && output != "" {
+	if d.MinecraftServerConfig.Docker.ServiceName != "" {
+		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "grep -E '^minecraft-version=' /srv/minecraft/server.properties 2>/dev/null || echo 'N/A'"}, d.MinecraftServerConfig.Docker.ServiceName); err == nil {
+			if output := strings.TrimSpace(results[d.MinecraftServerConfig.Docker.ServiceName]); output != "N/A" && output != "" {
 				parts := strings.Split(output, "=")
 				if len(parts) > 1 {
 					version := strings.TrimSpace(parts[1])
@@ -211,21 +214,32 @@ func (d *DockerMinecraftServer) getMinecraftVersion(ctx context.Context) string 
 		}
 	}
 
+	// Try to get from MINECRAFT_VERSION env var in the container
+	if d.MinecraftServerConfig.Docker.ServiceName != "" {
+		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "printenv MINECRAFT_VERSION 2>/dev/null || echo ''"}, d.MinecraftServerConfig.Docker.ServiceName); err == nil {
+			if version := strings.TrimSpace(results[d.MinecraftServerConfig.Docker.ServiceName]); version != "" {
+				if regexp.MustCompile(`^[0-9]+\.[0-9]+\.?[0-9]*$`).MatchString(version) {
+					return version
+				}
+			}
+		}
+	}
+
 	return "N/A - Version Unknown"
 }
 
 // getJavaVersion gets the Java version from the container
 func (d *DockerMinecraftServer) getJavaVersion(ctx context.Context) string {
-	if d.DockerConfig.ServiceName == "" {
+	if d.MinecraftServerConfig.Docker.ServiceName == "" {
 		return "N/A - No Service Name"
 	}
 
-	results, err := d.DockerCompose.ExecStructured([]string{"java", "-version"}, d.DockerConfig.ServiceName)
+	results, err := d.DockerCompose.ExecStructured([]string{"java", "-version"}, d.MinecraftServerConfig.Docker.ServiceName)
 	if err != nil || len(results) == 0 {
 		return "N/A - Cannot Query Java"
 	}
 
-	output := results[d.DockerConfig.ServiceName]
+	output := results[d.MinecraftServerConfig.Docker.ServiceName]
 	// Parse Java version from output like 'openjdk version "17.0.2" 2022-01-18'
 	versionRegex := regexp.MustCompile(`version\s*"([^"]+)"`)
 	if matches := versionRegex.FindStringSubmatch(output); len(matches) > 1 {
@@ -237,7 +251,30 @@ func (d *DockerMinecraftServer) getJavaVersion(ctx context.Context) string {
 
 // getModEngine attempts to detect the mod engine/server type
 func (d *DockerMinecraftServer) getModEngine(ctx context.Context) string {
-	// Try version command to detect server type
+	// Try to detect from container env vars (FABRIC_VERSION, FORGE_VERSION, etc.)
+	if d.MinecraftServerConfig.Docker.ServiceName != "" {
+		envChecks := []struct {
+			envVar string
+			engine string
+		}{
+			{"FABRIC_VERSION", "Fabric"},
+			{"FRABRIC_INSTALLER_VERSION", "Fabric"},
+			{"FORGE_VERSION", "Forge"},
+			{"NEOFORGE_VERSION", "NeoForge"},
+			{"QUILT_VERSION", "Quilt"},
+		}
+
+		for _, check := range envChecks {
+			cmd := fmt.Sprintf("printenv %s 2>/dev/null || echo ''", check.envVar)
+			if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", cmd}, d.MinecraftServerConfig.Docker.ServiceName); err == nil {
+				if value := strings.TrimSpace(results[d.MinecraftServerConfig.Docker.ServiceName]); value != "" {
+					return fmt.Sprintf("%s %s", check.engine, value)
+				}
+			}
+		}
+	}
+
+	// Try version command to detect server type via RCON
 	if versionResult, err := d.ExecuteCommand(ctx, "version"); err == nil {
 		versionResponse := versionResult.Output
 		versionLower := strings.ToLower(versionResponse)
@@ -285,9 +322,9 @@ func (d *DockerMinecraftServer) getMaxPlayers(ctx context.Context, listResponse 
 	}
 
 	// Try to get from server.properties file
-	if d.DockerConfig.ServiceName != "" {
-		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "grep -E '^max-players=' /data/server.properties 2>/dev/null || echo 'max-players=N/A'"}, d.DockerConfig.ServiceName); err == nil {
-			if output := strings.TrimSpace(results[d.DockerConfig.ServiceName]); output != "max-players=N/A" && output != "" {
+	if d.MinecraftServerConfig.Docker.ServiceName != "" {
+		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "grep -E '^max-players=' /srv/minecraft/server.properties 2>/dev/null || echo 'max-players=N/A'"}, d.MinecraftServerConfig.Docker.ServiceName); err == nil {
+			if output := strings.TrimSpace(results[d.MinecraftServerConfig.Docker.ServiceName]); output != "max-players=N/A" && output != "" {
 				parts := strings.Split(output, "=")
 				if len(parts) > 1 {
 					if maxPlayers, err := strconv.Atoi(strings.TrimSpace(parts[1])); err == nil {
@@ -352,8 +389,27 @@ func (d *DockerMinecraftServer) Info(ctx context.Context) (*models.ServerInfo, e
 	), nil
 }
 
+func (d *DockerMinecraftServer) Logs(ctx context.Context, n int) ([]string, error) {
+	if d.MinecraftServerConfig.Docker.ServiceName != "" {
+		logs, err := d.DockerCompose.ReadLastServiceLogs(uint(n), d.MinecraftServerConfig.Docker.ServiceName)
+		if err == nil {
+			return logs, nil
+		}
+
+		slog.Warn("Failed to read logs for configured service, retrying without service filter", "service", d.MinecraftServerConfig.Docker.ServiceName, "error", err)
+		fallbackLogs, fallbackErr := d.DockerCompose.ReadLastServiceLogs(uint(n))
+		if fallbackErr == nil {
+			return fallbackLogs, nil
+		}
+
+		return nil, fmt.Errorf("failed to read logs for service %q: %w; fallback failed: %v", d.MinecraftServerConfig.Docker.ServiceName, err, fallbackErr)
+	}
+
+	return d.DockerCompose.ReadLastServiceLogs(uint(n))
+}
+
 func (d *DockerMinecraftServer) StartUpInfo(ctx context.Context) string {
-	id, err := pkg.GetZeroTierNodeID(d.DockerConfig.ContainerName)
+	id, err := pkg.GetZeroTierNodeID(d.MinecraftServerConfig.Docker.ContainerName)
 	if err != nil {
 		return ""
 	}
@@ -362,7 +418,7 @@ func (d *DockerMinecraftServer) StartUpInfo(ctx context.Context) string {
 }
 
 func (d *DockerMinecraftServer) ExecuteCommand(ctx context.Context, command string) (*models.CommandResult, error) {
-	conn, err := rcon.Dial(d.DockerConfig.RconAddress, d.DockerConfig.RconPassword)
+	conn, err := rcon.Dial(d.MinecraftServerConfig.RconAddress, d.MinecraftServerConfig.RconPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -376,4 +432,73 @@ func (d *DockerMinecraftServer) ExecuteCommand(ctx context.Context, command stri
 	slog.Debug(response)
 
 	return models.NewCommandResultWithOutput(response), nil
+}
+
+func (d *DockerMinecraftServer) InstallMod(ctx context.Context, fileName string, modData io.Reader) (*models.ModInstallResult, error) {
+	serviceName := d.MinecraftServerConfig.Docker.ServiceName
+
+	// Save mod data to a temporary file
+	tmpFile, err := os.CreateTemp("", "admine-mod-*.jar")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	if _, err := io.Copy(tmpFile, modData); err != nil {
+		return nil, fmt.Errorf("failed to write mod data to temp file: %w", err)
+	}
+	tmpFile.Close()
+
+	// Use docker compose cp to copy the mod into the container's mods directory
+	destPath := fmt.Sprintf("%s:/srv/minecraft/mods/%s", serviceName, fileName)
+	baseArgs := []string{"compose", "-f", d.DockerCompose.File, "cp", tmpFile.Name(), destPath}
+	cmd := exec.CommandContext(ctx, "docker", baseArgs...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("Failed to copy mod to container", "error", err, "output", string(output))
+		return models.NewModInstallResult(fileName, false, fmt.Sprintf("Failed to copy mod: %s", string(output))), err
+	}
+
+	slog.Info("Mod installed successfully", "file", fileName, "service", serviceName)
+	return models.NewModInstallResult(fileName, true, "Mod installed successfully"), nil
+}
+
+func (d *DockerMinecraftServer) ListMods(ctx context.Context) (*models.ModListResult, error) {
+	serviceName := d.MinecraftServerConfig.Docker.ServiceName
+
+	results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "ls /srv/minecraft/mods/"}, serviceName)
+	if err != nil {
+		slog.Error("Failed to list mods", "error", err)
+		return nil, fmt.Errorf("failed to list mods: %w", err)
+	}
+
+	// Parse output: one filename per line, filter .jar files
+	output := strings.TrimSpace(results[serviceName])
+	lines := strings.Split(output, "\n")
+	var mods []string
+	for _, line := range lines {
+		name := strings.TrimSpace(line)
+		if name != "" && strings.HasSuffix(strings.ToLower(name), ".jar") {
+			mods = append(mods, name)
+		}
+	}
+
+	slog.Info("Listed mods", "count", len(mods), "service", serviceName)
+	return models.NewModListResult(mods), nil
+}
+
+func (d *DockerMinecraftServer) RemoveMod(ctx context.Context, fileName string) (*models.ModInstallResult, error) {
+	serviceName := d.MinecraftServerConfig.Docker.ServiceName
+
+	modPath := fmt.Sprintf("/srv/minecraft/mods/%s", fileName)
+	results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", fmt.Sprintf("rm %s", modPath)}, serviceName)
+	if err != nil {
+		output := results[serviceName]
+		slog.Error("Failed to remove mod", "error", err, "output", output)
+		return models.NewModInstallResult(fileName, false, fmt.Sprintf("Failed to remove mod: %s", output)), err
+	}
+
+	slog.Info("Mod removed successfully", "file", fileName, "service", serviceName)
+	return models.NewModInstallResult(fileName, true, "Mod removed successfully"), nil
 }

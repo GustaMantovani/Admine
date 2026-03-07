@@ -14,6 +14,7 @@ import (
 	"github.com/GustaMantovani/Admine/server_handler/internal/testutils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 // setupTestHandler creates a new test handler with necessary setup
@@ -194,6 +195,171 @@ func TestGetStatus_StatusError(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Contains(t, response.Message, "Failed to get server status")
+	assert.Contains(t, response.Message, expectedError.Error())
+
+	mockServer.AssertExpectations(t)
+}
+
+// TestGetLogs_Success tests successful retrieval of server logs
+func TestGetLogs_Success(t *testing.T) {
+	// Setup
+	handler := setupTestHandler()
+	mockServer := new(testutils.MockMinecraftServer)
+	ctx := context.Background()
+
+	expectedLogs := []string{
+		"[12:00:01] [Server thread/INFO]: Starting minecraft server",
+		"[12:00:05] [Server thread/INFO]: Done (4.123s)! For help, type \"help\"",
+	}
+
+	mockServer.On("Logs", ctx, 50).Return(expectedLogs, nil)
+
+	// Create test context with mock
+	testutils.SetupTestContextForAPI(mockServer)
+
+	// Create request
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest("GET", "/logs?n=50", nil)
+
+	// Execute
+	handler.GetLogs(c)
+
+	// Assert
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response models.LogsResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedLogs, response.Lines)
+	assert.Equal(t, len(expectedLogs), response.Total)
+
+	mockServer.AssertExpectations(t)
+}
+
+// TestGetLogs_DefaultN tests logs retrieval using default number of lines
+func TestGetLogs_DefaultN(t *testing.T) {
+	// Setup
+	handler := setupTestHandler()
+	mockServer := new(testutils.MockMinecraftServer)
+	ctx := context.Background()
+
+	expectedLogs := []string{"line1", "line2"}
+	mockServer.On("Logs", ctx, 100).Return(expectedLogs, nil)
+
+	// Create test context with mock
+	testutils.SetupTestContextForAPI(mockServer)
+
+	// Create request without n query param
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest("GET", "/logs", nil)
+
+	// Execute
+	handler.GetLogs(c)
+
+	// Assert
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response models.LogsResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedLogs, response.Lines)
+	assert.Equal(t, len(expectedLogs), response.Total)
+
+	mockServer.AssertExpectations(t)
+}
+
+// TestGetLogs_InvalidN tests logs retrieval with invalid n values
+func TestGetLogs_InvalidN(t *testing.T) {
+	tests := []struct {
+		name string
+		n    string
+	}{
+		{name: "non-integer", n: "abc"},
+		{name: "zero", n: "0"},
+		{name: "too-large", n: "101"},
+		{name: "negative", n: "-5"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := setupTestHandler()
+			mockServer := new(testutils.MockMinecraftServer)
+
+			testutils.SetupTestContextForAPI(mockServer)
+
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request, _ = http.NewRequest("GET", "/logs?n="+tc.n, nil)
+
+			handler.GetLogs(c)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+
+			var response models.ErrorResponse
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
+			assert.Contains(t, response.Message, "Invalid query param 'n'")
+
+			mockServer.AssertNotCalled(t, "Logs", mock.Anything, mock.Anything)
+		})
+	}
+}
+
+// TestGetLogs_ServerNotInitialized tests GetLogs when server is nil
+func TestGetLogs_ServerNotInitialized(t *testing.T) {
+	// Setup
+	handler := setupTestHandler()
+
+	// Create test context with nil server
+	testutils.SetupTestContextForAPIWithNilServer()
+
+	// Create request
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest("GET", "/logs?n=10", nil)
+
+	// Execute
+	handler.GetLogs(c)
+
+	// Assert
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	var response models.ErrorResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "Minecraft server not initialized", response.Message)
+}
+
+// TestGetLogs_LogsError tests GetLogs when Logs() returns an error
+func TestGetLogs_LogsError(t *testing.T) {
+	// Setup
+	handler := setupTestHandler()
+	mockServer := new(testutils.MockMinecraftServer)
+	ctx := context.Background()
+
+	expectedError := errors.New("failed to retrieve logs")
+	mockServer.On("Logs", ctx, 25).Return(nil, expectedError)
+
+	// Create test context with mock
+	testutils.SetupTestContextForAPI(mockServer)
+
+	// Create request
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest("GET", "/logs?n=25", nil)
+
+	// Execute
+	handler.GetLogs(c)
+
+	// Assert
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	var response models.ErrorResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Contains(t, response.Message, "Failed to get server logs")
 	assert.Contains(t, response.Message, expectedError.Error())
 
 	mockServer.AssertExpectations(t)

@@ -6,8 +6,10 @@ from discord.ext import commands
 from loguru import logger
 
 from bot.external.abstractions.message_service import MessageService
+from bot.models.logs_response import LogsResponse
 from bot.models.minecraft_server_info import MinecraftServerInfo
 from bot.models.minecraft_server_status import HealthStatus, MinecraftServerStatus, ServerStatus
+from bot.models.resource_usage import ResourceUsage
 
 
 class _DiscordClient(commands.Bot):
@@ -269,6 +271,185 @@ class _DiscordClient(commands.Bot):
                 logger.warning("Callback function not set for 'status' command.")
                 await interaction.response.send_message("No processor available for this command.")
 
+        # Command to get host resource usage (CPU, memory, disk)
+        @self.tree.command(
+            name="resources",
+            description="Get host resource usage (CPU, memory, disk)",
+        )
+        async def resources(interaction: discord.Interaction):
+            logger.debug(f"Received 'resources' command. Callback function: {self.command_handle_function_callback}")
+            if self.command_handle_function_callback is not None:
+                logger.info("Calling the command handle callback with 'resources'.")
+                response_data = await self.command_handle_function_callback(
+                    "resources", [], str(interaction.user.id), self._administrators
+                )
+                if isinstance(response_data, dict) and "error" in response_data:
+                    formatted_response = self._provider._format_resources_response(response_data)
+                elif hasattr(response_data, "cpu_usage"):
+                    formatted_response = self._provider._format_resources_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+                await interaction.response.send_message(formatted_response)
+                logger.info("Sent confirmation message for 'resources' command.")
+            else:
+                logger.warning("Callback function not set for 'resources' command.")
+                await interaction.response.send_message("No processor available for this command.")
+
+        # Command to get latest server logs
+        @self.tree.command(
+            name="logs",
+            description="Show latest Minecraft server logs",
+        )
+        async def logs(interaction: discord.Interaction, n: Optional[int] = None):
+            logger.debug(f"Received 'logs' command. Callback function: {self.command_handle_function_callback}")
+            if self.command_handle_function_callback is not None:
+                logger.info("Calling the command handle callback with 'logs'.")
+                args = [str(n)] if n is not None else []
+                response_data = await self.command_handle_function_callback(
+                    "logs", args, str(interaction.user.id), self._administrators
+                )
+
+                if isinstance(response_data, dict) and "error" in response_data:
+                    formatted_response = self._provider._format_logs_response(response_data)
+                elif hasattr(response_data, "lines"):
+                    formatted_response = self._provider._format_logs_response(response_data)
+                else:
+                    formatted_response = str(response_data)
+
+                await interaction.response.send_message(formatted_response)
+                logger.info("Sent confirmation message for 'logs' command.")
+            else:
+                logger.warning("Callback function not set for 'logs' command.")
+                await interaction.response.send_message("No processor available for this command.")
+
+        # Command to install a mod on the server
+        @self.tree.command(name="install_mod", description="Install a mod on the server (.jar file or URL)")
+        async def install_mod(
+            interaction: discord.Interaction,
+            url: Optional[str] = None,
+            file: Optional[discord.Attachment] = None,
+        ):
+            logger.debug(f"Received 'install_mod' command. url={url}, file={file}")
+            if self.command_handle_function_callback is None:
+                await interaction.response.send_message("No processor available for this command.")
+                return
+
+            # Validate: exactly one of url or file must be provided
+            if url and file:
+                await interaction.response.send_message("❌ Please provide either a URL or a file, not both.")
+                return
+            if not url and not file:
+                await interaction.response.send_message("❌ Please provide a mod URL or attach a .jar file.")
+                return
+
+            if file:
+                # Validate .jar extension
+                if not file.filename.lower().endswith(".jar"):
+                    await interaction.response.send_message("❌ Invalid file type: only `.jar` files are accepted.")
+                    return
+
+                await interaction.response.defer(thinking=True)
+                try:
+                    file_bytes = await file.read()
+                    response_data = await self.command_handle_function_callback(
+                        "install_mod",
+                        ["file", file.filename, file_bytes],
+                        str(interaction.user.id),
+                        self._administrators,
+                    )
+                except Exception as e:
+                    await interaction.followup.send(f"❌ Error uploading mod: {e}")
+                    return
+            else:
+                # Validate .jar extension in URL
+                import os
+
+                basename = os.path.basename(url)
+                if not basename.lower().endswith(".jar"):
+                    await interaction.response.send_message("❌ Invalid URL: must point to a `.jar` file.")
+                    return
+
+                await interaction.response.defer(thinking=True)
+                try:
+                    response_data = await self.command_handle_function_callback(
+                        "install_mod",
+                        ["url", url],
+                        str(interaction.user.id),
+                        self._administrators,
+                    )
+                except Exception as e:
+                    await interaction.followup.send(f"❌ Error requesting mod install: {e}")
+                    return
+
+            # Format and send response
+            if isinstance(response_data, dict):
+                formatted_response = self._provider._format_install_mod_response(response_data)
+            else:
+                formatted_response = str(response_data)
+
+            await interaction.followup.send(formatted_response)
+            logger.info("Sent confirmation message for 'install_mod' command.")
+
+        # Command to list installed mods
+        @self.tree.command(name="list_mods", description="List all installed mods on the server")
+        async def list_mods(interaction: discord.Interaction):
+            logger.debug("Received 'list_mods' command.")
+            if self.command_handle_function_callback is None:
+                await interaction.response.send_message("No processor available for this command.")
+                return
+
+            await interaction.response.defer(thinking=True)
+            try:
+                response_data = await self.command_handle_function_callback(
+                    "list_mods",
+                    [],
+                    str(interaction.user.id),
+                    self._administrators,
+                )
+            except Exception as e:
+                await interaction.followup.send(f"❌ Error listing mods: {e}")
+                return
+
+            if isinstance(response_data, dict):
+                formatted_response = self._provider._format_list_mods_response(response_data)
+            else:
+                formatted_response = str(response_data)
+
+            await interaction.followup.send(formatted_response)
+            logger.info("Sent response for 'list_mods' command.")
+
+        # Command to remove a mod
+        @self.tree.command(name="remove_mod", description="Remove a mod from the server")
+        async def remove_mod(interaction: discord.Interaction, filename: str):
+            logger.debug(f"Received 'remove_mod' command. filename={filename}")
+            if self.command_handle_function_callback is None:
+                await interaction.response.send_message("No processor available for this command.")
+                return
+
+            if not filename.lower().endswith(".jar"):
+                await interaction.response.send_message("❌ Invalid file type: only `.jar` files can be removed.")
+                return
+
+            await interaction.response.defer(thinking=True)
+            try:
+                response_data = await self.command_handle_function_callback(
+                    "remove_mod",
+                    [filename],
+                    str(interaction.user.id),
+                    self._administrators,
+                )
+            except Exception as e:
+                await interaction.followup.send(f"❌ Error removing mod: {e}")
+                return
+
+            if isinstance(response_data, dict):
+                formatted_response = self._provider._format_remove_mod_response(response_data)
+            else:
+                formatted_response = str(response_data)
+
+            await interaction.followup.send(formatted_response)
+            logger.info("Sent response for 'remove_mod' command.")
+
         # Help command - comprehensive guide for new players
         @self.tree.command(name="help", description="Complete guide on how to play on the server")
         async def help_command(interaction: discord.Interaction):
@@ -312,7 +493,9 @@ class _DiscordClient(commands.Bot):
                     "`/off` - Stop the Minecraft server\n"
                     "`/restart` - Restart the server\n"
                     "`/status` - Check server status and health\n"
-                    "`/info` - Get detailed server information"
+                    "`/info` - Get detailed server information\n"
+                    "`/resources` - Host CPU, memory and disk usage\n"
+                    "`/logs [n]` - Show latest server logs"
                 ),
                 inline=True,
             )
@@ -521,6 +704,95 @@ class DiscordMessageServiceProvider(MessageService):
             formatted_response += f"**Seed:** `{info.seed}`\n"
 
         return formatted_response.rstrip()
+
+    def _format_resources_response(self, data: ResourceUsage | dict) -> str:
+        """Format the resource usage response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        def bytes_to_gb(b: int) -> float:
+            return b / (1024**3)
+
+        mem_used_gb = bytes_to_gb(data.memory_used)
+        mem_total_gb = bytes_to_gb(data.memory_total)
+        disk_used_gb = bytes_to_gb(data.disk_used)
+        disk_total_gb = bytes_to_gb(data.disk_total)
+
+        formatted_response = "📊 **Host Resource Usage**\n"
+        formatted_response += f"**CPU:** {data.cpu_usage:.1f}%\n"
+        formatted_response += (
+            f"**Memory:** {mem_used_gb:.2f} GB / {mem_total_gb:.2f} GB ({data.memory_used_percent:.1f}%)\n"
+        )
+        formatted_response += (
+            f"**Disk:** {disk_used_gb:.2f} GB / {disk_total_gb:.2f} GB ({data.disk_used_percent:.1f}%)"
+        )
+        return formatted_response
+
+    def _format_logs_response(self, data: LogsResponse | dict) -> str:
+        """Format server logs response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        lines = data.lines if data.lines else ["No logs available"]
+        logs_text = "\n".join(lines)
+
+        header = f"📜 **Server Logs** ({data.total} lines)\n"
+        prefix = header + "```\n"
+        suffix = "\n```"
+
+        max_message_length = 2000
+        available_length = max_message_length - len(prefix) - len(suffix)
+
+        if available_length < 1:
+            return "📜 **Server Logs**\n```\nOutput too large to display\n```"
+
+        if len(logs_text) > available_length:
+            logs_text = logs_text[: max(available_length - 3, 0)] + "..."
+
+        return prefix + logs_text + suffix
+
+    def _format_install_mod_response(self, data: dict) -> str:
+        """Format the mod install response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        status = data.get("status", "")
+        message = data.get("message", "Request accepted")
+
+        if status == "accepted":
+            return f"📦 **Mod Install:** {message}\n\n_The result will be posted here when installation completes._"
+        else:
+            return f"📦 **Mod Install:** {message}"
+
+    def _format_list_mods_response(self, data: dict) -> str:
+        """Format the list mods response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        mods = data.get("mods", [])
+        total = data.get("total", 0)
+
+        if total == 0:
+            return "📦 **Installed Mods:** No mods installed."
+
+        lines = [f"📦 **Installed Mods ({total}):**"]
+        for mod in mods:
+            lines.append(f"  • `{mod}`")
+        return "\n".join(lines)
+
+    def _format_remove_mod_response(self, data: dict) -> str:
+        """Format the remove mod response for Discord display."""
+        if isinstance(data, dict) and "error" in data:
+            return f"❌ **Error:** {data['error']}"
+
+        success = data.get("success", False)
+        filename = data.get("fileName", "unknown")
+        message = data.get("message", "")
+
+        if success:
+            return f"🗑️ **Mod Removed:** `{filename}` — {message}"
+        else:
+            return f"❌ **Failed to remove mod:** `{filename}` — {message}"
 
     @property
     def token(self) -> str:

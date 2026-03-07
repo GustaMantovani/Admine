@@ -52,7 +52,7 @@ func main() {
 	eventHandler := pubsub.NewEventHandler(pubsubService)
 
 	// Create and start web server in background
-	webServer := api.NewServer()
+	webServer := api.NewServer(pubsubService)
 	go func() {
 		if err := webServer.StartBackground(); err != nil {
 			slog.Error("Failed to start web server", "error", err)

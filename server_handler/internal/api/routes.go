@@ -6,12 +6,13 @@ import (
 
 	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/api/handlers"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub"
 	"github.com/gin-gonic/gin"
 	sloggin "github.com/samber/slog-gin"
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes() *gin.Engine {
+func SetupRoutes(pubsubService pubsub.PubSubService) *gin.Engine {
 	// Set Gin mode BEFORE creating router
 	logLevel := strings.ToUpper(internal.Get().Config.App.LogLevel)
 
@@ -28,13 +29,19 @@ func SetupRoutes() *gin.Engine {
 
 	// Create handlers
 	serverHandler := handlers.NewApiHandler()
+	modHandler := handlers.NewModHandler(pubsubService)
 
 	// API routes
 	api := router.Group("/api/v1")
 	{
 		api.GET("/info", serverHandler.GetInfo)
 		api.GET("/status", serverHandler.GetStatus)
+		api.GET("/logs", serverHandler.GetLogs)
 		api.POST("/command", serverHandler.PostCommand)
+		api.GET("/resources", serverHandler.GetResourceUsage)
+		api.POST("/mods", modHandler.PostInstallMod)
+		api.GET("/mods", modHandler.GetListMods)
+		api.DELETE("/mods/:filename", modHandler.DeleteRemoveMod)
 	}
 
 	// Health check endpoint

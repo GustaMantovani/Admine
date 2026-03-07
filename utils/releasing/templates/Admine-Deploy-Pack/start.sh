@@ -6,4 +6,4 @@ cd ../../server_handler
 cd ../vpn_handler
 ./vpn_handler &
 cd ../bot
-./admine-bot &
+./bot &

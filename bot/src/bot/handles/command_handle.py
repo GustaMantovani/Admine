@@ -43,11 +43,16 @@ class CommandHandle:
             "command": self.__command,
             "info": self.__info,
             "status": self.__status,
+            "resources": self.__resources,
+            "logs": self.__logs,
             "adm": self.__turn_admin,
             "vpn_id": self.__vpn_id,
             "server_ips": self.__server_ips,
             "add_channel": self.__add_channel,
             "remove_channel": self.__remove_channel,
+            "install_mod": self.__install_mod,
+            "list_mods": self.__list_mods,
+            "remove_mod": self.__remove_mod,
         }
 
     async def process_command(
@@ -123,6 +128,33 @@ class CommandHandle:
             return await self.__minecraft_info_service.get_status()
         except Exception:
             return {"error": "Error getting server status"}
+
+    @admin_command
+    async def __resources(self, args: List[str]):
+        logger.debug(f"Getting resource usage with args: {args}")
+        try:
+            return await self.__minecraft_info_service.get_resources()
+        except Exception:
+            return {"error": "Error getting resource usage"}
+
+    @admin_command
+    async def __logs(self, args: List[str]):
+        logger.debug(f"Getting server logs with args: {args}")
+
+        n = 20
+        if args and args[0]:
+            try:
+                n = int(args[0])
+            except Exception:
+                return {"error": "Invalid logs line count. Use a number between 1 and 100."}
+
+        if n < 1 or n > 100:
+            return {"error": "Invalid logs line count. Use a number between 1 and 100."}
+
+        try:
+            return await self.__minecraft_info_service.get_logs(n)
+        except Exception:
+            return {"error": "Error getting server logs"}
 
     async def __vpn_id(self, args: List[str]):
         logger.debug(f"Getting vpn id off the server with args: {args}")
@@ -208,3 +240,47 @@ class CommandHandle:
 
         logger.info(f"Channel ID {channel_id} removed to authorized channels.")
         return f"Channel ID {channel_id} has been removed to authorized channels."
+
+    @admin_command
+    async def __install_mod(self, args: List[str]):
+        if not args:
+            return {"error": "Usage: /install_mod url:<url> or /install_mod file:<attachment>"}
+
+        try:
+            mode = args[0]
+            if mode == "url":
+                url = args[1]
+                logger.debug(f"Installing mod from URL: {url}")
+                return await self.__minecraft_info_service.install_mod_url(url)
+            elif mode == "file":
+                filename = args[1]
+                file_bytes = args[2]
+                logger.debug(f"Installing mod from file: {filename} ({len(file_bytes)} bytes)")
+                return await self.__minecraft_info_service.install_mod_file(filename, file_bytes)
+            else:
+                return {"error": "Invalid mode. Use url or file."}
+        except Exception as e:
+            logger.error(f"Error installing mod: {e}")
+            return {"error": f"Error installing mod: {str(e)}"}
+
+    @admin_command
+    async def __list_mods(self, args: List[str]):
+        logger.debug("Listing installed mods")
+        try:
+            return await self.__minecraft_info_service.list_mods()
+        except Exception as e:
+            logger.error(f"Error listing mods: {e}")
+            return {"error": f"Error listing mods: {str(e)}"}
+
+    @admin_command
+    async def __remove_mod(self, args: List[str]):
+        logger.debug(f"Removing mod with args: {args}")
+        if not args:
+            return {"error": "Usage: /remove_mod <filename.jar>"}
+
+        try:
+            filename = args[0]
+            return await self.__minecraft_info_service.remove_mod(filename)
+        except Exception as e:
+            logger.error(f"Error removing mod: {e}")
+            return {"error": f"Error removing mod: {str(e)}"}

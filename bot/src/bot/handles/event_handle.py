@@ -15,6 +15,7 @@ class EventHandle:
             "server_off": self.__server_off,
             "notification": self.__notification,
             "new_server_ips": self.__new_server_ips,
+            "mod_install_result": self.__mod_install_result,
         }
 
     async def handle_event(self, event: AdmineMessage):
@@ -47,3 +48,7 @@ class EventHandle:
     async def __notification(self, event: AdmineMessage):
         logger.debug(f"Handler: Notification with message: {event.message}")
         await self.__notify_all(event.message)
+
+    async def __mod_install_result(self, event: AdmineMessage):
+        logger.debug(f"Handler: Mod install result: {event.message}")
+        await self.__notify_all(f"📦 **Mod Install Result:** {event.message}")

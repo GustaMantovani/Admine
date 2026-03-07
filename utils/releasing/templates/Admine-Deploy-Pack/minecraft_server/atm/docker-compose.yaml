@@ -37,4 +37,3 @@ services:
       - ./data/cache/usernamecache.json:/srv/minecraft/usernamecache.json
     stdin_open: true
     tty: true
-    restart: unless-stopped
