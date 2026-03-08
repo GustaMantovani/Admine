@@ -26,7 +26,7 @@ log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 ensure_dirs() {
-    mkdir -p "$PID_DIR"
+    mkdir -p "$PID_DIR" "/tmp/admine/logs"
 }
 
 get_pid() {
