@@ -10,6 +10,7 @@ class Config:
 
     __DEFAULT_CONFIG: Dict[str, Any] = {
         "logging": {"level": "INFO", "file": "/tmp/admine/logs/bot.log"},
+        "security": {"ssl_verify": False},
         "providers": {
             "messaging": "DISCORD",
             "pubsub": "REDIS",

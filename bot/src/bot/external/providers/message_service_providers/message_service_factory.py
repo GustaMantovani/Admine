@@ -20,6 +20,7 @@ class MessageServiceFactory:
             token=config.get("discord.token"),
             command_prefix=config.get("discord.commandprefix"),
             channels_ids=config.get("discord.channel_ids"),
+            ssl_verify=config.get("security.ssl_verify", False),
         )
     }
 

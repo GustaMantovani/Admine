@@ -60,6 +60,8 @@ You can define only the required `discord` section. All other sections will fall
 }
 ```
 
+> **Note:** By default, SSL certificate verification is **disabled** to avoid issues in environments without CA certificates (e.g., compiled binaries, containers). A warning will be logged when SSL verification is off. To enable it, add `"security": {"ssl_verify": true}` to your config.
+
 **Full config example (overrides defaults):**
 
 ```json
@@ -67,6 +69,9 @@ You can define only the required `discord` section. All other sections will fall
     "logging": {
         "level": "DEBUG",
         "file": "./bot.log"
+    },
+    "security": {
+        "ssl_verify": true
     },
     "providers": {
         "messaging": "DISCORD",

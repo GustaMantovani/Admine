@@ -1,6 +1,8 @@
 import asyncio
+import ssl
 from typing import Callable, List, Optional
 
+import aiohttp
 import discord
 from discord.ext import commands
 from loguru import logger
@@ -20,12 +22,31 @@ class _DiscordClient(commands.Bot):
         administrators: Optional[List[str]] = None,
         channels_ids: List[str] = None,
         provider: Optional["DiscordMessageServiceProvider"] = None,
+        ssl_verify: bool = False,
     ):
         if channels_ids is None:
             channels_ids = []
         if administrators is None:
             administrators = []
-        super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
+
+        # Build connector based on ssl_verify setting
+        if not ssl_verify:
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE
+            connector = aiohttp.TCPConnector(ssl=ssl_ctx)
+            logger.warning(
+                "SSL certificate verification is DISABLED. "
+                "Set 'security.ssl_verify' to true in bot_config.json to enable it."
+            )
+        else:
+            connector = None
+
+        super().__init__(
+            command_prefix=command_prefix,
+            intents=discord.Intents.all(),
+            connector=connector,
+        )
         self.command_handle_function_callback = callback_function
 
         self._ready_event = asyncio.Event()
@@ -594,6 +615,7 @@ class DiscordMessageServiceProvider(MessageService):
         command_prefix: str = "!mc",
         channels_ids: Optional[list[str]] = [],
         administrators: Optional[list[str]] = [],
+        ssl_verify: bool = False,
     ):
         super().__init__(channels_ids, administrators)
         self.__token = token
@@ -603,6 +625,7 @@ class DiscordMessageServiceProvider(MessageService):
             administrators=administrators,
             channels_ids=channels_ids,
             provider=self,
+            ssl_verify=ssl_verify,
         )
 
     def _format_command_response(self, command_data: dict) -> str:

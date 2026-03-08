@@ -26,6 +26,23 @@ In the `bot_config.json` file, you need to configure:
 - To get IDs, enable "Developer Mode" in Discord (Settings > Advanced)
 - Right-click on channels/users and select "Copy ID"
 
+### SSL Verification (Optional):
+
+By default, the bot **disables SSL certificate verification** to avoid connection errors in environments without proper CA certificates (e.g., compiled binaries, minimal containers). A warning will be logged when verification is off.
+
+To enable SSL verification, add the following to your `bot_config.json`:
+
+```json
+{
+    "security": {
+        "ssl_verify": true
+    },
+    "discord": {
+        "...": "..."
+    }
+}
+```
+
 ## 2. ZeroTier VPN Configuration
 
 In the `vpn_handler_config.toml` file, you need to configure:
