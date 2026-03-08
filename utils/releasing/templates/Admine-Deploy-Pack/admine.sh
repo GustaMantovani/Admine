@@ -7,7 +7,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PID_DIR="/tmp/admine/pids"
-LOG_DIR="/tmp/admine/logs"
 
 SERVICES=("server_handler" "vpn_handler" "bot")
 
@@ -27,7 +26,7 @@ log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 ensure_dirs() {
-    mkdir -p "$PID_DIR" "$LOG_DIR"
+    mkdir -p "$PID_DIR"
 }
 
 get_pid() {
@@ -47,7 +46,7 @@ is_running() {
 
 start_redis() {
     log_info "Starting Redis (docker compose)..."
-    (cd "$SCRIPT_DIR/pubsub/redis" && docker compose up -d) > "$LOG_DIR/redis.log" 2>&1
+    (cd "$SCRIPT_DIR/pubsub/redis" && docker compose up -d) > /dev/null 2>&1
     sleep 2
     log_ok "Redis started"
 }
@@ -69,7 +68,7 @@ start_service() {
     fi
 
     log_info "Starting $service..."
-    (cd "$SCRIPT_DIR/$service" && exec ./"$service" >> "$LOG_DIR/$service.log" 2>&1) &
+    (cd "$SCRIPT_DIR/$service" && exec ./"$service" > /dev/null 2>&1) &
     local new_pid=$!
     echo "$new_pid" > "$PID_DIR/$service.pid"
     
@@ -78,7 +77,7 @@ start_service() {
     if is_running "$new_pid"; then
         log_ok "$service started (PID $new_pid)"
     else
-        log_err "$service failed to start — check logs: $LOG_DIR/$service.log"
+        log_err "$service failed to start — check application logs"
         rm -f "$PID_DIR/$service.pid"
         return 1
     fi
@@ -128,7 +127,7 @@ stop_service() {
 
 stop_redis() {
     log_info "Stopping Redis (docker compose)..."
-    (cd "$SCRIPT_DIR/pubsub/redis" && docker compose down) > "$LOG_DIR/redis.log" 2>&1
+    (cd "$SCRIPT_DIR/pubsub/redis" && docker compose down) > /dev/null 2>&1
     log_ok "Redis stopped"
 }
 
@@ -168,31 +167,6 @@ do_status() {
     done
 }
 
-# ─── Logs ────────────────────────────────────────────────────────────────────
-
-do_logs() {
-    local target="${1:-all}"
-    local lines="${2:-50}"
-
-    if [[ "$target" == "all" ]]; then
-        for service in "${SERVICES[@]}"; do
-            local logfile="$LOG_DIR/$service.log"
-            if [[ -f "$logfile" ]]; then
-                echo -e "\n${BOLD}━━━ $service (last $lines lines) ━━━${NC}"
-                tail -n "$lines" "$logfile"
-            fi
-        done
-    else
-        local logfile="$LOG_DIR/$target.log"
-        if [[ -f "$logfile" ]]; then
-            echo -e "${BOLD}━━━ $target (last $lines lines) ━━━${NC}"
-            tail -n "$lines" "$logfile"
-        else
-            log_err "No log file found for '$target'"
-            echo "Available: ${SERVICES[*]} redis"
-        fi
-    fi
-}
 
 # ─── Restart ─────────────────────────────────────────────────────────────────
 
@@ -226,7 +200,6 @@ usage() {
     echo "  stop               Stop all services"
     echo "  restart [service]  Restart all or a specific service"
     echo "  status             Show status of all services"
-    echo "  logs [service] [n] Show last n log lines (default: all, 50)"
     echo ""
     echo "Services: ${SERVICES[*]}"
 }
@@ -236,6 +209,5 @@ case "${1:-}" in
     stop)    do_stop ;;
     restart) do_restart "${2:-all}" ;;
     status)  do_status ;;
-    logs)    do_logs "${2:-all}" "${3:-50}" ;;
     *)       usage ;;
 esac

@@ -78,7 +78,7 @@ func NewDefaultConfig() *Config {
 	return &Config{
 		App: AppConfig{
 			SelfOriginName: "server",
-			LogFilePath:    "/tmp/server_handler.log",
+			LogFilePath:    "/tmp/admine/logs/server_handler.log",
 			LogLevel:       "INFO",
 		},
 		PubSub: PubSubConfig{

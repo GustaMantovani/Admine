@@ -51,12 +51,17 @@ fn init_logger() -> Result<(), Box<dyn std::error::Error>> {
 
         let file = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(PATTERN_ENCONDER)))
-            .build("./etc/zerotier_handler.log")?;
+            .build("/tmp/admine/logs/vpn_handler.log")?;
 
         let config = Config::builder()
             .appender(Appender::builder().build("stdout", Box::new(stdout)))
             .appender(Appender::builder().build("file", Box::new(file)))
-            .build(Root::builder().appender("stdout").build(LevelFilter::Info))?;
+            .build(
+                Root::builder()
+                    .appender("stdout")
+                    .appender("file")
+                    .build(LevelFilter::Info),
+            )?;
 
         log4rs::init_config(config)?;
     }
