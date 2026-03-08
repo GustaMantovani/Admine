@@ -164,7 +164,7 @@ This file controls Java Virtual Machine settings for server performance:
 After configuring your credentials, you can start the system with:
 
 ```bash
-./start.sh
+./admine.sh start
 ```
 
 ## System Usage
