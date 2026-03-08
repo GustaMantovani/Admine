@@ -6,8 +6,8 @@ set -euo pipefail
 # ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PID_DIR="$SCRIPT_DIR/.pids"
-LOG_DIR="$SCRIPT_DIR/.logs"
+PID_DIR="/tmp/admine/pids"
+LOG_DIR="/tmp/admine/logs"
 
 SERVICES=("server_handler" "vpn_handler" "bot")
 
@@ -69,7 +69,7 @@ start_service() {
     fi
 
     log_info "Starting $service..."
-    (cd "$SCRIPT_DIR/$service" && ./"$service" >> "$LOG_DIR/$service.log" 2>&1) &
+    (cd "$SCRIPT_DIR/$service" && exec ./"$service" >> "$LOG_DIR/$service.log" 2>&1) &
     local new_pid=$!
     echo "$new_pid" > "$PID_DIR/$service.pid"
     
@@ -114,7 +114,7 @@ stop_service() {
     local waited=0
     while is_running "$pid" && (( waited < 5 )); do
         sleep 1
-        (( waited++ ))
+        waited=$((waited + 1))
     done
 
     if is_running "$pid"; then
