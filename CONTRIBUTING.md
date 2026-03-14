@@ -9,7 +9,7 @@ Admine is a distributed infrastructure management system designed to automate Mi
 ![Admine](.readme/Admine.png)
 
 ### 1. Server Handler (Go)
-The `server_handler` component orchestrates Minecraft server lifecycle management through Docker Compose.
+The `server_handler` component orchestrates Minecraft server lifecycle management through Docker Compose. It uses the [`itzg/docker-minecraft-server`](https://github.com/itzg/docker-minecraft-server) image and **dynamically generates** the `docker-compose.yaml` at start time from a Go template (`internal/deployment/docker-compose.yaml.tmpl`), driven entirely by `server_handler_config.yaml`. There is no static `docker-compose.yaml` to maintain. An optional ZeroTier sidecar container can be enabled via configuration.
 
 ### 2. VPN Handler (Rust)
 The `vpn_handler` component manages network access by integrating with ZeroTier.
@@ -42,7 +42,7 @@ The `utils` directory provides supporting infrastructure and tooling:
 Python scripts for creating and sending messages to Redis Pub/Sub for debugging.
 
 ### Release Utilities (`utils/releasing/`)
-Automation tooling for building deployable artifacts. The `make-release.nu` script orchestrates packaging of all components into deployment-ready archives. The `templates/Admine-Deploy-Pack/` directory provides a pre-configured deployment structure, reducing configuration overhead during initial setup.
+Automation tooling for building deployable artifacts. The `make-release.nu` script orchestrates packaging of all components into deployment-ready archives. The `templates/Admine-Deploy-Pack/` directory provides a pre-configured deployment structure — including a fully annotated `server_handler_config.yaml` — reducing configuration overhead during initial setup.
 
 ### Mock APIs (`utils/mocks/apis/`)
 Docker Compose configurations for mocking all APIs.

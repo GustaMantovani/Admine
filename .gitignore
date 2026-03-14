@@ -1,1 +1,5 @@
 releases
+
+# server_handler runtime artefacts
+server_handler/generated/
+server_handler/minecraft-data/

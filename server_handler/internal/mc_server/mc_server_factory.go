@@ -8,12 +8,12 @@ import (
 	"github.com/GustaMantovani/Admine/server_handler/pkg"
 )
 
-func CreateMinecraftServer(config config.MinecraftServerConfig) (MinecraftServer, error) {
-	switch config.RuntimeType {
+func CreateMinecraftServer(cfg *config.Config) (MinecraftServer, error) {
+	switch cfg.MinecraftServer.RuntimeType {
 	case "docker":
-		dc := pkg.NewDockerCompose(config.Docker.ComposePath)
-		return mcserver.NewDockerMinecraftServer(dc, config), nil
+		dc := pkg.NewDockerCompose(cfg.MinecraftServer.Docker.ComposeOutputPath)
+		return mcserver.NewDockerMinecraftServer(dc, cfg), nil
 	default:
-		return nil, fmt.Errorf("unknown pubsub type: %s", config.RuntimeType)
+		return nil, fmt.Errorf("unknown runtime type: %s", cfg.MinecraftServer.RuntimeType)
 	}
 }

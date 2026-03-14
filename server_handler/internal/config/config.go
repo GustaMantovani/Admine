@@ -45,32 +45,61 @@ type RedisConfig struct {
 }
 
 type MinecraftServerConfig struct {
-	RuntimeType              string        `yaml:"runtime_type"`
-	ServerType               string        `yaml:"server_type"`
-	Docker                   DockerConfig  `yaml:"docker"`
-	ServerOnTimeout          time.Duration `yaml:"server_up_timeout"`
-	ServerOffTimeout         time.Duration `yaml:"server_off_timeout"`
-	ServerCommandExecTimeout time.Duration `yaml:"server_command_exec_timeout"`
-	ModInstallTimeout        time.Duration `yaml:"mod_install_timeout"`
-	RconAddress              string        `yaml:"rcon_address"`
-	RconPassword             string        `yaml:"rcon_password"`
+	RuntimeType              string                `yaml:"runtime_type"`
+	Docker                   DockerConfig          `yaml:"docker"`
+	Image                    MinecraftImageConfig  `yaml:"image"`
+	ZeroTier                 ZeroTierSidecarConfig `yaml:"zerotier"`
+	ServerOnTimeout          time.Duration         `yaml:"server_up_timeout"`
+	ServerOffTimeout         time.Duration         `yaml:"server_off_timeout"`
+	ServerCommandExecTimeout time.Duration         `yaml:"server_command_exec_timeout"`
+	ModInstallTimeout        time.Duration         `yaml:"mod_install_timeout"`
+	RconAddress              string                `yaml:"rcon_address"`
+	RconPassword             string                `yaml:"rcon_password"`
 }
 
+// DockerConfig holds Docker-specific runtime settings.
 type DockerConfig struct {
-	ComposePath   string `yaml:"compose_path"`
+	// ComposeOutputPath is where the generated docker-compose.yaml is written.
+	ComposeOutputPath string `yaml:"compose_output_path"`
+	ContainerName     string `yaml:"container_name"`
+	ServiceName       string `yaml:"service_name"`
+	// DataPath is the host directory mounted as /data inside the itzg container.
+	DataPath string `yaml:"data_path"`
+}
+
+// MinecraftImageConfig controls the itzg/docker-minecraft-server image behaviour.
+type MinecraftImageConfig struct {
+	// Type is the server type passed as the TYPE env var (e.g. FABRIC, FORGE, PAPER, VANILLA).
+	Type string `yaml:"type"`
+	// Version is the Minecraft version (e.g. "1.20.1").
+	Version string `yaml:"version"`
+	// Memory is the JVM heap size passed as the MEMORY env var (e.g. "4G").
+	Memory string `yaml:"memory"`
+	// FabricLoaderVersion is passed as FABRIC_LOADER_VERSION when non-empty.
+	FabricLoaderVersion string `yaml:"fabric_loader_version"`
+	// ForgeVersion is passed as FORGE_VERSION when non-empty.
+	ForgeVersion string `yaml:"forge_version"`
+	// ModpackURL is passed as MODPACK when non-empty (URL to a modpack archive).
+	ModpackURL string `yaml:"modpack_url"`
+	// ExtraEnv is a map of additional environment variables forwarded verbatim to the itzg image.
+	ExtraEnv map[string]string `yaml:"extra_env"`
+}
+
+// ZeroTierSidecarConfig controls the optional ZeroTier sidecar container.
+type ZeroTierSidecarConfig struct {
+	// Enabled controls whether the ZeroTier sidecar service is included in the generated compose file.
+	Enabled bool `yaml:"enabled"`
+	// NetworkID is the ZeroTier network to join (passed as a CLI argument to the zerotier container).
+	NetworkID string `yaml:"network_id"`
+	// ContainerName is the name assigned to the ZeroTier container.
 	ContainerName string `yaml:"container_name"`
-	ServiceName   string `yaml:"service_name"`
+	// ApiSecret is optionally passed as ZEROTIER_API_SECRET inside the ZeroTier container.
+	ApiSecret string `yaml:"api_secret"`
 }
 
 type WebServerConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
-}
-
-const MINECRAFT_MANIFESTS_DEFAULT_PATH = "../minecraft_server"
-
-func generateComposePath(serverType string) string {
-	return fmt.Sprintf("%s/%s/docker-compose.yaml", MINECRAFT_MANIFESTS_DEFAULT_PATH, serverType)
 }
 
 // NewDefaultConfig returns a Config with default values
@@ -96,7 +125,6 @@ func NewDefaultConfig() *Config {
 		},
 		MinecraftServer: MinecraftServerConfig{
 			RuntimeType:              "docker",
-			ServerType:               "fabric",
 			ServerOnTimeout:          2 * time.Minute,
 			ServerOffTimeout:         1 * time.Minute,
 			ServerCommandExecTimeout: 30 * time.Second,
@@ -104,9 +132,19 @@ func NewDefaultConfig() *Config {
 			RconAddress:              "127.0.0.1:25575",
 			RconPassword:             "admineRconPassword!",
 			Docker: DockerConfig{
-				ComposePath:   "../minecraft_server/fabric/docker-compose.yaml",
-				ContainerName: "mine_server",
-				ServiceName:   "mine_server",
+				ComposeOutputPath: "./generated/docker-compose.yaml",
+				ContainerName:     "mine_server",
+				ServiceName:       "mine_server",
+				DataPath:          "./minecraft-data",
+			},
+			Image: MinecraftImageConfig{
+				Type:    "FABRIC",
+				Version: "1.20.1",
+				Memory:  "2G",
+			},
+			ZeroTier: ZeroTierSidecarConfig{
+				Enabled:       false,
+				ContainerName: "zerotier",
 			},
 		},
 		WebSever: WebServerConfig{
@@ -118,21 +156,16 @@ func NewDefaultConfig() *Config {
 
 // LoadConfig reads YAML file into Config with default values
 func LoadConfig(path string) (*Config, error) {
-	// Start with default configuration
 	cfg := NewDefaultConfig()
 
 	fmt.Printf("Default config created: %+v\n", cfg)
 
 	exists, err := pkg.PathExists(path)
-
 	if err != nil {
 		return nil, err
 	}
 
 	if !exists {
-		if cfg.MinecraftServer.Docker.ComposePath == "" {
-			cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
-		}
 		return cfg, nil
 	}
 
@@ -142,17 +175,14 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	defer file.Close()
 
-	// Override defaults with values from YAML file
 	decoder := yaml.NewDecoder(file)
 	if err := decoder.Decode(cfg); err != nil {
-		if cfg.MinecraftServer.Docker.ComposePath == "" {
-			cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
-		}
 		return cfg, nil
 	}
 
-	if cfg.MinecraftServer.Docker.ComposePath == "" {
-		cfg.MinecraftServer.Docker.ComposePath = generateComposePath(cfg.MinecraftServer.ServerType)
+	// Ensure ComposeOutputPath has a value after decoding
+	if cfg.MinecraftServer.Docker.ComposeOutputPath == "" {
+		cfg.MinecraftServer.Docker.ComposeOutputPath = "./generated/docker-compose.yaml"
 	}
 
 	fmt.Printf("New config loaded: %+v\n", cfg)
