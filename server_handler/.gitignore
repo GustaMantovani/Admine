@@ -3,3 +3,7 @@ server_handler_config.yaml
 .env
 coverage.*
 bin
+
+# Generated docker-compose and persistent Minecraft data – never commit these
+generated/
+minecraft-data/

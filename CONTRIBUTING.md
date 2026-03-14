@@ -2,60 +2,142 @@
 
 ## Overview
 
-Admine is a distributed infrastructure management system designed to automate Minecraft server lifecycle operations in containerized environments. The architecture decouples concerns into specialized components that communicate asynchronously through Redis Pub/Sub. Each module is self-contained with its own configuration, dependencies, and testing infrastructure—refer to the module-specific README for technical implementation details.
+Admine is a distributed system with four independently deployable components. Each component has its own language, toolchain, and configuration. They communicate exclusively through Redis Pub/Sub — no direct calls between services.
+
+---
 
 ## Architecture
 
 ![Admine](.readme/Admine.png)
 
-### 1. Server Handler (Go)
-The `server_handler` component orchestrates Minecraft server lifecycle management through Docker Compose.
+### Components
 
-### 2. VPN Handler (Rust)
-The `vpn_handler` component manages network access by integrating with ZeroTier.
+#### 1. Server Handler (Go)
+Orchestrates the Minecraft server lifecycle through Docker Compose. On every `Start`, it renders `internal/deployment/docker-compose.yaml.tmpl` with values from `server_handler_config.yaml` and calls `docker compose up`. Supports all [`itzg/docker-minecraft-server`](https://github.com/itzg/docker-minecraft-server) server types (Vanilla, Fabric, Forge, NeoForge, Paper, Modrinth, CurseForge, FTB) and an optional ZeroTier sidecar container. Exposes a REST API consumed by the bot.
 
-### 3. Discord Bot (Python)
-The `bot` component serves as the primary user interface.
+#### 2. VPN Handler (Rust)
+Manages ZeroTier network membership via the ZeroTier Central REST API. Handles member authorization and network queries. Uses a local Sled database for persistence.
 
-### 4. Message Bus (Redis)
-The system uses Redis Pub/Sub as a message broker, enabling asynchronous communication between all components. Pub/Sub channels are:
+#### 3. Discord Bot (Python)
+The user-facing interface. Translates Discord slash commands into Pub/Sub messages and relays responses back to Discord channels. Built with discord.py.
 
-- `server_channel`: Server lifecycle events (up, down, restarting)
-- `command_channel`: Command routing and execution results
-- `vpn_channel`: Network state changes and member updates
+#### 4. Message Bus (Redis)
+All inter-component communication flows through three Redis Pub/Sub channels:
 
-All messages follow a standardized format for predictable serialization and routing:
+| Channel | Purpose |
+|---|---|
+| `server_channel` | Server lifecycle events (up, down, restarting) |
+| `command_channel` | Command routing and results |
+| `vpn_channel` | VPN state changes and member updates |
+
+Message envelope format:
 
 ```json
 {
   "origin": "component_name",
-  "tags": ["event_tag_1", "event_tag_2"],
-  "message": "a content"
+  "tags":   ["event_tag"],
+  "message": "payload"
 }
 ```
 
-## Project Utilities
+---
 
-The `utils` directory provides supporting infrastructure and tooling:
+## Repository structure
 
-### Pub/Sub Utilities (`utils/pubsub/redis/`)
-Python scripts for creating and sending messages to Redis Pub/Sub for debugging.
+```
+Admine/
+├── server_handler/         # Go — lifecycle management + REST API
+│   ├── cmd/                # Binary entrypoint
+│   ├── internal/           # Business logic (config, deployment, api, pubsub)
+│   └── pkg/                # Shared utilities (docker compose wrapper, logger)
+├── vpn_handler/            # Rust — ZeroTier integration
+│   ├── src/                # Source (api, pub_sub, vpn, persistence)
+│   └── etc/                # Config file and log4rs config
+├── bot/                    # Python — Discord bot
+│   ├── src/bot/            # Bot logic (commands, event handling)
+│   └── tests/              # pytest test suite
+├── pubsub/redis/           # Redis config and compose file
+└── utils/
+    ├── releasing/          # Release scripts (make-release.nu)
+    │   └── templates/      # Admine-Deploy-Pack deployment template
+    ├── pubsub/             # Debugging scripts for pub/sub messages
+    └── mocks/apis/         # Mock API compose files for local dev
+```
 
-### Release Utilities (`utils/releasing/`)
-Automation tooling for building deployable artifacts. The `make-release.nu` script orchestrates packaging of all components into deployment-ready archives. The `templates/Admine-Deploy-Pack/` directory provides a pre-configured deployment structure, reducing configuration overhead during initial setup.
+---
 
-### Mock APIs (`utils/mocks/apis/`)
-Docker Compose configurations for mocking all APIs.
+## Local development
 
-## Communication Flow
+### Server Handler (Go)
 
-The request-response pattern in Admine follows a consistent flow:
+```bash
+cd server_handler
+make build       # build binary → ./bin/server_handler
+make test        # run tests
+make clean       # remove build artifacts
+./bin/server_handler [config_path]
+```
 
-1. **User executes Discord command** → Bot receives via discord.py
-2. **Bot validates permissions** → Routes to CommandHandle
-3. **CommandHandle publishes to pub/sub** → Specific channel (server_channel, vpn_channel)
-4. **Target service subscribes to channel** → Processes command
-5. **Service executes operation** → Publishes result to appropriate channel
-6. **EventHandle receives result** → Notifies all Discord channels
+Requires: Go 1.21+, Docker with Compose plugin.
 
-The asynchronous architecture enables computationally intensive and long-running server operations to execute without maintaining synchronous connections for extended periods. An example is server initialization, which includes world generation stages that would otherwise require keeping connections open unnecessarily.
+### VPN Handler (Rust)
+
+```bash
+cd vpn_handler
+cargo build              # debug build
+cargo build --release    # release build
+cargo test               # run tests
+./target/debug/vpn_handler [config_path]
+```
+
+Requires: Rust toolchain (stable), a running Redis instance.
+
+### Bot (Python)
+
+```bash
+cd bot
+make install      # install dependencies via poetry
+make test         # run pytest suite
+make run          # start the bot
+make build-release # build PyInstaller binary → ./dist/bot
+```
+
+Requires: Python 3.11+, pyenv, poetry.
+
+### Redis (local)
+
+```bash
+cd pubsub/redis
+docker compose up -d
+```
+
+---
+
+## Commit conventions
+
+This project uses [gitmoji](https://gitmoji.dev/) prefixes.
+
+Example:
+```
+🐛 fix zerotier sidecar entrypoint not joining network on startup
+```
+
+---
+
+## Release
+
+Releases are built with [Nushell](https://www.nushell.sh/) from the repo root:
+
+```bash
+nu utils/releasing/make-release.nu <version>
+
+# Options
+--clean          # run clean before each build
+--force          # overwrite existing output and tags
+--dev            # skip git tagging (local iterations)
+--push_tags      # push annotated tag to origin (default: false)
+--no_archive     # skip tar.gz/zip creation
+```
+
+The output is a self-contained `admine-deploy-pack-<os>-<arch>-<version>/` directory ready to be dropped on the target host and started with `./admine.sh start`.
+

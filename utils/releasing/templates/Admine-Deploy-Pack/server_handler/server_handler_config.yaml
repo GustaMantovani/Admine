@@ -1,2 +1,11 @@
+# Admine – Server Handler minimal configuration
+# Full reference: see server_handler/README.md
+
 minecraft_server:
-  server_type: "fabric"
+  image:
+    type: "FABRIC"      # VANILLA | FABRIC | FORGE | NEOFORGE | PAPER | PURPUR | MODRINTH | AUTO_CURSEFORGE | FTBA
+    version: "1.20.1"   # e.g. "1.21.1", or LATEST
+    memory: "2G"        # JVM heap (e.g. "2G", "4G", "8G")
+
+  zerotier:
+    network_id: "your network_id"

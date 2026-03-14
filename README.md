@@ -6,6 +6,8 @@ Admine is a comprehensive infrastructure management solution for Minecraft serve
 
 Admine automates the complete management of Minecraft servers in a containerized environment, solving the common problem of running servers behind NAT (Network Address Translation) or in private networks where direct public access isn't available. The system is designed for server administrators who want to host Minecraft servers in private networks (home networks, cloud instances behind NAT, etc.) while providing secure and easy access to players through VPN connectivity.
 
+The Minecraft server runs via the [`itzg/docker-minecraft-server`](https://github.com/itzg/docker-minecraft-server) Docker image. The `docker-compose.yaml` is generated automatically at start time from the centralized `server_handler_config.yaml` — no manual Docker file editing required.
+
 ## System Architecture
 
 ![Admine](.readme/Admine.png)
