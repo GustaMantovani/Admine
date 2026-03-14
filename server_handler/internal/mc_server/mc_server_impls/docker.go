@@ -169,200 +169,43 @@ func (d *DockerMinecraftServer) Status(ctx context.Context) (*models.ServerStatu
 	), nil
 }
 
-// getMinecraftVersion attempts to get the Minecraft version from various sources
-func (d *DockerMinecraftServer) getMinecraftVersion(ctx context.Context) string {
-	if versionResult, err := d.ExecuteCommand(ctx, "version"); err == nil {
-		versionResponse := versionResult.Output
+func (d *DockerMinecraftServer) Info(_ context.Context) (*models.ServerInfo, error) {
+	img := d.mcCfg().Image
 
-		slog.Debug("Version command response", "response", versionResponse)
+	// JavaVersion: parse tag "java21" → "21"; empty means the image default is used.
+	javaVersion := "N/A - Not tracked in config"
+	if img.JavaVersion != "" {
+		javaVersion = strings.TrimPrefix(img.JavaVersion, "java")
+	}
 
-		patterns := []string{
-			`MC:\s*([0-9]+\.[0-9]+\.?[0-9]*)`,
-			`version\s+([0-9]+\.[0-9]+\.?[0-9]*)`,
-			`Minecraft\s+([0-9]+\.[0-9]+\.?[0-9]*)`,
-			`([0-9]+\.[0-9]+\.?[0-9]*)\s+server`,
-			`running\s+.*?([0-9]+\.[0-9]+\.?[0-9]*)`,
-		}
-
-		for _, pattern := range patterns {
-			versionRegex := regexp.MustCompile(pattern)
-			if matches := versionRegex.FindStringSubmatch(versionResponse); len(matches) > 1 {
-				version := matches[1]
-				if regexp.MustCompile(`^[0-9]+\.[0-9]+\.?[0-9]*$`).MatchString(version) {
-					return version
-				}
-			}
+	// ModEngine: prefer pinned loader versions, then extra_env, then TYPE.
+	modEngine := img.Type
+	switch {
+	case img.FabricLoaderVersion != "":
+		modEngine = "Fabric " + img.FabricLoaderVersion
+	case img.ForgeVersion != "":
+		modEngine = "Forge " + img.ForgeVersion
+	default:
+		if v, ok := img.ExtraEnv["NEOFORGE_VERSION"]; ok && v != "" {
+			modEngine = "NeoForge " + v
+		} else if v, ok := img.ExtraEnv["QUILT_LOADER_VERSION"]; ok && v != "" {
+			modEngine = "Quilt " + v
 		}
 	}
 
-	// Try to get from server.properties (itzg stores at /data/server.properties)
-	if d.mcCfg().Docker.ServiceName != "" {
-		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "grep -E '^minecraft-version=' /data/server.properties 2>/dev/null || echo 'N/A'"}, d.mcCfg().Docker.ServiceName); err == nil {
-			if output := strings.TrimSpace(results[d.mcCfg().Docker.ServiceName]); output != "N/A" && output != "" {
-				parts := strings.Split(output, "=")
-				if len(parts) > 1 {
-					version := strings.TrimSpace(parts[1])
-					if regexp.MustCompile(`^[0-9]+\.[0-9]+\.?[0-9]*$`).MatchString(version) {
-						return version
-					}
-				}
-			}
-		}
-	}
-
-	// Try to get from VERSION env var set by itzg image
-	if d.mcCfg().Docker.ServiceName != "" {
-		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "printenv VERSION 2>/dev/null || echo ''"}, d.mcCfg().Docker.ServiceName); err == nil {
-			if version := strings.TrimSpace(results[d.mcCfg().Docker.ServiceName]); version != "" {
-				if regexp.MustCompile(`^[0-9]+\.[0-9]+\.?[0-9]*$`).MatchString(version) {
-					return version
-				}
-			}
-		}
-	}
-
-	return "N/A - Version Unknown"
-}
-
-// getJavaVersion gets the Java version from the container
-func (d *DockerMinecraftServer) getJavaVersion(ctx context.Context) string {
-	if d.mcCfg().Docker.ServiceName == "" {
-		return "N/A - No Service Name"
-	}
-
-	results, err := d.DockerCompose.ExecStructured([]string{"java", "-version"}, d.mcCfg().Docker.ServiceName)
-	if err != nil || len(results) == 0 {
-		return "N/A - Cannot Query Java"
-	}
-
-	output := results[d.mcCfg().Docker.ServiceName]
-	versionRegex := regexp.MustCompile(`version\s*"([^"]+)"`)
-	if matches := versionRegex.FindStringSubmatch(output); len(matches) > 1 {
-		return matches[1]
-	}
-
-	return "N/A - Java Version Unknown"
-}
-
-// getModEngine attempts to detect the mod engine/server type
-func (d *DockerMinecraftServer) getModEngine(ctx context.Context) string {
-	if d.mcCfg().Docker.ServiceName != "" {
-		envChecks := []struct {
-			envVar string
-			engine string
-		}{
-			{"FABRIC_LOADER_VERSION", "Fabric"},
-			{"FORGE_VERSION", "Forge"},
-			{"NEOFORGE_VERSION", "NeoForge"},
-			{"QUILT_VERSION", "Quilt"},
-		}
-
-		for _, check := range envChecks {
-			cmd := fmt.Sprintf("printenv %s 2>/dev/null || echo ''", check.envVar)
-			if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", cmd}, d.mcCfg().Docker.ServiceName); err == nil {
-				if value := strings.TrimSpace(results[d.mcCfg().Docker.ServiceName]); value != "" {
-					return fmt.Sprintf("%s %s", check.engine, value)
-				}
-			}
-		}
-	}
-
-	if versionResult, err := d.ExecuteCommand(ctx, "version"); err == nil {
-		versionResponse := versionResult.Output
-		versionLower := strings.ToLower(versionResponse)
-
-		if strings.Contains(versionLower, "forge") {
-			return "Forge"
-		} else if strings.Contains(versionLower, "fabric") {
-			return "Fabric"
-		} else if strings.Contains(versionLower, "craftbukkit") || strings.Contains(versionLower, "bukkit") {
-			return "CraftBukkit"
-		} else if strings.Contains(versionLower, "spigot") {
-			return "Spigot"
-		} else if strings.Contains(versionLower, "paper") {
-			return "Paper"
-		} else if strings.Contains(versionLower, "purpur") {
-			return "Purpur"
-		} else if strings.Contains(versionLower, "mohist") {
-			return "Mohist"
-		} else if strings.Contains(versionLower, "vanilla") {
-			return "Vanilla"
-		}
-	}
-
-	if _, err := d.ExecuteCommand(ctx, "mods"); err == nil {
-		return "Modded - Type Unknown"
-	}
-
-	if _, err := d.ExecuteCommand(ctx, "forge"); err == nil {
-		return "Forge"
-	}
-
-	return "N/A - Engine Unknown"
-}
-
-// getMaxPlayers gets the maximum player count from server configuration
-func (d *DockerMinecraftServer) getMaxPlayers(ctx context.Context, listResponse string) int {
-	maxPlayersRegex := regexp.MustCompile(`max\s+of\s+([0-9]+)`)
-	if matches := maxPlayersRegex.FindStringSubmatch(listResponse); len(matches) > 1 {
-		if maxPlayers, err := strconv.Atoi(matches[1]); err == nil {
-			return maxPlayers
-		}
-	}
-
-	// itzg stores server.properties at /data/server.properties
-	if d.mcCfg().Docker.ServiceName != "" {
-		if results, err := d.DockerCompose.ExecStructured([]string{"sh", "-c", "grep -E '^max-players=' /data/server.properties 2>/dev/null || echo 'max-players=N/A'"}, d.mcCfg().Docker.ServiceName); err == nil {
-			if output := strings.TrimSpace(results[d.mcCfg().Docker.ServiceName]); output != "max-players=N/A" && output != "" {
-				parts := strings.Split(output, "=")
-				if len(parts) > 1 {
-					if maxPlayers, err := strconv.Atoi(strings.TrimSpace(parts[1])); err == nil {
-						return maxPlayers
-					}
-				}
-			}
-		}
-	}
-
-	return -1
-}
-
-func (d *DockerMinecraftServer) Info(ctx context.Context) (*models.ServerInfo, error) {
-	if _, err := d.ExecuteCommand(ctx, "list"); err != nil {
-		return &models.ServerInfo{
-			MinecraftVersion: "N/A - Server Offline",
-			JavaVersion:      "N/A - Server Offline",
-			ModEngine:        "N/A - Server Offline",
-			Seed:             "N/A - Server Offline",
-			MaxPlayers:       -1,
-		}, nil
-	}
-
-	minecraftVersion := d.FullConfig.MinecraftServer.Image.Version
-	javaVersion := d.getJavaVersion(ctx)
-	modEngine := d.getModEngine(ctx)
-
-	seed := "N/A - Seed Hidden"
-	if seedResult, err := d.ExecuteCommand(ctx, "seed"); err == nil {
-		seedResponse := seedResult.Output
-		seedRegex := regexp.MustCompile(`Seed:\s*\[([^\]]+)\]`)
-		if matches := seedRegex.FindStringSubmatch(seedResponse); len(matches) > 1 {
-			seed = matches[1]
-		} else if strings.TrimSpace(seedResponse) != "" {
-			seed = strings.TrimSpace(seedResponse)
-		}
-	}
-
+	// MaxPlayers: read from extra_env MAX_PLAYERS if set.
 	maxPlayers := -1
-	if listResult, err := d.ExecuteCommand(ctx, "list"); err == nil {
-		maxPlayers = d.getMaxPlayers(ctx, listResult.Output)
+	if v, ok := img.ExtraEnv["MAX_PLAYERS"]; ok {
+		if n, err := strconv.Atoi(v); err == nil {
+			maxPlayers = n
+		}
 	}
 
 	return models.NewServerInfo(
-		minecraftVersion,
+		img.Version,
 		javaVersion,
 		modEngine,
-		seed,
+		"N/A - Seed Hidden",
 		maxPlayers,
 	), nil
 }

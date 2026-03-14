@@ -18,6 +18,7 @@ type composeMinecraftData struct {
 	FabricLoaderVersion string
 	ForgeVersion        string
 	ModpackURL          string
+	JavaVersion         string
 	ExtraEnv            map[string]string
 }
 
@@ -57,6 +58,7 @@ func GenerateDockerCompose(cfg *config.Config) error {
 			FabricLoaderVersion: mc.Image.FabricLoaderVersion,
 			ForgeVersion:        mc.Image.ForgeVersion,
 			ModpackURL:          mc.Image.ModpackURL,
+			JavaVersion:         mc.Image.JavaVersion,
 			ExtraEnv:            mc.Image.ExtraEnv,
 		},
 		ZeroTier: composeZeroTierData{

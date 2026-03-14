@@ -24,7 +24,7 @@ services:
 {{- end }}
 
   {{ .Docker.ContainerName }}:
-    image: itzg/minecraft-server
+    image: itzg/minecraft-server{{- if .Minecraft.JavaVersion }}:{{ .Minecraft.JavaVersion }}{{ end }}
     container_name: {{ .Docker.ContainerName }}
 {{- if .ZeroTier.Enabled }}
     depends_on:

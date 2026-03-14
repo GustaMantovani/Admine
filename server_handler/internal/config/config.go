@@ -81,6 +81,10 @@ type MinecraftImageConfig struct {
 	ForgeVersion string `yaml:"forge_version"`
 	// ModpackURL is passed as MODPACK when non-empty (URL to a modpack archive).
 	ModpackURL string `yaml:"modpack_url"`
+	// JavaVersion sets the image tag used to select the JDK (e.g. "java21", "java17").
+	// Maps to the itzg image tag: itzg/minecraft-server:<java_version>.
+	// Leave empty to use the "latest" tag (recommended Java for the chosen MC version).
+	JavaVersion string `yaml:"java_version"`
 	// ExtraEnv is a map of additional environment variables forwarded verbatim to the itzg image.
 	ExtraEnv map[string]string `yaml:"extra_env"`
 }

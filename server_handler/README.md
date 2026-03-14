@@ -134,7 +134,57 @@ web_server:
 | NeoForge | `type: NEOFORGE` |
 | Paper | `type: PAPER` |
 | Modpack via URL | `modpack_url: "https://…/pack.zip"` (type must match the pack's loader) |
+| Modrinth modpack | see below |
+| CurseForge modpack | see below |
+| FTB modpack | see below |
 | Extra itzg env vars | `extra_env: { KEY: value }` |
+
+### Modpack platforms
+
+Modpack platforms are configured entirely through `extra_env`. Each platform sets `TYPE` to a specific value and uses its own set of environment variables.
+
+#### Modrinth
+
+```yaml
+image:
+  type: "MODRINTH"
+  version: "1.20.1"   # target Minecraft version, or LATEST
+  memory: "4G"
+  extra_env:
+    RCON_PASSWORD: "change-me!"
+    MODRINTH_MODPACK: "fabric-api"          # slug, project ID, page URL, or .mrpack URL
+    MODRINTH_VERSION: ""                    # specific version ID — omit for latest
+    MODRINTH_LOADER: "fabric"              # fabric | forge | quilt — omit for auto-detect
+    MODRINTH_MODPACK_VERSION_TYPE: "release" # release | beta | alpha
+```
+
+#### CurseForge
+
+Requires a free API key from [console.curseforge.com](https://console.curseforge.com/).
+
+```yaml
+image:
+  type: "AUTO_CURSEFORGE"
+  memory: "4G"          # CurseForge packs often need ≥4G
+  extra_env:
+    RCON_PASSWORD: "change-me!"
+    CF_API_KEY: "your-curseforge-api-key"
+    CF_SLUG: "all-the-mods-9"             # modpack slug from the CurseForge URL
+    CF_FILE_ID: ""                         # pin a specific file ID — omit for latest
+    # CF_PAGE_URL: "https://www.curseforge.com/minecraft/modpacks/all-the-mods-9"
+```
+
+#### Feed the Beast (FTB)
+
+```yaml
+image:
+  type: "FTBA"
+  memory: "4G"
+  extra_env:
+    RCON_PASSWORD: "change-me!"
+    FTB_MODPACK_ID: "31"          # numerical modpack ID
+    FTB_MODPACK_VERSION_ID: ""    # specific version — omit for latest
+```
 
 ### Volume persistence
 

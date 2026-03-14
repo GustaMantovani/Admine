@@ -3,9 +3,9 @@
 
 minecraft_server:
   image:
-    type: "FABRIC"      # VANILLA | FABRIC | FORGE | NEOFORGE | PAPER | PURPUR
+    type: "FABRIC"      # VANILLA | FABRIC | FORGE | NEOFORGE | PAPER | PURPUR | MODRINTH | AUTO_CURSEFORGE | FTBA
     version: "1.20.1"   # e.g. "1.21.1", or LATEST
     memory: "2G"        # JVM heap (e.g. "2G", "4G", "8G")
 
   zerotier:
-    network_id: "83048a063239701f"
+    network_id: "your network_id"
