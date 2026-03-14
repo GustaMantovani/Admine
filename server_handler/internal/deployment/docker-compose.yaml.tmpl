@@ -13,14 +13,14 @@ services:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - zerotier-data:/var/lib/zerotier-one
-{{- if .ZeroTier.NetworkID }}
-    command: ["{{ .ZeroTier.NetworkID }}"]
-{{- end }}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "zerotier-one & sleep 3 && zerotier-cli join {{ .ZeroTier.NetworkID }} && wait"
 {{- if .ZeroTier.ApiSecret }}
     environment:
       ZEROTIER_API_SECRET: "{{ .ZeroTier.ApiSecret }}"
 {{- end }}
-    restart: unless-stopped
 {{- end }}
 
   {{ .Docker.ContainerName }}:
@@ -56,7 +56,6 @@ services:
       - {{ .Docker.DataPath }}:/data
     stdin_open: true
     tty: true
-    restart: unless-stopped
 {{- if .ZeroTier.Enabled }}
 
 volumes:

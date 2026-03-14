@@ -1,92 +1,11 @@
-app:
-  self_origin_name: "server"
-  log_file_path: "/tmp/admine/logs/server_handler.log"
-  log_level: "INFO"               # DEBUG | INFO | WARN | ERROR
-
-pubsub:
-  type: "redis"
-  redis:
-    addr: "localhost:6379"
-    password: ""
-    db: 0
-  admine_channels_map:
-    server_channel: "server_channel"
-    command_channel: "command_channel"
-    vpn_channel: "vpn_channel"
+# Admine – Server Handler minimal configuration
+# Full reference: see server_handler/README.md
 
 minecraft_server:
-  runtime_type: "docker"
-  server_up_timeout: 2m
-  server_off_timeout: 1m
-  server_command_exec_timeout: 30s
-  mod_install_timeout: 2m
-
-  # RCON settings – must match the values passed in image.extra_env or defaults.
-  rcon_address: "127.0.0.1:25575"
-  rcon_password: "admineRconPassword!"   # ← change this!
-
-  docker:
-    # Path where server_handler writes the generated docker-compose.yaml.
-    compose_output_path: "./generated/docker-compose.yaml"
-    container_name: "mine_server"
-    service_name: "mine_server"
-    # Host directory mounted as /data inside the itzg container.
-    # The entire Minecraft working directory is persisted here.
-    data_path: "./minecraft-data"
-
   image:
-    # Server type passed as TYPE env var to itzg/docker-minecraft-server.
-    # Common values: VANILLA, FABRIC, FORGE, NEOFORGE, PAPER, QUILT, PURPUR
-    # Full list: https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/
-    type: "FABRIC"
-
-    # Minecraft version, e.g. "1.20.1", or "LATEST" to always pull the latest release.
-    version: "LATEST"
-
-    # JVM heap size passed as the MEMORY env var (e.g. "2G", "4G").
-    memory: "4G"
-
-    # Optional: pin the Fabric loader version (leave empty to use the latest).
-    fabric_loader_version: ""
-
-    # Optional: pin the Forge version (only relevant when type: FORGE).
-    forge_version: ""
-
-    # Optional: URL to a modpack archive. When set, itzg downloads and installs it
-    # automatically. Leave empty if you are managing mods manually via the API.
-    modpack_url: ""
-
-    # Optional: arbitrary environment variables forwarded verbatim to the itzg image.
-    # Useful for any itzg feature not covered by the fields above.
-    # See full reference: https://docker-minecraft-server.readthedocs.io/en/latest/
-    extra_env:
-      # Example overrides (uncomment and adjust as needed):
-      # DIFFICULTY: "normal"
-      # MAX_PLAYERS: "10"
-      # MOTD: "My Admine Server"
-      # ONLINE_MODE: "false"
-      # ENFORCE_WHITELIST: "true"
-      # WHITELIST: "Player1,Player2"
-      # OPS: "Player1"
-      # SPAWN_PROTECTION: "0"
-      # VIEW_DISTANCE: "10"
-      RCON_PASSWORD: "admineRconPassword!"   # ← must match rcon_password above
+    type: "FABRIC"      # VANILLA | FABRIC | FORGE | NEOFORGE | PAPER | PURPUR
+    version: "1.20.1"   # e.g. "1.21.1", or LATEST
+    memory: "2G"        # JVM heap (e.g. "2G", "4G", "8G")
 
   zerotier:
-    # Set to true to start a zerotier/zerotier sidecar container alongside the
-    # Minecraft server. ZeroTier runs with network_mode: host so it attaches
-    # directly to the host network, making the server reachable via the ZT IP.
-    enabled: false
-
-    # The ZeroTier network ID to join (required when enabled: true).
-    network_id: ""
-
-    # Name of the ZeroTier sidecar container.
-    container_name: "zerotier"
-
-    # Optional: ZeroTier Central API secret (ZEROTIER_API_SECRET env var).
-    api_secret: ""
-
-web_server:
-  host: "0.0.0.0"
-  port: 3000
+    network_id: "83048a063239701f"

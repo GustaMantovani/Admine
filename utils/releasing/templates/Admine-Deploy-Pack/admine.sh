@@ -168,6 +168,65 @@ do_status() {
 }
 
 
+# ─── Logs ────────────────────────────────────────────────────────────────────
+
+declare -A SERVICE_LOG=(
+    ["server_handler"]="/tmp/admine/logs/server_handler.log"
+    ["vpn_handler"]="/tmp/admine/logs/vpn_handler.log"
+    ["bot"]="/tmp/admine/logs/bot.log"
+)
+
+do_logs() {
+    local target="${1:-all}"
+    local follow=false
+    local lines=50
+    shift || true
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -f|--follow) follow=true; shift ;;
+            -n|--lines)  lines="${2:?'--lines requires a number'}"; shift 2 ;;
+            *) log_err "Unknown option: $1"; usage; return 1 ;;
+        esac
+    done
+
+    local tail_args=("-n" "$lines")
+    $follow && tail_args+=("-f")
+
+    if [[ "$target" == "all" ]]; then
+        local existing_logs=()
+        for svc in "${SERVICES[@]}"; do
+            local log_file="${SERVICE_LOG[$svc]:-}"
+            if [[ -n "$log_file" && -f "$log_file" ]]; then
+                existing_logs+=("$log_file")
+            else
+                log_warn "No log file found for $svc (${log_file:-undefined})"
+            fi
+        done
+
+        if [[ ${#existing_logs[@]} -eq 0 ]]; then
+            log_err "No log files found. Have the services been started?"
+            return 1
+        fi
+
+        tail "${tail_args[@]}" "${existing_logs[@]}"
+    else
+        local log_file="${SERVICE_LOG[$target]:-}"
+        if [[ -z "$log_file" ]]; then
+            log_err "Unknown service: $target"
+            echo "Available: ${SERVICES[*]} all"
+            return 1
+        fi
+        if [[ ! -f "$log_file" ]]; then
+            log_err "Log file not found: $log_file"
+            log_warn "Has $target been started at least once?"
+            return 1
+        fi
+
+        tail "${tail_args[@]}" "$log_file"
+    fi
+}
+
 # ─── Restart ─────────────────────────────────────────────────────────────────
 
 do_restart() {
@@ -196,10 +255,14 @@ usage() {
     echo "Usage: $0 <command> [options]"
     echo ""
     echo "Commands:"
-    echo "  start              Start all services"
-    echo "  stop               Stop all services"
-    echo "  restart [service]  Restart all or a specific service"
-    echo "  status             Show status of all services"
+    echo "  start                        Start all services"
+    echo "  stop                         Stop all services"
+    echo "  restart [service|all]        Restart all or a specific service"
+    echo "  status                       Show status of all services"
+    echo "  logs [service|all] [-f] [-n <lines>]"
+    echo "                               Show logs (default: all services, last 50 lines)"
+    echo "                               -f / --follow  Follow log output"
+    echo "                               -n / --lines   Number of lines to show"
     echo ""
     echo "Services: ${SERVICES[*]}"
 }
@@ -209,5 +272,6 @@ case "${1:-}" in
     stop)    do_stop ;;
     restart) do_restart "${2:-all}" ;;
     status)  do_status ;;
+    logs)    do_logs "${2:-all}" "${@:3}" ;;
     *)       usage ;;
 esac

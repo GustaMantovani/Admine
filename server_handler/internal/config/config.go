@@ -143,7 +143,7 @@ func NewDefaultConfig() *Config {
 				Memory:  "2G",
 			},
 			ZeroTier: ZeroTierSidecarConfig{
-				Enabled:       false,
+				Enabled:       true,
 				ContainerName: "zerotier",
 			},
 		},
