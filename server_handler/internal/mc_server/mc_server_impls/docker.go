@@ -81,7 +81,7 @@ func (d *DockerMinecraftServer) Restart(ctx context.Context) error {
 	if err := d.Stop(ctx); err != nil {
 		return err
 	}
-	time.Sleep(time.Duration(time.Duration.Seconds(1)));
+	time.Sleep(time.Duration(time.Duration.Seconds(1)))
 	return d.Start(ctx)
 }
 
