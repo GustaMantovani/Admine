@@ -13,7 +13,6 @@ import (
 type composeMinecraftData struct {
 	Type                string
 	Version             string
-	Memory              string
 	RconPassword        string
 	FabricLoaderVersion string
 	ForgeVersion        string
@@ -53,7 +52,6 @@ func GenerateDockerCompose(cfg *config.Config) error {
 		Minecraft: composeMinecraftData{
 			Type:                mc.Image.Type,
 			Version:             mc.Image.Version,
-			Memory:              mc.Image.Memory,
 			RconPassword:        mc.RconPassword,
 			FabricLoaderVersion: mc.Image.FabricLoaderVersion,
 			ForgeVersion:        mc.Image.ForgeVersion,

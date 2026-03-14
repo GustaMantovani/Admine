@@ -73,8 +73,6 @@ type MinecraftImageConfig struct {
 	Type string `yaml:"type"`
 	// Version is the Minecraft version (e.g. "1.20.1").
 	Version string `yaml:"version"`
-	// Memory is the JVM heap size passed as the MEMORY env var (e.g. "4G").
-	Memory string `yaml:"memory"`
 	// FabricLoaderVersion is passed as FABRIC_LOADER_VERSION when non-empty.
 	FabricLoaderVersion string `yaml:"fabric_loader_version"`
 	// ForgeVersion is passed as FORGE_VERSION when non-empty.
@@ -144,7 +142,6 @@ func NewDefaultConfig() *Config {
 			Image: MinecraftImageConfig{
 				Type:    "FABRIC",
 				Version: "1.20.1",
-				Memory:  "2G",
 			},
 			ZeroTier: ZeroTierSidecarConfig{
 				Enabled:       true,

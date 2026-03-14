@@ -46,7 +46,8 @@ func (d *DockerMinecraftServer) Stop(ctx context.Context) error {
 	done := make(chan error, 1)
 
 	if _, err := d.ExecuteCommand(ctx, "/stop"); err != nil {
-		return err
+		slog.Warn("RCON stop failed, falling back to docker compose down", "error", err)
+		return d.DockerCompose.Down()
 	}
 
 	go func() {
