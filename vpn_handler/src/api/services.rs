@@ -1,7 +1,12 @@
 use crate::{
-    app_context::AppContext,
+    config::Config,
     errors::VpnError,
-    models::api_models::{AuthMemberRequest, ErrorResponse, ServerIpResponse, VpnIdResponse},
+    models::{
+        auth_member_request::AuthMemberRequest, error_response::ErrorResponse,
+        server_ip_response::ServerIpResponse, vpn_id_response::VpnIdResponse,
+    },
+    persistence::key_value_storage::DynKeyValueStore,
+    vpn::vpn::DynVpn,
 };
 use actix_web::{get, post, web, HttpResponse, Responder};
 use log::{error, info};
@@ -36,29 +41,29 @@ fn map_error_to_http_response(error: VpnError) -> HttpResponse {
 }
 
 #[get("/server-ips")]
-pub async fn server_ip() -> impl Responder {
-    let server_vpn_id = AppContext::instance()
-        .storage()
-        .get("server_member_id")
-        .unwrap_or("".to_string());
+pub async fn server_ip(
+    storage: web::Data<DynKeyValueStore>,
+    vpn_client: web::Data<DynVpn>,
+) -> impl Responder {
+    let server_vpn_id = storage.get("server_member_id").unwrap_or_default();
 
-    match AppContext::instance()
-        .vpn_client()
-        .get_member_ips_in_vpn(server_vpn_id)
-        .await
-    {
+    match vpn_client.get_member_ips_in_vpn(server_vpn_id).await {
         Ok(ips) => HttpResponse::Ok().json(ServerIpResponse { server_ips: ips }),
         Err(vpn_error) => map_error_to_http_response(vpn_error),
     }
 }
 
 #[post("/auth-member")]
-pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Responder {
+pub async fn auth_member(
+    member_data: web::Json<AuthMemberRequest>,
+    vpn_client: web::Data<DynVpn>,
+) -> impl Responder {
     info!("Authorizing member: {}", member_data.member_id);
 
-    let vpn = AppContext::instance().vpn_client();
-
-    match vpn.auth_member(member_data.member_id.clone(), None).await {
+    match vpn_client
+        .auth_member(member_data.member_id.clone(), None)
+        .await
+    {
         Ok(_) => {
             info!("Member {} authorized successfully", member_data.member_id);
             HttpResponse::NoContent().finish()
@@ -74,8 +79,7 @@ pub async fn auth_member(member_data: web::Json<AuthMemberRequest>) -> impl Resp
 }
 
 #[get("/vpn-id")]
-pub async fn vpn_id() -> impl Responder {
-    let config = AppContext::instance().config();
+pub async fn vpn_id(config: web::Data<Config>) -> impl Responder {
     HttpResponse::Ok().json(VpnIdResponse {
         vpn_id: config.vpn_config().network_id().clone(),
     })

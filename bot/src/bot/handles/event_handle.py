@@ -2,8 +2,8 @@ from typing import Callable, Dict, List, Optional
 
 from loguru import logger
 
-from bot.external.abstractions.message_service import MessageService
 from bot.models.admine_message import AdmineMessage
+from bot.services.messaging.message_service import MessageService
 
 
 class EventHandle:

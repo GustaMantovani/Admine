@@ -4,13 +4,12 @@ import (
 	"context"
 	"io"
 
-	mcserver "github.com/GustaMantovani/Admine/server_handler/internal/mc_server"
-	mcmodels "github.com/GustaMantovani/Admine/server_handler/internal/mc_server/models"
-	pubsubmodels "github.com/GustaMantovani/Admine/server_handler/internal/pubsub/models"
+	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub"
+	"github.com/GustaMantovani/Admine/server_handler/internal/server"
 	"github.com/stretchr/testify/mock"
 )
 
-// MockMinecraftServer is a shared mock implementation of the MinecraftServer interface for testing
+// MockMinecraftServer is a mock implementation of server.MinecraftServer for testing
 type MockMinecraftServer struct {
 	mock.Mock
 }
@@ -35,20 +34,20 @@ func (m *MockMinecraftServer) Restart(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func (m *MockMinecraftServer) Status(ctx context.Context) (*mcmodels.ServerStatus, error) {
+func (m *MockMinecraftServer) Status(ctx context.Context) (*server.ServerStatus, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mcmodels.ServerStatus), args.Error(1)
+	return args.Get(0).(*server.ServerStatus), args.Error(1)
 }
 
-func (m *MockMinecraftServer) Info(ctx context.Context) (*mcmodels.ServerInfo, error) {
+func (m *MockMinecraftServer) Info(ctx context.Context) (*server.ServerInfo, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mcmodels.ServerInfo), args.Error(1)
+	return args.Get(0).(*server.ServerInfo), args.Error(1)
 }
 
 func (m *MockMinecraftServer) Logs(ctx context.Context, n int) ([]string, error) {
@@ -64,62 +63,57 @@ func (m *MockMinecraftServer) StartUpInfo(ctx context.Context) string {
 	return args.String(0)
 }
 
-func (m *MockMinecraftServer) ExecuteCommand(ctx context.Context, command string) (*mcmodels.CommandResult, error) {
+func (m *MockMinecraftServer) ExecuteCommand(ctx context.Context, command string) (*server.CommandResult, error) {
 	args := m.Called(ctx, command)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mcmodels.CommandResult), args.Error(1)
+	return args.Get(0).(*server.CommandResult), args.Error(1)
 }
 
-func (m *MockMinecraftServer) InstallMod(ctx context.Context, fileName string, modData io.Reader) (*mcmodels.ModInstallResult, error) {
+func (m *MockMinecraftServer) InstallMod(ctx context.Context, fileName string, modData io.Reader) (*server.ModInstallResult, error) {
 	args := m.Called(ctx, fileName, modData)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mcmodels.ModInstallResult), args.Error(1)
+	return args.Get(0).(*server.ModInstallResult), args.Error(1)
 }
 
-func (m *MockMinecraftServer) ListMods(ctx context.Context) (*mcmodels.ModListResult, error) {
+func (m *MockMinecraftServer) ListMods(ctx context.Context) (*server.ModListResult, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mcmodels.ModListResult), args.Error(1)
+	return args.Get(0).(*server.ModListResult), args.Error(1)
 }
 
-func (m *MockMinecraftServer) RemoveMod(ctx context.Context, fileName string) (*mcmodels.ModInstallResult, error) {
+func (m *MockMinecraftServer) RemoveMod(ctx context.Context, fileName string) (*server.ModInstallResult, error) {
 	args := m.Called(ctx, fileName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mcmodels.ModInstallResult), args.Error(1)
+	return args.Get(0).(*server.ModInstallResult), args.Error(1)
 }
 
-// MockPubSubService is a shared mock implementation of PubSubService for testing
+// MockPubSubService is a mock implementation of pubsub.PubSubService for testing
 type MockPubSubService struct {
 	mock.Mock
 }
 
-func (m *MockPubSubService) Publish(topic string, msg *pubsubmodels.AdmineMessage) error {
+func (m *MockPubSubService) Publish(topic string, msg *pubsub.AdmineMessage) error {
 	args := m.Called(topic, msg)
 	return args.Error(0)
 }
 
-func (m *MockPubSubService) Subscribe(topics ...string) (<-chan *pubsubmodels.AdmineMessage, error) {
+func (m *MockPubSubService) Subscribe(topics ...string) (<-chan *pubsub.AdmineMessage, error) {
 	args := m.Called(topics)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(chan *pubsubmodels.AdmineMessage), args.Error(1)
+	return args.Get(0).(chan *pubsub.AdmineMessage), args.Error(1)
 }
 
 func (m *MockPubSubService) Close() error {
 	args := m.Called()
 	return args.Error(0)
-}
-
-// AsInterface returns the mock as a MinecraftServer interface
-func (m *MockMinecraftServer) AsInterface() mcserver.MinecraftServer {
-	return m
 }

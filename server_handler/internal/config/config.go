@@ -1,11 +1,10 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/GustaMantovani/Admine/server_handler/pkg"
 
 	"gopkg.in/yaml.v3"
 )
@@ -73,8 +72,6 @@ type MinecraftImageConfig struct {
 	Type string `yaml:"type"`
 	// Version is the Minecraft version (e.g. "1.20.1").
 	Version string `yaml:"version"`
-	// Memory is the JVM heap size passed as the MEMORY env var (e.g. "4G").
-	Memory string `yaml:"memory"`
 	// FabricLoaderVersion is passed as FABRIC_LOADER_VERSION when non-empty.
 	FabricLoaderVersion string `yaml:"fabric_loader_version"`
 	// ForgeVersion is passed as FORGE_VERSION when non-empty.
@@ -82,8 +79,6 @@ type MinecraftImageConfig struct {
 	// ModpackURL is passed as MODPACK when non-empty (URL to a modpack archive).
 	ModpackURL string `yaml:"modpack_url"`
 	// JavaVersion sets the image tag used to select the JDK (e.g. "java21", "java17").
-	// Maps to the itzg image tag: itzg/minecraft-server:<java_version>.
-	// Leave empty to use the "latest" tag (recommended Java for the chosen MC version).
 	JavaVersion string `yaml:"java_version"`
 	// ExtraEnv is a map of additional environment variables forwarded verbatim to the itzg image.
 	ExtraEnv map[string]string `yaml:"extra_env"`
@@ -93,7 +88,7 @@ type MinecraftImageConfig struct {
 type ZeroTierSidecarConfig struct {
 	// Enabled controls whether the ZeroTier sidecar service is included in the generated compose file.
 	Enabled bool `yaml:"enabled"`
-	// NetworkID is the ZeroTier network to join (passed as a CLI argument to the zerotier container).
+	// NetworkID is the ZeroTier network to join.
 	NetworkID string `yaml:"network_id"`
 	// ContainerName is the name assigned to the ZeroTier container.
 	ContainerName string `yaml:"container_name"`
@@ -106,7 +101,7 @@ type WebServerConfig struct {
 	Port int    `yaml:"port"`
 }
 
-// NewDefaultConfig returns a Config with default values
+// NewDefaultConfig returns a Config with sensible defaults
 func NewDefaultConfig() *Config {
 	return &Config{
 		App: AppConfig{
@@ -144,7 +139,6 @@ func NewDefaultConfig() *Config {
 			Image: MinecraftImageConfig{
 				Type:    "FABRIC",
 				Version: "1.20.1",
-				Memory:  "2G",
 			},
 			ZeroTier: ZeroTierSidecarConfig{
 				Enabled:       true,
@@ -158,13 +152,13 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadConfig reads YAML file into Config with default values
+// LoadConfig reads a YAML file into Config, using defaults for missing values
 func LoadConfig(path string) (*Config, error) {
 	cfg := NewDefaultConfig()
 
 	fmt.Printf("Default config created: %+v\n", cfg)
 
-	exists, err := pkg.PathExists(path)
+	exists, err := pathExists(path)
 	if err != nil {
 		return nil, err
 	}
@@ -184,11 +178,21 @@ func LoadConfig(path string) (*Config, error) {
 		return cfg, nil
 	}
 
-	// Ensure ComposeOutputPath has a value after decoding
 	if cfg.MinecraftServer.Docker.ComposeOutputPath == "" {
 		cfg.MinecraftServer.Docker.ComposeOutputPath = "./generated/docker-compose.yaml"
 	}
 
 	fmt.Printf("New config loaded: %+v\n", cfg)
 	return cfg, nil
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }

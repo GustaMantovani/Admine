@@ -26,6 +26,7 @@ derive_builder = "0.20"
 displaydoc = "0.2"
 toml = "0.9.11"
 getset = "0.1.6"
+futures-util = "0.3"
 
 [dev-dependencies]
 mockall = "0.14"

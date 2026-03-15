@@ -4,39 +4,19 @@ from typing import List
 from loguru import logger
 
 from bot.config import Config
-from bot.external.abstractions.message_service import MessageService
-from bot.external.abstractions.pubsub_service import PubSubService
-from bot.external.providers.message_service_providers.message_service_factory import (
-    MessageServiceFactory,
-)
-from bot.external.providers.message_service_providers.message_service_provider_type import (
-    MessageServiceProviderType,
-)
-from bot.external.providers.minecraft_server_service_providers.minecraft_server_service_factory import (
-    MinecraftServiceFactory,
-)
-from bot.external.providers.minecraft_server_service_providers.minecraft_server_service_provider_type import (
-    MinecraftServiceProviderType,
-)
-from bot.external.providers.pubsub_service_providers.pubsub_service_factory import (
-    PubSubServiceFactory,
-)
-from bot.external.providers.pubsub_service_providers.pubsub_service_provider_type import (
-    PubSubServiceProviderType,
-)
-from bot.external.providers.vpn_service_providers.vpn_service_factory import (
-    VpnServiceFactory,
-)
-from bot.external.providers.vpn_service_providers.vpn_service_provider_type import (
-    VpnServiceProviderType,
-)
 from bot.handles.command_handle import CommandHandle
 from bot.handles.event_handle import EventHandle
+from bot.services.messaging.discord_message_service import MessageServiceFactory, MessageServiceProviderType
+from bot.services.messaging.message_service import MessageService
+from bot.services.minecraft.server_handler_api_service import MinecraftServiceFactory, MinecraftServiceProviderType
+from bot.services.pubsub.pubsub_service import PubSubService
+from bot.services.pubsub.redis_pubsub_service import PubSubServiceFactory, PubSubServiceProviderType
+from bot.services.vpn.api_vpn_service import VpnServiceFactory, VpnServiceProviderType
 
 
 class Bot:
-    def __init__(self):
-        self.__config = Config()
+    def __init__(self, config: Config):
+        self.__config = config
         self.__message_services: List[MessageService] = []
         self.__pubsub_service: PubSubService
 
@@ -58,10 +38,12 @@ class Bot:
         self.__vpn_service = VpnServiceFactory.create(vpn_provider_type, self.__config)
         logger.info(f"{vpn_provider_str} vpn provider initialized.")
 
+        self.__tasks = []
         self.__command_handle = CommandHandle(
             self.__pubsub_service,
             self.__minecraft_info_service,
             self.__vpn_service,
+            self.__config,
         )
         self.__event_handle = EventHandle(self.__message_services)
 
@@ -76,10 +58,23 @@ class Bot:
 
         self.__message_services[0].set_callback(self.__command_handle.process_command)
 
-        await asyncio.gather(
-            self.__message_services[0].connect(),
-            self.__pubsub_service.listen_message(self.__event_handle.handle_event),
-        )
+        self.__tasks = [
+            asyncio.create_task(self.__message_services[0].connect()),
+            asyncio.create_task(self.__pubsub_service.listen_message(self.__event_handle.handle_event)),
+        ]
+        try:
+            await asyncio.gather(*self.__tasks)
+        except asyncio.CancelledError:
+            pass
 
-    def shutdown(self):
+    async def shutdown(self):
         logger.info("Shutting down bot...")
+        for task in self.__tasks:
+            task.cancel()
+        await asyncio.gather(*self.__tasks, return_exceptions=True)
+
+        self.__pubsub_service.close()
+        for svc in self.__message_services:
+            await svc.disconnect()
+
+        logger.info("Bot shut down.")

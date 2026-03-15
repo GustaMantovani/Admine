@@ -1,18 +1,13 @@
-import json
 from functools import wraps
 from typing import Callable, Dict, List, Optional
 
 from loguru import logger
 
 from bot.config import Config
-from bot.external.abstractions.minecraft_server_service import (
-    MinecraftServerService,
-)
-from bot.external.abstractions.pubsub_service import PubSubService
-from bot.external.abstractions.vpn_service import (
-    VpnService,
-)
 from bot.models.admine_message import AdmineMessage
+from bot.services.minecraft.minecraft_server_service import MinecraftServerService
+from bot.services.pubsub.pubsub_service import PubSubService
+from bot.services.vpn.vpn_service import VpnService
 
 
 def admin_command(func):
@@ -30,10 +25,12 @@ class CommandHandle:
         pubsub_service: PubSubService,
         minecraft_info_service: MinecraftServerService,
         vpn_service: VpnService,
+        config: Config,
     ):
         self.__pubsub_service = pubsub_service
         self.__minecraft_info_service = minecraft_info_service
         self.__vpn_service = vpn_service
+        self.__config = config
 
         self.__HANDLES: Dict[str, Callable[[List[str]], None]] = {
             "on": self.__server_on,
@@ -178,19 +175,13 @@ class CommandHandle:
 
         user_id = str(args[0])
         user_mention = args[1]
-        config = Config()
 
-        administrators: list[str] = config.get("discord.administrators", [])
-        # Update the administrators list in the object itself
+        administrators: list[str] = self.__config.get("discord.administrators", [])
         if user_id in administrators:
             return f"{user_mention} is already an administrator."
 
         administrators.append(user_id)
-
-        # Save to bot_config.json file
-
-        with open("./bot_config.json", "w") as f:
-            json.dump(config._Config__config, f, indent=4)
+        self.__config.save()
 
         logger.info(f"User {user_id} added as administrator.")
         return f"{user_mention} is now an administrator."
@@ -202,18 +193,13 @@ class CommandHandle:
             return "No channel ID provided to add."
 
         channel_id = str(args[0])
-        config = Config()
 
-        channel_ids: list[str] = config.get("discord.channel_ids", [])
-        # Update the channel IDs list in the object itself
+        channel_ids: list[str] = self.__config.get("discord.channel_ids", [])
         if channel_id in channel_ids:
             return f"Channel ID {channel_id} is already authorized."
 
         channel_ids.append(channel_id)
-
-        # Save to bot_config.json file
-        with open("./bot_config.json", "w") as f:
-            json.dump(config._Config__config, f, indent=4)
+        self.__config.save()
 
         logger.info(f"Channel ID {channel_id} added to authorized channels.")
         return f"Channel ID {channel_id} has been added to authorized channels."
@@ -225,18 +211,13 @@ class CommandHandle:
             return "No channel ID provided to remove."
 
         channel_id = str(args[0])
-        config = Config()
 
-        channel_ids: list[str] = config.get("discord.channel_ids", [])
-        # Update the channel IDs list in the object itself
+        channel_ids: list[str] = self.__config.get("discord.channel_ids", [])
         if channel_id not in channel_ids:
             return f"Channel ID {channel_id} is not authorized."
 
         channel_ids.remove(channel_id)
-
-        # Save to bot_config.json file
-        with open("./bot_config.json", "w") as f:
-            json.dump(config._Config__config, f, indent=4)
+        self.__config.save()
 
         logger.info(f"Channel ID {channel_id} removed to authorized channels.")
         return f"Channel ID {channel_id} has been removed to authorized channels."

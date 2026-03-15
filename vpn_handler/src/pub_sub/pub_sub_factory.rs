@@ -12,12 +12,12 @@ pub enum PubSubType {
 pub struct PubSubFactory;
 
 impl PubSubFactory {
-    pub fn create_pubsub_instance(
+    pub async fn create_pubsub_instance(
         pubsub_type: PubSubType,
         url: &str,
     ) -> Result<DynPubSub, PubSubError> {
         match pubsub_type {
-            PubSubType::Redis => Ok(Box::new(RedisPubSub::new(url)?)),
+            PubSubType::Redis => Ok(Box::new(RedisPubSub::new(url).await?)),
         }
     }
 }
