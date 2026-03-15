@@ -47,18 +47,18 @@ Users can interact with the system through Discord commands:
 
 ## Table of Contents
 
-- [Running on free cloud environments](#running-on-free-cloud-environments)
-  - [Oracle Cloud Free Tier](#oracle-cloud-free-tier)
-  - [Google Cloud Shell](#google-cloud-shell)
-  - [GitHub Codespaces](#github-codespaces)
-  - [AWS CloudShell](#aws-cloudshell)
-  - [Azure Cloud Shell](#azure-cloud-shell)
 - [Installation](#installation)
   - [1. Download the deploy pack](#1-download-the-deploy-pack)
   - [2. Configure Discord](#2-configure-discord)
   - [3. Configure ZeroTier VPN](#3-configure-zerotier-vpn)
   - [4. Configure the Minecraft server](#4-configure-the-minecraft-server)
   - [5. Start](#5-start)
+- [Running on free cloud environments](#running-on-free-cloud-environments)
+  - [Oracle Cloud Free Tier](#oracle-cloud-free-tier)
+  - [Google Cloud Shell](#google-cloud-shell)
+  - [GitHub Codespaces](#github-codespaces)
+  - [AWS CloudShell](#aws-cloudshell)
+  - [Azure Cloud Shell](#azure-cloud-shell)
 - [Mod logistics with Google Drive](#mod-logistics-with-google-drive)
 - [Technical Documentation](#technical-documentation)
   - [Architecture overview](#architecture-overview)
@@ -66,69 +66,7 @@ Users can interact with the system through Discord commands:
   - [Pub/Sub channels](#pubsub-channels)
   - [Message flows](#message-flows)
   - [Component documentation](#component-documentation)
-
----
-
-## Running on free cloud environments
-
-The typical problem with hosting a Minecraft server is needing a machine with a public IP. Most home connections and all free cloud environments sit behind NAT — the machine has no public IP and cannot accept inbound connections from the internet.
-
-Admine was designed specifically for this scenario. Instead of requiring port forwarding or a public IP, it uses [ZeroTier](https://www.zerotier.com) to create a virtual network overlay: the server joins the VPN and players connect to it through that overlay IP. The server never needs to be reachable from the public internet.
-
-This means you can run a Minecraft server for free on any of the following platforms:
-
----
-
-### Oracle Cloud Free Tier
-
-The best free option. Oracle's Always Free tier includes up to **4 Ampere A1 vCPUs and 24 GB RAM** on ARM64 VMs — enough to comfortably run the Minecraft server alongside all Admine components. Instances are persistent (no automatic shutdown) and have a real static public IP that is never used for game traffic.
-
-- Sign up at [cloud.oracle.com](https://www.oracle.com/cloud/free/)
-- Create an Always Free Compute instance (Ubuntu or Oracle Linux)
-- Install Docker, clone the deploy pack, configure and run
-
-### Google Cloud Shell
-
-Google Cloud Shell provides a free persistent Linux environment directly in the browser, backed by a Debian VM with ~5 GB of home directory storage. It has Docker available and works well for running the Admine management components (bot, vpn_handler, server_handler). The shell has limited RAM (~1.7 GB) so it may struggle with heavier modpacks, but works for vanilla or light Fabric/Paper servers.
-
-- Access at [shell.cloud.google.com](https://shell.cloud.google.com)
-- No sign-up beyond a Google account required
-- The environment pauses after inactivity but the home directory persists
-
-### GitHub Codespaces
-
-Codespaces gives every GitHub account **60 free hours/month** of a containerized dev environment with Docker, up to 4 vCPUs and 8 GB RAM depending on the machine type selected. Suitable for running the full Admine stack during active sessions.
-
-- Access at [github.com/codespaces](https://github.com/codespaces)
-- Open the Admine repository directly in a Codespace
-- Note: Codespaces pause when inactive, so they work best for on-demand server sessions
-
-### AWS CloudShell
-
-AWS CloudShell is a free, browser-based shell pre-authenticated with your AWS account. It has 1 GB persistent storage but limited compute. Useful for running the Admine management components if you already have an AWS account.
-
-- Access from the AWS Console toolbar
-- Docker is available but requires root or a workaround depending on the region
-
-### Azure Cloud Shell
-
-Azure Cloud Shell provides a free Linux shell with 5 GB persistent storage mounted from an Azure Files share. Docker is available. Like AWS CloudShell, it is better suited for running the management components than for a RAM-heavy Minecraft server.
-
-- Access at [shell.azure.com](https://shell.azure.com)
-- Requires an Azure account (free tier available)
-
----
-
-### Why it works behind NAT
-
-The key is that **all outbound connections, no inbound**:
-
-- The Minecraft server container joins the ZeroTier network by making an outbound connection to ZeroTier's coordination servers — no port forwarding needed.
-- The bot connects to Discord via a persistent WebSocket (outbound).
-- Redis is local to the machine.
-- Players connect to the server using its ZeroTier overlay IP after being authorized via `/auth`.
-
-The host machine never needs to be directly reachable from the internet.
+- [Contributing](CONTRIBUTING.md)
 
 ---
 
@@ -138,10 +76,9 @@ The host machine never needs to be directly reachable from the internet.
 
 Download the latest release from [GitHub Releases](https://github.com/GustaMantovani/Admine/releases). Each release ships a self-contained `admine-deploy-pack-<os>-<arch>-<version>` directory that includes compiled binaries for all components, config templates, and the `admine.sh` control script. No build step needed.
 
-Extract the archive and enter the directory:
-
 ```bash
-tar -xzf admine-deploy-pack-linux-x86_64-<version>.tar.gz
+wget https://github.com/GustaMantovani/Admine/releases/download/v<version>/admine-deploy-pack-linux-x86_64-<version>.zip
+unzip admine-deploy-pack-linux-x86_64-<version>.zip
 cd admine-deploy-pack-linux-x86_64-<version>
 ```
 
@@ -240,6 +177,69 @@ Logs are written to `/tmp/admine/logs/`.
 - Docker with Compose plugin
 - A Discord bot token
 - A ZeroTier account with an API key and network
+
+---
+
+## Running on free cloud environments
+
+The typical problem with hosting a Minecraft server is needing a machine with a public IP. Most home connections and all free cloud environments sit behind NAT — the machine has no public IP and cannot accept inbound connections from the internet.
+
+Admine was designed specifically for this scenario. Instead of requiring port forwarding or a public IP, it uses [ZeroTier](https://www.zerotier.com) to create a virtual network overlay: the server joins the VPN and players connect to it through that overlay IP. The server never needs to be reachable from the public internet.
+
+This means you can run a Minecraft server for free on any of the following platforms:
+
+---
+
+### Oracle Cloud Free Tier
+
+The best free option. Oracle's Always Free tier includes up to **4 Ampere A1 vCPUs and 24 GB RAM** on ARM64 VMs — enough to comfortably run the Minecraft server alongside all Admine components. Instances are persistent (no automatic shutdown) and have a real static public IP that is never used for game traffic.
+
+- Sign up at [cloud.oracle.com](https://www.oracle.com/cloud/free/)
+- Create an Always Free Compute instance (Ubuntu or Oracle Linux)
+- Install Docker, clone the deploy pack, configure and run
+
+### Google Cloud Shell
+
+Google Cloud Shell provides a free persistent Linux environment directly in the browser, backed by a Debian VM with ~5 GB of home directory storage. It has Docker available and works well for running the Admine management components (bot, vpn_handler, server_handler). The shell has limited RAM (~1.7 GB) so it may struggle with heavier modpacks, but works for vanilla or light Fabric/Paper servers.
+
+- Access at [shell.cloud.google.com](https://shell.cloud.google.com)
+- No sign-up beyond a Google account required
+- The environment pauses after inactivity but the home directory persists
+
+### GitHub Codespaces
+
+Codespaces gives every GitHub account **60 free hours/month** of a containerized dev environment with Docker, up to 4 vCPUs and 8 GB RAM depending on the machine type selected. Suitable for running the full Admine stack during active sessions.
+
+- Access at [github.com/codespaces](https://github.com/codespaces)
+- Open the Admine repository directly in a Codespace
+- Note: Codespaces pause when inactive, so they work best for on-demand server sessions
+
+### AWS CloudShell
+
+AWS CloudShell is a free, browser-based shell pre-authenticated with your AWS account. It has 1 GB persistent storage but limited compute. Useful for running the Admine management components if you already have an AWS account.
+
+- Access from the AWS Console toolbar
+- Docker is available but requires root or a workaround depending on the region
+
+### Azure Cloud Shell
+
+Azure Cloud Shell provides a free Linux shell with 5 GB persistent storage mounted from an Azure Files share. Docker is available. Like AWS CloudShell, it is better suited for running the management components than for a RAM-heavy Minecraft server.
+
+- Access at [shell.azure.com](https://shell.azure.com)
+- Requires an Azure account (free tier available)
+
+---
+
+### Why it works behind NAT
+
+The key is that **all outbound connections, no inbound**:
+
+- The Minecraft server container joins the ZeroTier network by making an outbound connection to ZeroTier's coordination servers — no port forwarding needed.
+- The bot connects to Discord via a persistent WebSocket (outbound).
+- Redis is local to the machine.
+- Players connect to the server using its ZeroTier overlay IP after being authorized via `/auth`.
+
+The host machine never needs to be directly reachable from the internet.
 
 ---
 
