@@ -1,72 +1,94 @@
 use super::pub_sub::{TPublisher, TSubscriber};
 use crate::errors::PubSubError;
-use redis::Commands;
+use async_trait::async_trait;
+use futures_util::StreamExt;
 
 pub struct RedisPubSub {
-    connection: redis::Connection,
+    subscriber: redis::aio::PubSub,
+    publisher: redis::aio::MultiplexedConnection,
     subscribed_topics: Vec<String>,
+    subscribed: bool,
 }
 
 impl RedisPubSub {
-    pub fn new(url: &str) -> Result<Self, PubSubError> {
+    pub async fn new(url: &str) -> Result<Self, PubSubError> {
         let client = redis::Client::open(url).map_err(|e| {
             log::error!("Failed to create Redis client with URL '{}': {}", url, e);
             PubSubError::CreationError(format!("Failed to create Redis client: {}", e))
         })?;
 
-        let connection = client.get_connection().map_err(|e| {
-            log::error!("Failed to establish Redis connection: {}", e);
-            PubSubError::ConnectionError(format!("Failed to connect to Redis: {}", e))
+        let subscriber = client.get_async_pubsub().await.map_err(|e| {
+            log::error!("Failed to establish Redis subscriber connection: {}", e);
+            PubSubError::ConnectionError(format!("Failed to connect subscriber: {}", e))
         })?;
 
-        let subscribed_topics = Vec::new();
+        let publisher = client
+            .get_multiplexed_async_connection()
+            .await
+            .map_err(|e| {
+                log::error!("Failed to establish Redis publisher connection: {}", e);
+                PubSubError::ConnectionError(format!("Failed to connect publisher: {}", e))
+            })?;
+
         Ok(Self {
-            connection,
-            subscribed_topics,
+            subscriber,
+            publisher,
+            subscribed_topics: Vec::new(),
+            subscribed: false,
         })
     }
 }
 
+#[async_trait]
 impl TSubscriber for RedisPubSub {
     fn subscribe(&mut self, topics: Vec<String>) -> Result<(), PubSubError> {
-        topics.iter().for_each(|t| {
-            self.subscribed_topics.push(t.clone());
-        });
+        self.subscribed_topics.extend(topics);
         Ok(())
     }
 
-    fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError> {
-        let mut pubsub = self.connection.as_pubsub();
-
-        self.subscribed_topics.iter().for_each(|t| {
-            if let Err(e) = pubsub.subscribe(t) {
-                log::error!("Failed to subscribe to topic '{}': {}", t, e);
+    async fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError> {
+        if !self.subscribed {
+            for topic in self.subscribed_topics.clone() {
+                self.subscriber
+                    .subscribe(topic.as_str())
+                    .await
+                    .map_err(|e| {
+                        log::error!("Failed to subscribe to topic '{}': {}", topic, e);
+                        PubSubError::ConnectionError(format!(
+                            "Failed to subscribe to '{}': {}",
+                            topic, e
+                        ))
+                    })?;
             }
-        });
+            self.subscribed = true;
+        }
 
-        let msg = pubsub.get_message().map_err(|e| {
-            log::error!("Failed to receive message from Redis: {}", e);
-            PubSubError::MessageError(format!("Failed to get message: {}", e))
+        let msg = self
+            .subscriber
+            .on_message()
+            .next()
+            .await
+            .ok_or_else(|| PubSubError::ConnectionError("PubSub stream closed".to_string()))?;
+
+        let payload: String = msg.get_payload().map_err(|e| {
+            log::error!("Failed to get message payload: {}", e);
+            PubSubError::MessageError(format!("Failed to get message payload: {}", e))
         })?;
 
-        match msg.get_payload() {
-            Ok(p) => return Ok((p, msg.get_channel_name().to_string())),
-            Err(e) => {
-                log::error!("Failed to parse message payload: {}", e);
-                return Err(PubSubError::MessageError(e.to_string()));
-            }
-        };
+        Ok((payload, msg.get_channel_name().to_string()))
     }
 }
 
+#[async_trait]
 impl TPublisher for RedisPubSub {
-    fn publish(&mut self, topic: String, message: String) -> Result<(), PubSubError> {
-        self.connection
-            .publish::<String, String, ()>(topic.clone(), message.clone())
+    async fn publish(&mut self, topic: String, message: String) -> Result<(), PubSubError> {
+        use redis::AsyncCommands;
+        self.publisher
+            .publish::<_, _, ()>(topic.clone(), message)
+            .await
             .map_err(|e| {
                 log::error!("Failed to publish message to topic '{}': {}", topic, e);
-                PubSubError::MessageError(format!("Failed to publish message: {}", e))
-            })?;
-        Ok(())
+                PubSubError::MessageError(format!("Failed to publish to '{}': {}", topic, e))
+            })
     }
 }

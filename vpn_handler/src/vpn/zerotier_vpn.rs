@@ -60,7 +60,7 @@ impl TVpnClient for ZerotierVpn {
     }
 
     async fn get_member_ips_in_vpn(&self, member_id: String) -> Result<Vec<IpAddr>, VpnError> {
-        if member_id.len() > 0 {
+        if !member_id.is_empty() {
             let member = match get_network_member(&self.config, &self.network_id, &member_id).await
             {
                 Ok(m) => m,
@@ -108,8 +108,6 @@ impl TVpnClient for ZerotierVpn {
         member_id: String,
         _member_token: Option<String>,
     ) -> Result<(), VpnError> {
-        print!("{}", &self.network_id);
-        print!("{:?}", &self.config);
         let mut member = match get_network_member(&self.config, &self.network_id, &member_id).await
         {
             Ok(m) => m,

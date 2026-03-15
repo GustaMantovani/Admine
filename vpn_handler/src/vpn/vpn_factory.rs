@@ -32,8 +32,6 @@ impl VpnFactory {
 
                 config.bearer_access_token = Some(api_key.clone());
 
-                print!("{:?}", config);
-
                 Ok(Box::new(ZerotierVpn::new(config, network_id)))
             }
 

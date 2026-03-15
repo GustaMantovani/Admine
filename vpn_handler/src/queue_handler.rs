@@ -1,22 +1,38 @@
-use std::time::Duration;
+use std::sync::Arc;
 
-use crate::app_context::AppContext;
-use crate::config::RetryConfig;
+use crate::config::{Config, RetryConfig};
 use crate::models::admine_message::AdmineMessage;
 use crate::persistence::key_value_storage::DynKeyValueStore;
 use crate::pub_sub::pub_sub::DynPubSub;
 use crate::vpn::vpn::DynVpn;
 use log::{error, info, warn};
+use tokio::sync::watch;
 use tokio::time::sleep;
 
 /// Main handle structure.
-pub struct Handle;
+pub struct Handle {
+    pub_sub: DynPubSub,
+    vpn_client: Arc<DynVpn>,
+    storage: Arc<DynKeyValueStore>,
+    config: Arc<Config>,
+    shutdown: watch::Receiver<bool>,
+}
 
 impl Handle {
-    /// Initializes the Handle using the shared AppContext.
-    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        AppContext::instance();
-        Ok(Self)
+    pub fn new(
+        pub_sub: DynPubSub,
+        vpn_client: Arc<DynVpn>,
+        storage: Arc<DynKeyValueStore>,
+        config: Arc<Config>,
+        shutdown: watch::Receiver<bool>,
+    ) -> Self {
+        Self {
+            pub_sub,
+            vpn_client,
+            storage,
+            config,
+            shutdown,
+        }
     }
 
     /// Helper function to update the server member ID in the database.
@@ -37,9 +53,10 @@ impl Handle {
         member_id: String,
         vpn_client: &DynVpn,
         storage: &DynKeyValueStore,
-        pub_sub: &std::sync::Mutex<DynPubSub>,
+        pub_sub: &mut DynPubSub,
         retry_config: &RetryConfig,
         vpn_channel: &str,
+        origin: &str,
     ) {
         // Retry logic to authenticate member and fetch IPs until available
         let mut attempts = *retry_config.attempts();
@@ -70,7 +87,7 @@ impl Handle {
             // Then try to fetch the IPs
             match vpn_client.get_member_ips_in_vpn(member_id.clone()).await {
                 Ok(ips) => {
-                    if ips.len() == 0 {
+                    if ips.is_empty() {
                         if attempts == 0 {
                             error!(
                                 "Exceeded retry attempts to fetch IPs for member {}",
@@ -113,6 +130,7 @@ impl Handle {
 
         // Publish new server IPs
         let new_message = AdmineMessage::new(
+            origin.to_string(),
             vec!["new_server_ips".to_string()],
             member_ips
                 .iter()
@@ -130,9 +148,8 @@ impl Handle {
         };
 
         if let Err(e) = pub_sub
-            .lock()
-            .unwrap()
             .publish(vpn_channel.to_string(), serialized_message)
+            .await
         {
             error!("Failed to publish message: {}", e);
         } else {
@@ -158,8 +175,9 @@ impl Handle {
     async fn process_auth_member(
         member_id: String,
         vpn_client: &DynVpn,
-        pub_sub: &std::sync::Mutex<DynPubSub>,
+        pub_sub: &mut DynPubSub,
         vpn_channel: &str,
+        origin: &str,
     ) {
         if let Err(e) = vpn_client.auth_member(member_id.clone(), None).await {
             error!("Error authenticating member {}: {}", member_id, e);
@@ -168,8 +186,11 @@ impl Handle {
         info!("Member {} authenticated successfully.", member_id);
 
         // Publish success message
-        let success_message =
-            AdmineMessage::new(vec!["auth_member_success".to_string()], member_id);
+        let success_message = AdmineMessage::new(
+            origin.to_string(),
+            vec!["auth_member_success".to_string()],
+            member_id,
+        );
 
         let serialized_message = match serde_json::to_string(&success_message) {
             Ok(json) => json,
@@ -180,9 +201,8 @@ impl Handle {
         };
 
         if let Err(e) = pub_sub
-            .lock()
-            .unwrap()
             .publish(vpn_channel.to_string(), serialized_message)
+            .await
         {
             error!("Failed to publish success message: {}", e);
         } else {
@@ -195,9 +215,10 @@ impl Handle {
         admine_message: AdmineMessage,
         vpn_client: &DynVpn,
         storage: &DynKeyValueStore,
-        pub_sub: &std::sync::Mutex<DynPubSub>,
+        pub_sub: &mut DynPubSub,
         retry_config: &RetryConfig,
         vpn_channel: &str,
+        origin: &str,
     ) {
         info!(
             "Dispatching message: origin={}, message_len={}",
@@ -217,6 +238,7 @@ impl Handle {
                         pub_sub,
                         retry_config,
                         vpn_channel,
+                        origin,
                     )
                     .await;
                 } else {
@@ -228,7 +250,8 @@ impl Handle {
                 if admine_message.has_tag("auth_member") && !admine_message.message().is_empty() {
                     let member_id = admine_message.message().clone();
                     info!("auth_member command received: member_id={}", member_id);
-                    Self::process_auth_member(member_id, vpn_client, pub_sub, vpn_channel).await;
+                    Self::process_auth_member(member_id, vpn_client, pub_sub, vpn_channel, origin)
+                        .await;
                 } else {
                     warn!("Ignored bot command...");
                 }
@@ -239,43 +262,34 @@ impl Handle {
         }
     }
 
-    /// Process incoming messages based on channel and tags (using AppContext)
-    async fn process_message(admine_message: AdmineMessage) {
-        let app_context = AppContext::instance();
-        let vpn_client = app_context.vpn_client();
-        let storage = app_context.storage();
-        let pub_sub = app_context.pub_sub();
-        let config = app_context.config();
-        let retry_config = config.retry_config();
-        let vpn_channel = config.admine_channels_map().vpn_channel();
-
-        Self::process_message_with_deps(
-            admine_message,
-            vpn_client,
-            storage,
-            pub_sub,
-            retry_config,
-            vpn_channel,
-        )
-        .await;
-    }
-
     /// Main run loop.
-    pub async fn run(self) {
+    pub async fn run(mut self) {
         info!("Handle run started.");
 
-        // Main loop to listen for incoming messages.
+        let retry_config = self.config.retry_config().clone();
+        let vpn_channel = self.config.admine_channels_map().vpn_channel().clone();
+        let origin = self.config.self_origin_name().clone();
+
         loop {
             info!("Waiting for a new message...");
 
-            let raw_message = match AppContext::instance()
-                .pub_sub()
-                .lock()
-                .unwrap()
-                .listen_until_receive_message()
-            {
+            let raw_message = tokio::select! {
+                biased;
+
+                _ = self.shutdown.changed() => {
+                    if *self.shutdown.borrow() {
+                        info!("Shutdown signal received, stopping queue handler.");
+                        break;
+                    }
+                    continue;
+                }
+
+                result = self.pub_sub.listen_until_receive_message() => result,
+            };
+
+            let (payload, channel) = match raw_message {
                 Ok(msg) => {
-                    info!("Message received: {:?}", msg);
+                    info!("Message received on channel {}: {:?}", msg.1, msg.0);
                     msg
                 }
                 Err(e) => {
@@ -284,7 +298,7 @@ impl Handle {
                 }
             };
 
-            let admine_message = match serde_json::from_str::<AdmineMessage>(&raw_message.0) {
+            let admine_message = match serde_json::from_str::<AdmineMessage>(&payload) {
                 Ok(msg) => msg,
                 Err(e) => {
                     error!("Error deserializing message: {}", e);
@@ -294,13 +308,22 @@ impl Handle {
 
             info!(
                 "Processing message received on channel {}: {:?}",
-                raw_message.1, admine_message
+                channel, admine_message
             );
 
-            Self::process_message(admine_message).await;
-
-            let _ = sleep(Duration::from_millis(10));
+            Self::process_message_with_deps(
+                admine_message,
+                &self.vpn_client,
+                &self.storage,
+                &mut self.pub_sub,
+                &retry_config,
+                &vpn_channel,
+                &origin,
+            )
+            .await;
         }
+
+        info!("Queue handler stopped.");
     }
 }
 
@@ -311,18 +334,20 @@ mod tests {
     use crate::errors::{PubSubError, VpnError};
     use crate::models::admine_message::AdmineMessage;
     use crate::persistence::key_value_storage::KeyValueStore;
-    use crate::pub_sub::pub_sub::{PubSubProvider, TPublisher, TSubscriber};
+    use crate::pub_sub::pub_sub::{TPublisher, TSubscriber};
     use crate::vpn::vpn::TVpnClient;
+    use async_trait::async_trait;
     use mockall::{mock, predicate::*};
     use std::net::IpAddr;
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
     use std::time::Duration;
+    use tokio::sync::watch;
 
     // Mock implementations
     mock! {
         TestVpn {}
 
-        #[async_trait::async_trait]
+        #[async_trait]
         impl TVpnClient for TestVpn {
             async fn auth_member(&self, member_id: String, member_token: Option<String>) -> Result<(), VpnError>;
             async fn delete_member(&self, member_id: String) -> Result<(), VpnError>;
@@ -342,13 +367,15 @@ mod tests {
     mock! {
         TestPubSub {}
 
+        #[async_trait]
         impl TSubscriber for TestPubSub {
             fn subscribe(&mut self, topics: Vec<String>) -> Result<(), PubSubError>;
-            fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError>;
+            async fn listen_until_receive_message(&mut self) -> Result<(String, String), PubSubError>;
         }
 
+        #[async_trait]
         impl TPublisher for TestPubSub {
-            fn publish(&mut self, topic: String, message: String) -> Result<(), PubSubError>;
+            async fn publish(&mut self, topic: String, message: String) -> Result<(), PubSubError>;
         }
     }
 
@@ -414,13 +441,14 @@ mod tests {
             .returning(|_, _| Ok(()));
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
 
         Handle::process_auth_member(
             "test_member_123".to_string(),
             &vpn,
-            &pubsub_mutex,
+            &mut pubsub,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -440,13 +468,14 @@ mod tests {
         mock_pubsub.expect_publish().times(0);
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
 
         Handle::process_auth_member(
             "test_member_123".to_string(),
             &vpn,
-            &pubsub_mutex,
+            &mut pubsub,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -497,16 +526,17 @@ mod tests {
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_server_up(
             "test_member_123".to_string(),
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -543,16 +573,17 @@ mod tests {
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_server_up(
             "test_member_123".to_string(),
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -587,16 +618,17 @@ mod tests {
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_server_up(
             "test_member_123".to_string(),
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -617,22 +649,25 @@ mod tests {
         mock_storage.expect_set().returning(|_, _| Ok(()));
         mock_pubsub.expect_publish().returning(|_, _| Ok(()));
 
-        let mut message =
-            AdmineMessage::new(vec!["server_on".to_string()], "test_member_123".to_string());
-        message.set_origin("server".to_string());
+        let message = AdmineMessage::new(
+            "server".to_string(),
+            vec!["server_on".to_string()],
+            "test_member_123".to_string(),
+        );
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -654,24 +689,25 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
 
-        let mut message = AdmineMessage::new(
+        let message = AdmineMessage::new(
+            "bot".to_string(),
             vec!["auth_member".to_string()],
             "test_member_123".to_string(),
         );
-        message.set_origin("bot".to_string());
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
     }
@@ -682,22 +718,25 @@ mod tests {
         let mock_storage = MockTestStorage::new();
         let mock_pubsub = MockTestPubSub::new();
 
-        let mut message =
-            AdmineMessage::new(vec!["some_tag".to_string()], "test_message".to_string());
-        message.set_origin("unknown_channel".to_string());
+        let message = AdmineMessage::new(
+            "unknown_channel".to_string(),
+            vec!["some_tag".to_string()],
+            "test_message".to_string(),
+        );
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
         // This test mainly checks that the function doesn't panic with unknown channels
@@ -709,26 +748,55 @@ mod tests {
         let mock_storage = MockTestStorage::new();
         let mock_pubsub = MockTestPubSub::new();
 
-        let mut message = AdmineMessage::new(
+        let message = AdmineMessage::new(
+            "server".to_string(),
             vec!["server_on".to_string()],
             "".to_string(), // Empty message
         );
-        message.set_origin("server".to_string());
 
         let vpn: Box<dyn TVpnClient + Send + Sync> = Box::new(mock_vpn);
         let storage: Box<dyn KeyValueStore + Send + Sync> = Box::new(mock_storage);
-        let pubsub_mutex = Arc::new(Mutex::new(Box::new(mock_pubsub) as Box<dyn PubSubProvider>));
+        let mut pubsub: DynPubSub = Box::new(mock_pubsub);
         let retry_config = create_test_retry_config();
 
         Handle::process_message_with_deps(
             message,
             &vpn,
             &storage,
-            &pubsub_mutex,
+            &mut pubsub,
             &retry_config,
             "vpn_channel",
+            "vpn",
         )
         .await;
         // This test checks that empty messages are ignored
+    }
+
+    #[tokio::test]
+    async fn test_handle_shutdown_on_watch_signal() {
+        // No expectations on pub_sub: with biased select!, shutdown is checked first.
+        // Since the signal is sent before run() starts, listen_until_receive_message
+        // is never polled.
+        let mock_vpn = MockTestVpn::new();
+        let mock_storage = MockTestStorage::new();
+        let mock_pubsub = MockTestPubSub::new();
+
+        let (shutdown_tx, shutdown_rx) = watch::channel(false);
+
+        // Signal shutdown before run() is called — the watch receiver has not yet
+        // observed this change, so changed() resolves on the very first poll.
+        let _ = shutdown_tx.send(true);
+
+        let config = Arc::new(crate::config::Config::default());
+        let vpn_client = Arc::new(Box::new(mock_vpn) as Box<dyn TVpnClient + Send + Sync>);
+        let storage = Arc::new(Box::new(mock_storage) as Box<dyn KeyValueStore + Send + Sync>);
+        let pubsub: DynPubSub = Box::new(mock_pubsub);
+
+        let handle = Handle::new(pubsub, vpn_client, storage, config, shutdown_rx);
+
+        // run() should return immediately without touching pub_sub
+        tokio::time::timeout(Duration::from_secs(1), handle.run())
+            .await
+            .expect("Handle::run() did not stop after shutdown signal");
     }
 }
