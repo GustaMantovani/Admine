@@ -69,11 +69,15 @@ All coordination flows through Redis Pub/Sub. No component calls another directl
 
 ### Server Handler internals
 
-- `internal/deployment/` — Dynamically generates `docker-compose.yaml` from config on each start (output goes to `generated/`, which is gitignored)
-- `internal/mc_server/` — RCON client and Docker lifecycle control
-- `internal/pubsub/` — Redis subscription/publishing
-- `internal/service/` — Business logic layer
-- `internal/api/` — Gin REST API handlers
+- `internal/server/` — `MinecraftServer` interface + Docker implementation (RCON, lifecycle, mods, TPS). All domain models live here too (`ServerStatus`, `ServerInfo`, `CommandResult`, etc.)
+- `internal/pubsub/` — `PubSubService` interface + Redis implementation + `EventHandler` (routes pubsub commands to server operations)
+- `internal/api/` — Gin REST API: `routes.go` wires handlers; `handlers/server.go` and `handlers/mod.go` are stateless and receive all deps via constructor
+- `internal/deployment/` — Dynamically generates `docker-compose.yaml` from a Go template on each Start (output goes to `generated/`, which is gitignored)
+- `internal/docker/` — Low-level Docker SDK helpers (container exec, log tailing, compose wrapper)
+- `internal/logger/` — slog setup (file + level)
+- `cmd/server_handler/main.go` — Wiring only: constructs all objects, injects dependencies, starts web server and pubsub listener
+
+All dependency injection is explicit via constructors — no global state.
 
 ### VPN Handler internals
 

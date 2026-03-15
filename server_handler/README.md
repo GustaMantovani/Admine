@@ -26,6 +26,25 @@ server_handler_config.yaml
 On every `Start`, the handler renders the Go template
 `internal/deployment/docker-compose.yaml.tmpl` with values from the config and writes the result to `docker.compose_output_path`. Docker Compose is then called against that file. This means **the config file is the single source of truth** — editing `docker-compose.yaml` by hand has no permanent effect.
 
+### Package structure
+
+```
+server_handler/
+├── cmd/server_handler/main.go   # Wiring: constructs all objects and starts the app
+└── internal/
+    ├── server/                  # MinecraftServer interface, Docker implementation, domain models
+    ├── pubsub/                  # PubSubService interface, Redis implementation, EventHandler
+    ├── api/
+    │   ├── routes.go            # Gin router setup
+    │   └── handlers/            # HTTP handlers (server.go, mod.go) — stateless, deps via constructor
+    ├── deployment/              # docker-compose.yaml template rendering
+    ├── docker/                  # Low-level Docker SDK helpers (exec, log tailing, compose)
+    ├── logger/                  # slog setup
+    └── config/                  # Config loading and defaults
+```
+
+All layers use explicit constructor injection — there is no global state.
+
 ---
 
 ## Configuration
@@ -78,14 +97,14 @@ minecraft_server:
     # Minecraft version, e.g. "1.20.1". Use "LATEST" to always pull the newest release.
     version: "1.20.1"
 
-    # JVM heap size passed as the MEMORY env var.
-    memory: "4G"
-
     # Pin the Fabric loader version (leave empty for latest; only relevant when type: FABRIC).
     fabric_loader_version: ""
 
     # Pin the Forge version (leave empty for latest; only relevant when type: FORGE).
     forge_version: ""
+
+    # Selects the JDK image tag (e.g. "java21", "java17"). Leave empty to use the itzg default.
+    java_version: ""
 
     # URL to a modpack archive. When set, itzg downloads and installs it automatically.
     # Leave empty if you manage mods manually through the API.
@@ -96,6 +115,7 @@ minecraft_server:
     # Full reference: https://docker-minecraft-server.readthedocs.io/en/latest/
     extra_env:
       RCON_PASSWORD: "admineRconPassword!"   # ← must match rcon_password above
+      MEMORY: "4G"                           # JVM heap size
       # MAX_PLAYERS:       "20"
       # DIFFICULTY:        "normal"
       # MOTD:              "My Server"
@@ -149,9 +169,9 @@ Modpack platforms are configured entirely through `extra_env`. Each platform set
 image:
   type: "MODRINTH"
   version: "1.20.1"   # target Minecraft version, or LATEST
-  memory: "4G"
   extra_env:
     RCON_PASSWORD: "change-me!"
+    MEMORY: "4G"
     MODRINTH_MODPACK: "fabric-api"          # slug, project ID, page URL, or .mrpack URL
     MODRINTH_VERSION: ""                    # specific version ID — omit for latest
     MODRINTH_LOADER: "fabric"              # fabric | forge | quilt — omit for auto-detect
@@ -165,9 +185,9 @@ Requires a free API key from [console.curseforge.com](https://console.curseforge
 ```yaml
 image:
   type: "AUTO_CURSEFORGE"
-  memory: "4G"          # CurseForge packs often need ≥4G
   extra_env:
     RCON_PASSWORD: "change-me!"
+    MEMORY: "4G"          # CurseForge packs often need ≥4G
     CF_API_KEY: "your-curseforge-api-key"
     CF_SLUG: "all-the-mods-9"             # modpack slug from the CurseForge URL
     CF_FILE_ID: ""                         # pin a specific file ID — omit for latest
@@ -179,9 +199,9 @@ image:
 ```yaml
 image:
   type: "FTBA"
-  memory: "4G"
   extra_env:
     RCON_PASSWORD: "change-me!"
+    MEMORY: "4G"
     FTB_MODPACK_ID: "31"          # numerical modpack ID
     FTB_MODPACK_VERSION_ID: ""    # specific version — omit for latest
 ```
