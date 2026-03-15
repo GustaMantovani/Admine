@@ -1,46 +1,131 @@
-# Admine Discord Bot
+# Discord Bot
 
-Discord bot for managing Minecraft servers through the Admine. Provides a user-friendly interface for server control via Discord commands.
+The bot is the user-facing interface for Admine. It:
 
-## Available Commands
+- Receives Discord slash commands and translates them into Redis Pub/Sub messages or direct REST API calls
+- Subscribes to Pub/Sub channels and relays server events back to Discord channels
+- Manages bot configuration (admins, authorized channels) at runtime via Discord commands
 
-Type `/` in Discord to see all available commands.
+---
 
-### Server Management
-- `/on` - Start the Minecraft server
-- `/off` - Stop the Minecraft server  
-- `/restart` - Restart the Minecraft server
-- `/status` - Get current server status
-- `/info` - Get detailed server information
-- `/resources` - Get host CPU, memory and disk usage
-- `/logs [n]` - Show latest server logs (`n` optional, default: 20, range: 1-100, admin-only)
+## Package structure
 
-### Server Commands
-- `/command <mine_command>` - Execute a Minecraft command on the server
-  - Example: `/command say Hello World!`
-  - Example: `/command tp player1 player2`
+```
+bot/
+├── src/
+│   ├── main.py                          # Entrypoint: config, logging, signal handling
+│   └── bot/
+│       ├── bot.py                       # Bot lifecycle: constructs all services, starts tasks
+│       ├── config.py                    # JSON config loader with deep-merge defaults
+│       ├── logger.py                    # Loguru setup
+│       ├── exceptions.py                # ConfigError, ConfigFileError
+│       ├── models/                      # Pydantic data models
+│       │   ├── admine_message.py        # AdmineMessage envelope
+│       │   ├── minecraft_server_info.py # /info response model
+│       │   ├── minecraft_server_status.py # /status response model
+│       │   ├── resource_usage.py        # /resources response model
+│       │   └── logs_response.py         # /logs response model
+│       ├── handles/
+│       │   ├── command_handle.py        # Routes Discord commands → services
+│       │   └── event_handle.py          # Routes Pub/Sub events → Discord notifications
+│       └── services/
+│           ├── messaging/
+│           │   ├── message_service.py           # MessageService ABC
+│           │   └── discord_message_service.py   # discord.py implementation + factory
+│           ├── minecraft/
+│           │   ├── minecraft_server_service.py  # MinecraftServerService ABC
+│           │   └── server_handler_api_service.py # server_handler REST API client + factory
+│           ├── pubsub/
+│           │   ├── pubsub_service.py             # PubSubService ABC
+│           │   └── redis_pubsub_service.py       # Redis implementation + factory
+│           └── vpn/
+│               ├── vpn_service.py                # VpnService ABC
+│               └── api_vpn_service.py            # vpn_handler REST API client + factory
+└── tests/
+    └── ...                              # pytest test suite (unittest.mock)
+```
 
-### VPN Management
-- `/auth <vpn_id>` - Authorize a member on the VPN network
-- `/vpn_id` - Get the VPN network ID
-- `/server_ips` - Get server IP addresses in the VPN
+---
 
-### Administration (Admin Only)
-- `/adm <user>` - Grant admin privileges to a Discord user
-- `/add_channel` - Add current channel to allowed channels list
-- `/remove_channel` - Remove current channel from allowed channels list
+## Dependency flow
 
-## Setup
+```
+main.py
+  └─ Config(bot_config.json)
+  └─ Bot(config)
+       └─ PubSubServiceFactory.create(...)      ─► RedisPubSubService
+       └─ MinecraftServiceFactory.create(...)   ─► ServerHandlerApiService
+       └─ VpnServiceFactory.create(...)         ─► ApiVpnService
+       └─ CommandHandle(pubsub, minecraft, vpn, config)
+       └─ EventHandle(message_services)
+       └─ MessageServiceFactory.create(...)     ─► DiscordMessageService
+  └─ bot.start()
+       └─ message_service.connect()             ─► discord.py event loop (task)
+       └─ pubsub_service.listen_message(...)    ─► Redis subscription loop (task)
+```
 
-### Prerequisites
-- pyenv
-- poetry
-- git-hooks
-- Make
+The two async tasks run concurrently via `asyncio.gather`. Shutdown cancels both tasks, closes the Redis connection, and disconnects the Discord client.
 
-### Configuration
+---
 
-You can define only the required `discord` section. All other sections will fall back to sensible defaults identical to the example below (logging, providers, redis, minecraft, vpn). This means you do **not** need to define the full file unless you want to override defaults.
+## Service abstractions
+
+Each service domain has an ABC (Abstract Base Class) that the concrete implementation fulfills. Factories select the implementation based on the config's `providers` section, making it possible to swap implementations without touching handlers.
+
+| ABC | Config key | Implementation |
+|---|---|---|
+| `MessageService` | `providers.messaging` | `DiscordMessageService` (`DISCORD`) |
+| `PubSubService` | `providers.pubsub` | `RedisPubSubService` (`REDIS`) |
+| `MinecraftServerService` | `providers.minecraft` | `ServerHandlerApiService` (`REST`) |
+| `VpnService` | `providers.vpn` | `ApiVpnService` (`REST`) |
+
+---
+
+## CommandHandle
+
+`bot/handles/command_handle.py` — receives a command name + args from the message service and dispatches to a handler method via a string-keyed dictionary.
+
+Permission model: handlers decorated with `@admin_command` require the calling user's ID to be in `discord.administrators`. If not, the handler returns `"Unauthorized command usage"` without executing.
+
+| Command | Admin only | Action |
+|---|---|---|
+| `on` | yes | Publishes `AdmineMessage(tags=["server_on"])` to `server_channel` |
+| `off` | yes | Publishes `AdmineMessage(tags=["server_off"])` to `server_channel` |
+| `restart` | yes | Publishes `AdmineMessage(tags=["restart"])` to `server_channel` |
+| `command` | yes | Calls `MinecraftServerService.command()` (REST POST /command) |
+| `info` | no | Calls `MinecraftServerService.get_info()` (REST GET /info) |
+| `status` | no | Calls `MinecraftServerService.get_status()` (REST GET /status) |
+| `resources` | yes | Calls `MinecraftServerService.get_resources()` (REST GET /resources) |
+| `logs` | yes | Calls `MinecraftServerService.get_logs(n)` (REST GET /logs?n=N) |
+| `install_mod` | yes | Calls `MinecraftServerService.install_mod_url()` or `install_mod_file()` |
+| `list_mods` | yes | Calls `MinecraftServerService.list_mods()` |
+| `remove_mod` | yes | Calls `MinecraftServerService.remove_mod(filename)` |
+| `auth` | no | Calls `VpnService.auth_member(id)` (REST POST /auth-member) |
+| `vpn_id` | no | Calls `VpnService.get_vpn_id()` (REST GET /vpn-id) |
+| `server_ips` | no | Calls `VpnService.get_server_ips()` (REST GET /server-ips) |
+| `adm` | yes | Appends user ID to `discord.administrators` in config and saves |
+| `add_channel` | yes | Appends channel ID to `discord.channel_ids` in config and saves |
+| `remove_channel` | yes | Removes channel ID from `discord.channel_ids` in config and saves |
+
+---
+
+## EventHandle
+
+`bot/handles/event_handle.py` — receives an `AdmineMessage` from the Pub/Sub subscription and dispatches based on the message's `tags` list. A single message can trigger multiple handlers.
+
+| Tag | Handler | Discord notification |
+|---|---|---|
+| `server_on` | `__server_on` | `"Server has started with message: <payload>"` |
+| `server_off` | `__server_off` | `"Server has stopped with message: <payload>"` |
+| `notification` | `__notification` | The message payload verbatim |
+| `new_server_ips` | `__new_server_ips` | `"Received new server IPs: <ip1,ip2>"` |
+| `mod_install_result` | `__mod_install_result` | `"📦 Mod Install Result: <payload>"` |
+
+---
+
+## Configuration
+
+You only need to define the `discord` section. All other sections fall back to defaults.
 
 **Minimal config (required only):**
 
@@ -49,46 +134,34 @@ You can define only the required `discord` section. All other sections will fall
     "discord": {
         "token": "YOUR_DISCORD_BOT_TOKEN",
         "commandprefix": "!mc",
-        "administrators": [
-            "admin_user_id_1",
-            "admin_user_id_2"
-        ],
-        "channel_ids": [
-            "allowed_channel_id_1"
-        ]
+        "administrators": ["admin_user_id"],
+        "channel_ids": ["allowed_channel_id"]
     }
 }
 ```
 
-> **Note:** By default, SSL certificate verification is **disabled** to avoid issues in environments without CA certificates (e.g., compiled binaries, containers). A warning will be logged when SSL verification is off. To enable it, add `"security": {"ssl_verify": true}` to your config.
-
-**Full config example (overrides defaults):**
+**Full reference with defaults:**
 
 ```json
 {
     "logging": {
-        "level": "DEBUG",
-        "file": "./bot.log"
+        "level": "INFO",
+        "file": "/tmp/admine/logs/bot.log"
     },
     "security": {
-        "ssl_verify": true
+        "ssl_verify": false
     },
     "providers": {
         "messaging": "DISCORD",
-        "pubsub": "REDIS",
+        "pubsub":    "REDIS",
         "minecraft": "REST",
-        "vpn": "REST"
+        "vpn":       "REST"
     },
     "discord": {
-        "token": "YOUR_DISCORD_BOT_TOKEN",
-        "commandprefix": "!mc",
-        "administrators": [
-            "admin_user_id_1",
-            "admin_user_id_2"
-        ],
-        "channel_ids": [
-            "allowed_channel_id_1"
-        ]
+        "token":          "YOUR_DISCORD_BOT_TOKEN",
+        "commandprefix":  "!mc",
+        "administrators": [],
+        "channel_ids":    []
     },
     "redis": {
         "connectionstring": "localhost:6379"
@@ -104,74 +177,25 @@ You can define only the required `discord` section. All other sections will fall
 }
 ```
 
-### Run the Bot
+> **Note:** SSL certificate verification is disabled by default. Set `"security": {"ssl_verify": true}` to enable it.
+
+Config is read from `./bot_config.json` by default. The path can be overridden as a constructor argument. Runtime changes (adding admins, channels) are persisted back to the same file via `Config.save()`.
+
+---
+
+## Build and test
 
 ```bash
-# Using Make
-make run
-
-# Using Poetry directly
-poetry run python src/main.py
+make install      # Install dependencies via Poetry
+make run          # Start the bot
+make test         # Run pytest suite
+make check        # Lint + format check (Ruff)
+make fix          # Apply all auto-fixable Ruff fixes
+make git-hooks    # Install pre-commit hooks
 ```
 
-## Development
-
-### Git Hooks (Recommended)
-
-The project uses pre-commit hooks for code quality enforcement:
+Run a single test:
 
 ```bash
-# Install git hooks (automatically runs on commits)
-make git-hooks
-# or
-poetry run pre-commit install
+poetry run pytest tests/test_command_handle.py -v
 ```
-
-This will automatically run:
-- **Ruff linting** with auto-fix
-- **Ruff formatting** on all staged files
-
-**Before Submitting**:
-   ```bash
-   make check     # Ensure all checks pass
-   make test      # Run full test suite
-   ```
-
-## Architecture
-
-### How It Works
-
-The bot uses a layered architecture with abstractions and providers:
-
-**Core Components:**
-
-1. **Abstractions Layer** - Service interfaces in `external/abstractions/`
-   - `MessageService`: Discord communication
-   - `PubSubService`: Redis pub/sub for async events
-   - `MinecraftServerService`: REST API for server control
-   - `VpnService`: VPN network management
-
-2. **Providers Layer** - Concrete implementations using factory pattern
-   - Swappable implementations without changing core logic
-   - Configure providers via `bot_config.json`
-
-3. **Handlers** - Command and event processing
-   - `CommandHandle`: Processes user commands, validates admin permissions, publishes to pub/sub
-   - `EventHandle`: Listens to server events, broadcasts notifications to Discord
-
-### Handlers
-
-Handlers are the orchestrators that contain the business logic for each command and route pub/sub events and message service commands to the methods that execute the corresponding action. The bot uses two handlers:
-
-- `CommandHandle` receives commands from Message Service and routes them to appropriate services. It uses a dictionary that maps command names to handler methods. When a command arrives:
-
-    1. The command string is looked up in the `__HANDLES` dictionary
-    2. Permission validation occurs via decorator (`@admin_command`)
-    3. The corresponding handler method is invoked with arguments
-
-- `EventHandle` subscribes to the Redis pub/sub channel and listens for system events. When an event arrives:
-
-    1. The event's `tags` list is iterated (one event can trigger multiple handlers)
-    2. Each tag is looked up in the `__HANDLES` dictionary
-    3. Corresponding handler method is invoked with the full event object
-    4. Handler usually calls `__notify_all()` which broadcasts to all registered `MessageService` instances
