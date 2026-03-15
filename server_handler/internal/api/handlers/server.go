@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/GustaMantovani/Admine/server_handler/internal"
 	"github.com/GustaMantovani/Admine/server_handler/internal/api/models"
+	"github.com/GustaMantovani/Admine/server_handler/internal/server"
 	"github.com/gin-gonic/gin"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
@@ -21,26 +21,25 @@ const (
 
 // ServerHandler handles server-related API endpoints
 type ServerHandler struct {
+	server server.MinecraftServer
 }
 
-// NewApiHandler creates a new ServerHandler instance
-func NewApiHandler() *ServerHandler {
-	return &ServerHandler{}
+// NewServerHandler creates a new ServerHandler
+func NewServerHandler(srv server.MinecraftServer) *ServerHandler {
+	return &ServerHandler{server: srv}
 }
 
-// GetInfo handles GET /info endpoint
+// GetInfo handles GET /info
 func (h *ServerHandler) GetInfo(c *gin.Context) {
 	slog.Info("GET /info endpoint called")
 
-	ctx := internal.Get()
-	if ctx.MinecraftServer == nil {
+	if h.server == nil {
 		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
 
-	// Get server info through the MinecraftServer interface
-	serverInfo, err := (*ctx.MinecraftServer).Info(*ctx.MainCtx)
+	serverInfo, err := h.server.Info(c.Request.Context())
 	if err != nil {
 		slog.Error("Failed to get server info", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server info: "+err.Error()))
@@ -51,19 +50,17 @@ func (h *ServerHandler) GetInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, serverInfo)
 }
 
-// GetStatus handles GET /status endpoint
+// GetStatus handles GET /status
 func (h *ServerHandler) GetStatus(c *gin.Context) {
 	slog.Info("GET /status endpoint called")
 
-	ctx := internal.Get()
-	if ctx.MinecraftServer == nil {
+	if h.server == nil {
 		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
 
-	// Get server status through the MinecraftServer interface
-	serverStatus, err := (*ctx.MinecraftServer).Status(*ctx.MainCtx)
+	serverStatus, err := h.server.Status(c.Request.Context())
 	if err != nil {
 		slog.Error("Failed to get server status", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server status: "+err.Error()))
@@ -74,27 +71,24 @@ func (h *ServerHandler) GetStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, serverStatus)
 }
 
-// GetLogs handles GET /logs endpoint
+// GetLogs handles GET /logs?n=<int>
 func (h *ServerHandler) GetLogs(c *gin.Context) {
 	slog.Info("GET /logs endpoint called")
 
-	ctx := internal.Get()
-	if ctx.MinecraftServer == nil {
+	if h.server == nil {
 		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
 
 	n := defaultLogLines
-	nRaw := c.Query("n")
-	if nRaw != "" {
+	if nRaw := c.Query("n"); nRaw != "" {
 		parsedN, err := strconv.Atoi(nRaw)
 		if err != nil {
 			slog.Error("Invalid query param n", "n", nRaw, "error", err.Error())
 			c.JSON(http.StatusBadRequest, models.NewErrorResponse("Invalid query param 'n': must be an integer between 1 and 100"))
 			return
 		}
-
 		n = parsedN
 	}
 
@@ -103,7 +97,7 @@ func (h *ServerHandler) GetLogs(c *gin.Context) {
 		return
 	}
 
-	logs, err := (*ctx.MinecraftServer).Logs(*ctx.MainCtx, n)
+	logs, err := h.server.Logs(c.Request.Context(), n)
 	if err != nil {
 		slog.Error("Failed to get server logs", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to get server logs: "+err.Error()))
@@ -114,7 +108,7 @@ func (h *ServerHandler) GetLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, models.NewLogsResponse(logs))
 }
 
-// PostCommand handles POST /command endpoint
+// PostCommand handles POST /command
 func (h *ServerHandler) PostCommand(c *gin.Context) {
 	slog.Info("POST /command endpoint called")
 
@@ -125,15 +119,13 @@ func (h *ServerHandler) PostCommand(c *gin.Context) {
 		return
 	}
 
-	ctx := internal.Get()
-	if ctx.MinecraftServer == nil {
+	if h.server == nil {
 		slog.Error("MinecraftServer is not initialized")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Minecraft server not initialized"))
 		return
 	}
 
-	// Execute command through the MinecraftServer interface
-	result, err := (*ctx.MinecraftServer).ExecuteCommand(*ctx.MainCtx, command.Command)
+	result, err := h.server.ExecuteCommand(c.Request.Context(), command.Command)
 	if err != nil {
 		slog.Error("Failed to execute command", "command", command.Command, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse("Failed to execute command: "+err.Error()))
@@ -144,7 +136,7 @@ func (h *ServerHandler) PostCommand(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetResourceUsage handles GET /resources endpoint
+// GetResourceUsage handles GET /resources
 func (h *ServerHandler) GetResourceUsage(c *gin.Context) {
 	slog.Info("GET /resources endpoint called")
 

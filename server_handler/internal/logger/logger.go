@@ -1,4 +1,4 @@
-package pkg
+package logger
 
 import (
 	"io"
@@ -22,10 +22,7 @@ func Setup(logFile string, logLevel string) error {
 	}
 
 	handler := slog.NewTextHandler(multiWriter, opts)
-	l := slog.New(handler)
-
-	// Set global slog
-	slog.SetDefault(l)
+	slog.SetDefault(slog.New(handler))
 
 	return nil
 }

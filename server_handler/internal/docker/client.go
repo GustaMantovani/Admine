@@ -1,4 +1,4 @@
-package pkg
+package docker
 
 import (
 	"bufio"
@@ -19,21 +19,17 @@ import (
 )
 
 func WriteToContainer(ctx context.Context, containerName string, input string) error {
-
-	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
 	defer cli.Close()
 
-	// Find container ID by name
 	containerID, err := getContainerID(containerName, cli, ctx)
 	if err != nil {
 		return err
 	}
 
-	// Attach to container stdin
 	hijackedResp, err := cli.ContainerAttach(ctx, containerID, container.AttachOptions{
 		Stream: true,
 		Stdin:  true,
@@ -45,14 +41,12 @@ func WriteToContainer(ctx context.Context, containerName string, input string) e
 	}
 	defer hijackedResp.Close()
 
-	// Write input to container
 	input = input + "\n"
 	_, err = io.WriteString(hijackedResp.Conn, input)
 	if err != nil {
 		return err
 	}
 
-	// Optionally close stdin write
 	if closer, ok := hijackedResp.Conn.(interface{ CloseWrite() error }); ok {
 		if err := closer.CloseWrite(); err != nil {
 			return err
@@ -62,23 +56,18 @@ func WriteToContainer(ctx context.Context, containerName string, input string) e
 	return nil
 }
 
-// ReadLastContainerLine reads the last line of logs from a container
 func ReadLastContainerNLines(containerName string, n uint, ctx context.Context) ([]string, error) {
-
-	// Create Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 	defer cli.Close()
 
-	// Find container ID by name
 	containerID, err := getContainerID(containerName, cli, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get container logs
 	out, err := cli.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: false,
@@ -90,8 +79,6 @@ func ReadLastContainerNLines(containerName string, n uint, ctx context.Context) 
 	}
 	defer out.Close()
 
-	// Docker logs come with an 8-byte header per stream
-	// We need to skip this header to get the actual content
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, out)
 	if err != nil {
@@ -102,7 +89,6 @@ func ReadLastContainerNLines(containerName string, n uint, ctx context.Context) 
 	var lines []string
 	for scanner.Scan() {
 		line := scanner.Text()
-		// Skip Docker header bytes (usually starts with special characters)
 		if len(line) > 8 && line[0] < 32 {
 			line = line[8:]
 		}
@@ -120,7 +106,6 @@ func ReadLastContainerNLines(containerName string, n uint, ctx context.Context) 
 	return lines, nil
 }
 
-// GetZeroTierNodeID gets the ZeroTier node ID from a container
 func GetZeroTierNodeID(containerName string) (string, error) {
 	cmd := exec.Command("docker", "exec", "-i", containerName, "/bin/bash", "-c", "zerotier-cli info")
 	output, err := cmd.CombinedOutput()
@@ -139,12 +124,10 @@ func GetZeroTierNodeID(containerName string) (string, error) {
 	return parts[2], nil
 }
 
-// WaitForContainerStart waits for a container to start and be in running state
 func WaitForContainerStart(containerName string, timeout time.Duration, ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	// Create Docker client
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -154,7 +137,6 @@ func WaitForContainerStart(containerName string, timeout time.Duration, ctx cont
 	}
 	defer cli.Close()
 
-	// Check if container exists
 	_, err = cli.ContainerInspect(ctx, containerName)
 	if err != nil {
 		return fmt.Errorf("container '%s' not found: %w", containerName, err)
@@ -163,7 +145,6 @@ func WaitForContainerStart(containerName string, timeout time.Duration, ctx cont
 	return waitForContainerRunning(cli, containerName, ctx)
 }
 
-// getContainerID finds a container ID by name
 func getContainerID(containerName string, cli *client.Client, ctx context.Context) (string, error) {
 	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
@@ -179,7 +160,6 @@ func getContainerID(containerName string, cli *client.Client, ctx context.Contex
 	return "", fmt.Errorf("container '%s' not found", containerName)
 }
 
-// waitForContainerRunning waits for a container to be in running state
 func waitForContainerRunning(cli *client.Client, containerName string, ctx context.Context) error {
 	filter := filters.NewArgs(filters.Arg("name", containerName))
 
@@ -191,7 +171,6 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			// List containers
 			containers, err := cli.ContainerList(ctx, container.ListOptions{
 				Filters: filter,
 				All:     true,
@@ -202,10 +181,10 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 			}
 
 			if len(containers) > 0 {
-				container := containers[0]
-				slog.Info("Container status", "container", containerName, "status", container.State)
+				c := containers[0]
+				slog.Info("Container status", "container", containerName, "status", c.State)
 
-				if container.State == "running" {
+				if c.State == "running" {
 					slog.Info("Container is now running", "container", containerName)
 					return nil
 				}
@@ -216,7 +195,6 @@ func waitForContainerRunning(cli *client.Client, containerName string, ctx conte
 	}
 }
 
-// StreamContainerLogs streams logs from a container and passes each line to a callback.
 func StreamContainerLogs(ctx context.Context, containerName string, onLine func(string)) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {

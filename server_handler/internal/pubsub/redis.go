@@ -1,4 +1,4 @@
-package pubsub_impls
+package pubsub
 
 import (
 	"context"
@@ -6,17 +6,16 @@ import (
 	"fmt"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
-	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub/models"
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisPubSub struct {
+type redisPubSub struct {
 	client *redis.Client
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
-func NewRedisPubSub(c config.RedisConfig, ctx context.Context) *RedisPubSub {
+func newRedisPubSub(c config.RedisConfig, ctx context.Context) *redisPubSub {
 	ctx, cancel := context.WithCancel(ctx)
 
 	client := redis.NewClient(&redis.Options{
@@ -25,14 +24,14 @@ func NewRedisPubSub(c config.RedisConfig, ctx context.Context) *RedisPubSub {
 		DB:       c.Db,
 	})
 
-	return &RedisPubSub{
+	return &redisPubSub{
 		client: client,
 		ctx:    ctx,
 		cancel: cancel,
 	}
 }
 
-func (r *RedisPubSub) Publish(topic string, msg *models.AdmineMessage) error {
+func (r *redisPubSub) Publish(topic string, msg *AdmineMessage) error {
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %w", err)
@@ -41,11 +40,11 @@ func (r *RedisPubSub) Publish(topic string, msg *models.AdmineMessage) error {
 	return r.client.Publish(r.ctx, topic, data).Err()
 }
 
-func (r *RedisPubSub) Subscribe(topics ...string) (<-chan *models.AdmineMessage, error) {
-	ch := make(chan *models.AdmineMessage)
+func (r *redisPubSub) Subscribe(topics ...string) (<-chan *AdmineMessage, error) {
+	ch := make(chan *AdmineMessage)
 
-	pubsub := r.client.Subscribe(r.ctx, topics...)
-	_, err := pubsub.Receive(r.ctx)
+	sub := r.client.Subscribe(r.ctx, topics...)
+	_, err := sub.Receive(r.ctx)
 	if err != nil {
 		close(ch)
 		return nil, fmt.Errorf("failed to subscribe: %w", err)
@@ -58,11 +57,11 @@ func (r *RedisPubSub) Subscribe(topics ...string) (<-chan *models.AdmineMessage,
 			case <-r.ctx.Done():
 				return
 			default:
-				msg, err := pubsub.ReceiveMessage(r.ctx)
+				msg, err := sub.ReceiveMessage(r.ctx)
 				if err != nil {
 					continue
 				}
-				var admMsg models.AdmineMessage
+				var admMsg AdmineMessage
 				if err := json.Unmarshal([]byte(msg.Payload), &admMsg); err != nil {
 					continue
 				}
@@ -74,7 +73,7 @@ func (r *RedisPubSub) Subscribe(topics ...string) (<-chan *models.AdmineMessage,
 	return ch, nil
 }
 
-func (r *RedisPubSub) Close() error {
+func (r *redisPubSub) Close() error {
 	r.cancel()
 	return r.client.Close()
 }

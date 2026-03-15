@@ -1,21 +1,18 @@
-package models
+package pubsub
 
-import (
-	"encoding/json"
+import "encoding/json"
 
-	"github.com/GustaMantovani/Admine/server_handler/internal"
-)
-
+// AdmineMessage is the message format used across all Admine pub/sub channels
 type AdmineMessage struct {
 	Origin  string   `json:"origin"`
 	Tags    []string `json:"tags"`
 	Message string   `json:"message"`
 }
 
-func NewAdmineMessage(tags []string, message string) *AdmineMessage {
-	ctx := internal.Get()
+// NewAdmineMessage creates an AdmineMessage with an explicit origin
+func NewAdmineMessage(origin string, tags []string, message string) *AdmineMessage {
 	return &AdmineMessage{
-		Origin:  ctx.Config.App.SelfOriginName,
+		Origin:  origin,
 		Tags:    tags,
 		Message: message,
 	}
@@ -30,9 +27,8 @@ func (m *AdmineMessage) HasTag(tag string) bool {
 	return false
 }
 
-func (msg AdmineMessage) ToString() string {
-
-	bytes, err := json.Marshal(msg)
+func (m AdmineMessage) ToString() string {
+	bytes, err := json.Marshal(m)
 	if err != nil {
 		return "{}"
 	}

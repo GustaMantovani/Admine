@@ -7,37 +7,30 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/GustaMantovani/Admine/server_handler/internal"
-	"github.com/GustaMantovani/Admine/server_handler/internal/pubsub"
+	"github.com/GustaMantovani/Admine/server_handler/internal/config"
 )
 
-// Server represents the HTTP API server
+// Server wraps the HTTP server
 type Server struct {
 	server *http.Server
 }
 
-// NewServer creates a new API server instance
-func NewServer(pubsubService pubsub.PubSubService) *Server {
-	cfg := internal.Get().Config
-	router := SetupRoutes(pubsubService)
+// NewServer creates a new API Server
+func NewServer(cfg config.WebServerConfig, router http.Handler) *Server {
+	address := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
-	address := fmt.Sprintf("%s:%d", cfg.WebSever.Host, cfg.WebSever.Port)
-
-	server := &http.Server{
-		Addr:    address,
-		Handler: router,
-		// Timeouts
+	s := &http.Server{
+		Addr:         address,
+		Handler:      router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	return &Server{
-		server: server,
-	}
+	return &Server{server: s}
 }
 
-// Start starts the HTTP server
+// Start starts the HTTP server (blocking)
 func (s *Server) Start() error {
 	slog.Info("Starting HTTP server", "addr", s.server.Addr)
 
@@ -48,7 +41,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
-// StartBackground starts the HTTP server in the background
+// StartBackground starts the HTTP server in a goroutine
 func (s *Server) StartBackground() error {
 	slog.Info("Starting HTTP server in background", "addr", s.server.Addr)
 
@@ -61,7 +54,7 @@ func (s *Server) StartBackground() error {
 	return nil
 }
 
-// Stop gracefully stops the HTTP server
+// Stop gracefully shuts down the HTTP server
 func (s *Server) Stop(ctx context.Context) error {
 	slog.Info("Stopping HTTP server")
 
