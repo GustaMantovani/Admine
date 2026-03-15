@@ -1,3 +1,5 @@
+import asyncio
+import signal
 import sys
 import traceback
 
@@ -14,8 +16,13 @@ async def main():
     setup_logging(config.get("logging.file", "/tmp/bot.log"), log_level=log_level)
     logger.info("Starting Admine Bot")
 
+    bot = Bot(config)
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(bot.shutdown()))
+
     try:
-        bot = Bot()
         await bot.start()
     except Exception as e:
         logger.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
@@ -23,6 +30,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())

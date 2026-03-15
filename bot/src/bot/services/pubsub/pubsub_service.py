@@ -44,3 +44,7 @@ class PubSubService(ABC):
     @abstractmethod
     def listen_message(self, callback_function: Callable[[AdmineMessage], None] = None):
         pass
+
+    @abstractmethod
+    def close(self):
+        pass

@@ -47,7 +47,10 @@ def mock_services():
 @pytest.fixture
 def command_handle(mock_services):
     """Creates an instance of CommandHandle with mocked services."""
-    return CommandHandle(mock_services["pubsub"], mock_services["minecraft"], mock_services["vpn"])
+    from unittest.mock import MagicMock
+
+    mock_config = MagicMock()
+    return CommandHandle(mock_services["pubsub"], mock_services["minecraft"], mock_services["vpn"], mock_config)
 
 
 class TestCommandHandleBasics:

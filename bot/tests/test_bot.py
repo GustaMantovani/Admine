@@ -5,19 +5,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from bot.bot import Bot
-from bot.config import Config
-from bot.external.providers.message_service_providers.message_service_provider_type import (
-    MessageServiceProviderType,
-)
-from bot.external.providers.minecraft_server_service_providers.minecraft_server_service_provider_type import (
-    MinecraftServiceProviderType,
-)
-from bot.external.providers.pubsub_service_providers.pubsub_service_provider_type import (
-    PubSubServiceProviderType,
-)
-from bot.external.providers.vpn_service_providers.vpn_service_provider_type import (
-    VpnServiceProviderType,
-)
+from bot.services.messaging.discord_message_service import MessageServiceProviderType
+from bot.services.minecraft.server_handler_api_service import MinecraftServiceProviderType
+from bot.services.pubsub.redis_pubsub_service import PubSubServiceProviderType
+from bot.services.vpn.api_vpn_service import VpnServiceProviderType
 
 
 @pytest.fixture
@@ -46,12 +37,17 @@ def temp_bot_config_file(sample_bot_config):
         os.remove(temp_file)
 
 
-@pytest.fixture(autouse=True)
-def reset_config_singleton():
-    """Reset Config singleton before each test."""
-    Config._instance = None
-    yield
-    Config._instance = None
+@pytest.fixture
+def mock_config():
+    """Creates a mock Config for the bot."""
+    config = MagicMock()
+    config.get.side_effect = lambda key, default=None: {
+        "providers.pubsub": "REDIS",
+        "providers.minecraft": "REST",
+        "providers.vpn": "REST",
+        "providers.messaging": "DISCORD",
+    }.get(key, default)
+    return config
 
 
 @pytest.fixture
@@ -74,25 +70,14 @@ def mock_factories():
 class TestBotInitialization:
     """Bot initialization tests."""
 
-    @patch("bot.bot.Config")
     @patch("bot.bot.PubSubServiceFactory.create")
     @patch("bot.bot.MinecraftServiceFactory.create")
     @patch("bot.bot.VpnServiceFactory.create")
     @patch("bot.bot.MessageServiceFactory.create")
     def test_bot_initialization_creates_all_services(
-        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config_class
+        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config
     ):
         # Tests that initialization creates all necessary instances.
-        # Configure mocks
-        mock_config = MagicMock()
-        mock_config.get.side_effect = lambda key, default=None: {
-            "providers.pubsub": "REDIS",
-            "providers.minecraft": "REST",
-            "providers.vpn": "REST",
-            "providers.messaging": "DISCORD",
-        }.get(key, default)
-        mock_config_class.return_value = mock_config
-
         mock_pubsub = MagicMock()
         mock_pubsub_factory.return_value = mock_pubsub
 
@@ -106,7 +91,7 @@ class TestBotInitialization:
         mock_msg_factory.return_value = mock_message
 
         # Create the bot
-        bot = Bot()
+        bot = Bot(mock_config)
 
         # Verify all factories were called with expected provider types
         mock_pubsub_factory.assert_called_once_with(PubSubServiceProviderType.REDIS, mock_config)
@@ -120,32 +105,21 @@ class TestBotInitialization:
         assert bot._Bot__vpn_service == mock_vpn
         assert mock_message in bot._Bot__message_services
 
-    @patch("bot.bot.Config")
     @patch("bot.bot.PubSubServiceFactory.create")
     @patch("bot.bot.MinecraftServiceFactory.create")
     @patch("bot.bot.VpnServiceFactory.create")
     @patch("bot.bot.MessageServiceFactory.create")
     def test_bot_initialization_creates_handles(
-        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config_class
+        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config
     ):
         """Tests that handles are created during initialization."""
-        # Configure mocks
-        mock_config = MagicMock()
-        mock_config.get.side_effect = lambda key, default=None: {
-            "providers.pubsub": "REDIS",
-            "providers.minecraft": "REST",
-            "providers.vpn": "REST",
-            "providers.messaging": "DISCORD",
-        }.get(key, default)
-        mock_config_class.return_value = mock_config
-
         mock_pubsub_factory.return_value = MagicMock()
         mock_mc_factory.return_value = MagicMock()
         mock_vpn_factory.return_value = MagicMock()
         mock_msg_factory.return_value = MagicMock()
 
         # Create the bot
-        bot = Bot()
+        bot = Bot(mock_config)
 
         # Verify that handles were created
         assert bot._Bot__command_handle is not None
@@ -155,32 +129,21 @@ class TestBotInitialization:
 class TestBotProviderConfiguration:
     """Provider configuration tests."""
 
-    @patch("bot.bot.Config")
     @patch("bot.bot.PubSubServiceFactory.create")
     @patch("bot.bot.MinecraftServiceFactory.create")
     @patch("bot.bot.VpnServiceFactory.create")
     @patch("bot.bot.MessageServiceFactory.create")
     def test_bot_uses_config_provider_types(
-        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config_class
+        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config
     ):
         # Tests that bot uses provider types from the configuration.
-        # Configure mocks with specific values
-        mock_config = MagicMock()
-        mock_config.get.side_effect = lambda key, default=None: {
-            "providers.pubsub": "REDIS",
-            "providers.minecraft": "REST",
-            "providers.vpn": "REST",
-            "providers.messaging": "DISCORD",
-        }.get(key, default)
-        mock_config_class.return_value = mock_config
-
         mock_pubsub_factory.return_value = MagicMock()
         mock_mc_factory.return_value = MagicMock()
         mock_vpn_factory.return_value = MagicMock()
         mock_msg_factory.return_value = MagicMock()
 
         # Create the bot
-        Bot()
+        Bot(mock_config)
 
         # Verify correct provider types were used
         mock_pubsub_factory.assert_called_once()
@@ -191,32 +154,21 @@ class TestBotProviderConfiguration:
         call_args = mock_mc_factory.call_args[0]
         assert call_args[0] == MinecraftServiceProviderType.REST
 
-    @patch("bot.bot.Config")
     @patch("bot.bot.PubSubServiceFactory.create")
     @patch("bot.bot.MinecraftServiceFactory.create")
     @patch("bot.bot.VpnServiceFactory.create")
     @patch("bot.bot.MessageServiceFactory.create")
     def test_bot_uses_default_provider_types(
-        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config_class
+        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config
     ):
         # Tests that the bot uses default provider types when config doesn't specify.
-        # Configure the mock to return default values defined in Bot
-        mock_config = MagicMock()
-        mock_config.get.side_effect = lambda key, default=None: {
-            "providers.pubsub": "REDIS",
-            "providers.minecraft": "REST",  # Default in code is REST, not SERVER_HANDLER_API
-            "providers.vpn": "REST",  # Default in code is REST, not VPN_API
-            "providers.messaging": "DISCORD",
-        }.get(key, default)
-        mock_config_class.return_value = mock_config
-
         mock_pubsub_factory.return_value = MagicMock()
         mock_mc_factory.return_value = MagicMock()
         mock_vpn_factory.return_value = MagicMock()
         mock_msg_factory.return_value = MagicMock()
 
         # Create the bot
-        Bot()
+        Bot(mock_config)
 
         # Verify defaults were used
         mock_pubsub_factory.assert_called_once()
@@ -231,25 +183,14 @@ class TestBotProviderConfiguration:
 class TestBotIntegration:
     """Integration tests for bot components."""
 
-    @patch("bot.bot.Config")
     @patch("bot.bot.PubSubServiceFactory.create")
     @patch("bot.bot.MinecraftServiceFactory.create")
     @patch("bot.bot.VpnServiceFactory.create")
     @patch("bot.bot.MessageServiceFactory.create")
     def test_command_handle_receives_correct_services(
-        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config_class
+        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config
     ):
         # Tests that CommandHandle receives correct services.
-        # Configure mocks
-        mock_config = MagicMock()
-        mock_config.get.side_effect = lambda key, default=None: {
-            "providers.pubsub": "REDIS",
-            "providers.minecraft": "REST",
-            "providers.vpn": "REST",
-            "providers.messaging": "DISCORD",
-        }.get(key, default)
-        mock_config_class.return_value = mock_config
-
         mock_pubsub = MagicMock()
         mock_minecraft = MagicMock()
         mock_vpn = MagicMock()
@@ -260,7 +201,7 @@ class TestBotIntegration:
         mock_msg_factory.return_value = MagicMock()
 
         # Create the bot
-        bot = Bot()
+        bot = Bot(mock_config)
 
         # Verify CommandHandle has correct services
         command_handle = bot._Bot__command_handle
@@ -268,25 +209,14 @@ class TestBotIntegration:
         assert command_handle._CommandHandle__minecraft_info_service == mock_minecraft
         assert command_handle._CommandHandle__vpn_service == mock_vpn
 
-    @patch("bot.bot.Config")
     @patch("bot.bot.PubSubServiceFactory.create")
     @patch("bot.bot.MinecraftServiceFactory.create")
     @patch("bot.bot.VpnServiceFactory.create")
     @patch("bot.bot.MessageServiceFactory.create")
     def test_event_handle_receives_message_services(
-        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config_class
+        self, mock_msg_factory, mock_vpn_factory, mock_mc_factory, mock_pubsub_factory, mock_config
     ):
         # Tests that EventHandle receives the correct message services.
-        # Configure mocks
-        mock_config = MagicMock()
-        mock_config.get.side_effect = lambda key, default=None: {
-            "providers.pubsub": "REDIS",
-            "providers.minecraft": "REST",
-            "providers.vpn": "REST",
-            "providers.messaging": "DISCORD",
-        }.get(key, default)
-        mock_config_class.return_value = mock_config
-
         mock_message_service = MagicMock()
 
         mock_pubsub_factory.return_value = MagicMock()
@@ -295,7 +225,7 @@ class TestBotIntegration:
         mock_msg_factory.return_value = mock_message_service
 
         # Create the bot
-        bot = Bot()
+        bot = Bot(mock_config)
 
         # Verify EventHandle has the correct message services
         event_handle = bot._Bot__event_handle

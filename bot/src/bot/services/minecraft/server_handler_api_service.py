@@ -1,13 +1,17 @@
 import asyncio
+from enum import Enum, auto
+from typing import Any, Callable, Dict
 
 import requests
 from loguru import logger
 
-from bot.external.abstractions.minecraft_server_service import MinecraftServerService
+from bot.config import Config
+from bot.exceptions import MinecraftInfoServiceFactoryException
 from bot.models.logs_response import LogsResponse
 from bot.models.minecraft_server_info import MinecraftServerInfo
 from bot.models.minecraft_server_status import MinecraftServerStatus
 from bot.models.resource_usage import ResourceUsage
+from bot.services.minecraft.minecraft_server_service import MinecraftServerService
 
 
 class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
@@ -145,3 +149,28 @@ class ServerHandlerApiMinecraftServerServiceProvider(MinecraftServerService):
 
     def __str__(self):
         return f"ServerHandlerApiMinecraftServerServiceProvider(api_url={self.api_url})"
+
+
+class MinecraftServiceProviderType(Enum):
+    REST = auto()
+
+
+class MinecraftServiceFactory:
+    __PROVIDER_FACTORIES: Dict[MinecraftServiceProviderType, Callable[[Config], Any]] = {
+        MinecraftServiceProviderType.REST: lambda config: ServerHandlerApiMinecraftServerServiceProvider(
+            config.get("minecraft.connectionstring", "http://localhost:3000"),
+            config.get("minecraft.token", ""),
+        ),
+    }
+
+    @staticmethod
+    def create(provider_type: MinecraftServiceProviderType, config: Config) -> MinecraftServerService:
+        factory = MinecraftServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
+        if factory:
+            try:
+                return factory(config)
+            except Exception as e:
+                logger.error(f"Error creating Minecraft Info provider {provider_type}: {e}")
+                raise MinecraftInfoServiceFactoryException(provider_type, f"Failed to instantiate provider: {e}") from e
+        logger.error(f"Unknown MinecraftServiceProviderType requested: {provider_type}")
+        raise MinecraftInfoServiceFactoryException(provider_type, "Unknown MinecraftServiceProviderType")

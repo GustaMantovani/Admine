@@ -40,3 +40,7 @@ class MessageService(ABC):
         callback_function: Callable[[str, Optional[List[str]], str, List[str]], None] = None,
     ):
         pass
+
+    @abstractmethod
+    async def disconnect(self):
+        pass

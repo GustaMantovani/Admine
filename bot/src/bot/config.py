@@ -6,8 +6,6 @@ from bot.exceptions import ConfigError, ConfigFileError
 
 
 class Config:
-    _instance = None
-
     __DEFAULT_CONFIG: Dict[str, Any] = {
         "logging": {"level": "INFO", "file": "/tmp/admine/logs/bot.log"},
         "security": {"ssl_verify": False},
@@ -22,19 +20,11 @@ class Config:
         "vpn": {"connectionstring": "http://localhost:9000", "token": ""},
     }
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(Config, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self, config_file: str = "./bot_config.json"):
-        if self._initialized:
-            return
+        self.__config_file = config_file
         loaded_config = self.__load_from_json(config_file) or {}
         self.__config = self.__merge_defaults(self.__DEFAULT_CONFIG, loaded_config)
         self.__validate_required()
-        self._initialized = True
 
     def __load_from_json(self, config_file: str) -> Optional[Dict[str, Any]]:
         if os.path.exists(config_file):
@@ -79,3 +69,7 @@ class Config:
             if value is None:
                 return default
         return value
+
+    def save(self) -> None:
+        with open(self.__config_file, "w") as f:
+            json.dump(self.__config, f, indent=4)

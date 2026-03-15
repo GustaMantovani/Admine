@@ -1,17 +1,20 @@
 import asyncio
 import ssl
-from typing import Callable, List, Optional
+from enum import Enum, auto
+from typing import Any, Callable, Dict, List, Optional
 
 import aiohttp
 import discord
 from discord.ext import commands
 from loguru import logger
 
-from bot.external.abstractions.message_service import MessageService
+from bot.config import Config
+from bot.exceptions import MessageServiceFactoryError
 from bot.models.logs_response import LogsResponse
 from bot.models.minecraft_server_info import MinecraftServerInfo
 from bot.models.minecraft_server_status import HealthStatus, MinecraftServerStatus, ServerStatus
 from bot.models.resource_usage import ResourceUsage
+from bot.services.messaging.message_service import MessageService
 
 
 class _DiscordClient(commands.Bot):
@@ -809,7 +812,7 @@ class DiscordMessageServiceProvider(MessageService):
             return f"❌ **Error:** {data['error']}"
 
         success = data.get("success", False)
-        filename = data.get("fileName", "unknown")
+        filename = data.get("file_name", "unknown")
         message = data.get("message", "")
 
         if success:
@@ -844,6 +847,10 @@ class DiscordMessageServiceProvider(MessageService):
         await self.__discord_client.start(self.token)
         logger.info("Connected to Discord successfully.")
 
+    async def disconnect(self):
+        logger.info("Disconnecting from Discord...")
+        await self.__discord_client.close()
+
     async def send_message(self, message: str):
         logger.debug(f"Sending message: {message}")
         for channel in self.__discord_client._channels_ids:
@@ -856,3 +863,31 @@ class DiscordMessageServiceProvider(MessageService):
         logger.debug("Listening for messages")
         self.__discord_client.command_handle_function_callback = callback_function
         self.__discord_client.run(token=self.token)
+
+
+class MessageServiceProviderType(Enum):
+    DISCORD = auto()
+
+
+class MessageServiceFactory:
+    __PROVIDER_FACTORIES: Dict[MessageServiceProviderType, Callable[[Config], Any]] = {
+        MessageServiceProviderType.DISCORD: lambda config: DiscordMessageServiceProvider(
+            administrators=config.get("discord.administrators"),
+            token=config.get("discord.token"),
+            command_prefix=config.get("discord.commandprefix"),
+            channels_ids=config.get("discord.channel_ids"),
+            ssl_verify=config.get("security.ssl_verify", False),
+        )
+    }
+
+    @staticmethod
+    def create(provider_type: MessageServiceProviderType, config: Config) -> MessageService:
+        factory = MessageServiceFactory.__PROVIDER_FACTORIES.get(provider_type)
+        if factory:
+            try:
+                return factory(config)
+            except Exception as e:
+                logger.error(f"Error creating Message Service provider {provider_type}: {e}")
+                raise MessageServiceFactoryError(provider_type, f"Failed to instantiate provider: {e}") from e
+        logger.error(f"Unknown MessageServiceProviderType requested: {provider_type}")
+        raise MessageServiceFactoryError(provider_type, "Unknown MessageServiceProviderType")
