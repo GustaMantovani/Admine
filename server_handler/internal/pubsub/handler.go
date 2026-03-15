@@ -135,14 +135,29 @@ func (eh *EventHandler) restart() {
 	eh.publish([]string{"notification"}, "Restarting server")
 	slog.Info("Starting server restart process")
 
-	cmdCtx, cancel := context.WithTimeout(eh.mainCtx, eh.cfg.ServerCommandExecTimeout)
-	defer cancel()
+	stopCtx, stopCancel := context.WithTimeout(eh.mainCtx, eh.cfg.ServerOffTimeout)
+	defer stopCancel()
 
-	if _, err := eh.server.ExecuteCommand(cmdCtx, "/stop"); err != nil {
-		slog.Error("Error executing stop command for restart", "error", err.Error())
+	if err := eh.server.Stop(stopCtx); err != nil {
+		slog.Error("Error stopping server for restart", "error", err.Error())
 		eh.publish([]string{"notification"}, "Failed to restart server: "+err.Error())
 		return
 	}
+
+	startCtx, startCancel := context.WithTimeout(eh.mainCtx, eh.cfg.ServerOnTimeout)
+	defer startCancel()
+
+	if err := eh.server.Start(startCtx); err != nil {
+		slog.Error("Error starting server after restart", "error", err.Error())
+		eh.publish([]string{"notification"}, "Failed to start server after stop: "+err.Error())
+		return
+	}
+
+	infoCtx, infoCancel := context.WithTimeout(eh.mainCtx, eh.cfg.ServerCommandExecTimeout)
+	defer infoCancel()
+
+	startInfo := eh.server.StartUpInfo(infoCtx)
+	eh.publish([]string{"server_on"}, startInfo)
 
 	slog.Info("Server restarted successfully")
 }

@@ -237,8 +237,13 @@ func TestRestart_Success(t *testing.T) {
 		return msg.HasTag("notification") && msg.Message == "Restarting server"
 	})).Return(nil).Once()
 
-	mockServer.On("ExecuteCommand", mock.AnythingOfType("*context.timerCtx"), "/stop").
-		Return(&server.CommandResult{Output: "Stopping..."}, nil).Once()
+	mockServer.On("Stop", mock.AnythingOfType("*context.timerCtx")).Return(nil).Once()
+	mockServer.On("Start", mock.AnythingOfType("*context.timerCtx")).Return(nil).Once()
+	mockServer.On("StartUpInfo", mock.AnythingOfType("*context.timerCtx")).Return("zerotier:1234567890").Once()
+
+	mockPubSub.On("Publish", "test_server_channel", mock.MatchedBy(func(msg *pubsub.AdmineMessage) bool {
+		return msg.HasTag("server_on") && msg.Message == "zerotier:1234567890"
+	})).Return(nil).Once()
 
 	msg := pubsub.NewAdmineMessage("origin", []string{"restart"}, "")
 	err := handler.ManageCommand(msg)
@@ -248,7 +253,7 @@ func TestRestart_Success(t *testing.T) {
 	mockServer.AssertExpectations(t)
 }
 
-func TestRestart_Failure(t *testing.T) {
+func TestRestart_StopFailure(t *testing.T) {
 	mockPubSub := new(testutils.MockPubSubService)
 	mockServer := new(testutils.MockMinecraftServer)
 	handler := newTestHandler(mockServer, mockPubSub)
@@ -257,11 +262,34 @@ func TestRestart_Failure(t *testing.T) {
 		return msg.HasTag("notification") && msg.Message == "Restarting server"
 	})).Return(nil).Once()
 
-	mockServer.On("ExecuteCommand", mock.AnythingOfType("*context.timerCtx"), "/stop").
-		Return((*server.CommandResult)(nil), errors.New("restart failed")).Once()
+	mockServer.On("Stop", mock.AnythingOfType("*context.timerCtx")).Return(errors.New("stop failed")).Once()
 
 	mockPubSub.On("Publish", "test_server_channel", mock.MatchedBy(func(msg *pubsub.AdmineMessage) bool {
-		return msg.HasTag("notification") && msg.Message == "Failed to restart server: restart failed"
+		return msg.HasTag("notification") && msg.Message == "Failed to restart server: stop failed"
+	})).Return(nil).Once()
+
+	msg := pubsub.NewAdmineMessage("origin", []string{"restart"}, "")
+	err := handler.ManageCommand(msg)
+
+	assert.NoError(t, err)
+	mockPubSub.AssertExpectations(t)
+	mockServer.AssertExpectations(t)
+}
+
+func TestRestart_StartFailure(t *testing.T) {
+	mockPubSub := new(testutils.MockPubSubService)
+	mockServer := new(testutils.MockMinecraftServer)
+	handler := newTestHandler(mockServer, mockPubSub)
+
+	mockPubSub.On("Publish", "test_server_channel", mock.MatchedBy(func(msg *pubsub.AdmineMessage) bool {
+		return msg.HasTag("notification") && msg.Message == "Restarting server"
+	})).Return(nil).Once()
+
+	mockServer.On("Stop", mock.AnythingOfType("*context.timerCtx")).Return(nil).Once()
+	mockServer.On("Start", mock.AnythingOfType("*context.timerCtx")).Return(errors.New("start failed")).Once()
+
+	mockPubSub.On("Publish", "test_server_channel", mock.MatchedBy(func(msg *pubsub.AdmineMessage) bool {
+		return msg.HasTag("notification") && msg.Message == "Failed to start server after stop: start failed"
 	})).Return(nil).Once()
 
 	msg := pubsub.NewAdmineMessage("origin", []string{"restart"}, "")
