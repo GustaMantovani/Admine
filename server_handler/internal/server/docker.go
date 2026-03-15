@@ -164,13 +164,8 @@ func (d *dockerMinecraftServer) Status(ctx context.Context) (*ServerStatus, erro
 	), nil
 }
 
-func (d *dockerMinecraftServer) Info(_ context.Context) (*ServerInfo, error) {
+func (d *dockerMinecraftServer) Info(ctx context.Context) (*ServerInfo, error) {
 	img := d.cfg.Image
-
-	javaVersion := "N/A - Not tracked in config"
-	if img.JavaVersion != "" {
-		javaVersion = strings.TrimPrefix(img.JavaVersion, "java")
-	}
 
 	modEngine := img.Type
 	switch {
@@ -186,20 +181,58 @@ func (d *dockerMinecraftServer) Info(_ context.Context) (*ServerInfo, error) {
 		}
 	}
 
-	maxPlayers := -1
-	if v, ok := img.ExtraEnv["MAX_PLAYERS"]; ok {
-		if n, err := strconv.Atoi(v); err == nil {
-			maxPlayers = n
-		}
-	}
-
 	return NewServerInfo(
 		img.Version,
-		javaVersion,
+		d.getJavaVersion(),
 		modEngine,
-		"N/A - Seed Hidden",
-		maxPlayers,
+		d.getSeed(ctx),
+		d.getMaxPlayers(ctx),
 	), nil
+}
+
+func (d *dockerMinecraftServer) getSeed(ctx context.Context) string {
+	seedResult, err := d.ExecuteCommand(ctx, "seed")
+	if err != nil {
+		return "N/A - Server Offline"
+	}
+	seedRegex := regexp.MustCompile(`Seed:\s*\[([^\]]+)\]`)
+	if matches := seedRegex.FindStringSubmatch(seedResult.Output); len(matches) > 1 {
+		return matches[1]
+	}
+	if trimmed := strings.TrimSpace(seedResult.Output); trimmed != "" {
+		return trimmed
+	}
+	return "N/A - Seed Hidden"
+}
+
+func (d *dockerMinecraftServer) getJavaVersion() string {
+	if d.cfg.Docker.ServiceName == "" {
+		return "N/A - No Service Name"
+	}
+	results, err := d.compose.ExecStructured([]string{"java", "-version"}, d.cfg.Docker.ServiceName)
+	if err != nil || len(results) == 0 {
+		return "N/A - Cannot Query Java"
+	}
+	output := results[d.cfg.Docker.ServiceName]
+	versionRegex := regexp.MustCompile(`version\s*"([^"]+)"`)
+	if matches := versionRegex.FindStringSubmatch(output); len(matches) > 1 {
+		return matches[1]
+	}
+	return "N/A - Java Version Unknown"
+}
+
+func (d *dockerMinecraftServer) getMaxPlayers(ctx context.Context) int {
+	listResult, err := d.ExecuteCommand(ctx, "list")
+	if err != nil {
+		return -1
+	}
+	maxRegex := regexp.MustCompile(`max of (\d+)`)
+	if matches := maxRegex.FindStringSubmatch(listResult.Output); len(matches) > 1 {
+		if n, err := strconv.Atoi(matches[1]); err == nil {
+			return n
+		}
+	}
+	return -1
 }
 
 func (d *dockerMinecraftServer) Logs(ctx context.Context, n int) ([]string, error) {
