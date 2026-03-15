@@ -92,17 +92,17 @@ Permission model: handlers decorated with `@admin_command` require the calling u
 | `on` | yes | Publishes `AdmineMessage(tags=["server_on"])` to `server_channel` |
 | `off` | yes | Publishes `AdmineMessage(tags=["server_off"])` to `server_channel` |
 | `restart` | yes | Publishes `AdmineMessage(tags=["restart"])` to `server_channel` |
-| `command` | yes | Calls `MinecraftServerService.command()` (REST POST /command) |
-| `info` | no | Calls `MinecraftServerService.get_info()` (REST GET /info) |
-| `status` | no | Calls `MinecraftServerService.get_status()` (REST GET /status) |
-| `resources` | yes | Calls `MinecraftServerService.get_resources()` (REST GET /resources) |
-| `logs` | yes | Calls `MinecraftServerService.get_logs(n)` (REST GET /logs?n=N) |
+| `command` | yes | Calls `MinecraftServerService.command()` |
+| `info` | no | Calls `MinecraftServerService.get_info()` |
+| `status` | no | Calls `MinecraftServerService.get_status()` |
+| `resources` | yes | Calls `MinecraftServerService.get_resources()` |
+| `logs` | yes | Calls `MinecraftServerService.get_logs(n)` |
 | `install_mod` | yes | Calls `MinecraftServerService.install_mod_url()` or `install_mod_file()` |
 | `list_mods` | yes | Calls `MinecraftServerService.list_mods()` |
 | `remove_mod` | yes | Calls `MinecraftServerService.remove_mod(filename)` |
-| `auth` | no | Calls `VpnService.auth_member(id)` (REST POST /auth-member) |
-| `vpn_id` | no | Calls `VpnService.get_vpn_id()` (REST GET /vpn-id) |
-| `server_ips` | no | Calls `VpnService.get_server_ips()` (REST GET /server-ips) |
+| `auth` | no | Calls `VpnService.auth_member(id)` |
+| `vpn_id` | no | Calls `VpnService.get_vpn_id()` |
+| `server_ips` | no | Calls `VpnService.get_server_ips()` |
 | `adm` | yes | Appends user ID to `discord.administrators` in config and saves |
 | `add_channel` | yes | Appends channel ID to `discord.channel_ids` in config and saves |
 | `remove_channel` | yes | Removes channel ID from `discord.channel_ids` in config and saves |

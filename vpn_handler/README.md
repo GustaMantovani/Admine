@@ -103,37 +103,7 @@ Message routing dispatches on `origin` first, then on `tags`:
 
 ## REST API
 
-Base URL: `http://<host>:<port>`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/server-ips` | Returns VPN IPs for the current server node |
-| `POST` | `/auth-member` | Authorizes a ZeroTier member by ID |
-| `GET` | `/vpn-id` | Returns the configured ZeroTier network ID |
-
-### Request / response shapes
-
-**`GET /server-ips`**
-```json
-{ "server_ips": ["10.147.17.42", "fce3:abc1::1"] }
-```
-
-**`POST /auth-member`**
-
-Body:
-```json
-{ "member_id": "abc1234567" }
-```
-
-Response: `204 No Content` on success, or a JSON error on failure:
-```json
-{ "message": "Member not found: abc1234567" }
-```
-
-**`GET /vpn-id`**
-```json
-{ "vpn_id": "a1b2c3d4e5f6a7b8" }
-```
+The vpn_handler exposes a REST API consumed by the bot. For the full endpoint reference and response shapes, see the API specification in the repository.
 
 ---
 

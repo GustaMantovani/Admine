@@ -104,63 +104,9 @@ After a successful `server_on` or `restart`, publishes a `server_on` message wit
 
 ## REST API
 
-Base URL: `http://<host>:<port>/api/v1`
+The server_handler exposes a REST API consumed by the bot. For the full endpoint reference and response shapes, see the API specification in the repository.
 
 > **Note:** server Start/Stop/Restart are **not** exposed via REST. They are triggered exclusively through Redis Pub/Sub.
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/info` | Server info (version, java, mod engine, max players, seed) |
-| `GET` | `/status` | Live status (health, TPS, uptime) |
-| `GET` | `/logs?n=<int>` | Last N log lines (max 100, default 100) |
-| `POST` | `/command` | Execute RCON command — body: `{"command":"<cmd>"}` |
-| `GET` | `/resources` | Host CPU, memory, and disk usage |
-| `POST` | `/mods` | Install mod — multipart `file` field or JSON `{"url":"..."}` |
-| `GET` | `/mods` | List `.jar` files in `/data/mods/` |
-| `DELETE` | `/mods/:filename` | Remove a mod by filename |
-| `GET` | `/health` | Health check (no auth, always 200) |
-
-### Response shapes
-
-**`GET /info`**
-```json
-{
-  "minecraftVersion": "1.20.1",
-  "javaVersion": "17.0.9",
-  "modEngine": "Fabric 0.15.11",
-  "maxPlayers": 20,
-  "seed": "1234567890"
-}
-```
-
-**`GET /status`**
-```json
-{
-  "health": "HEALTHY",
-  "status": "ONLINE",
-  "description": "Server is online - There are 2 of a max of 20 players online",
-  "uptime": "2h 15m",
-  "tps": 19.8
-}
-```
-
-**`GET /resources`**
-```json
-{
-  "cpu_usage": 12.4,
-  "memory_used": 4294967296,
-  "memory_total": 17179869184,
-  "memory_used_percent": 25.0,
-  "disk_used": 21474836480,
-  "disk_total": 107374182400,
-  "disk_used_percent": 20.0
-}
-```
-
-**`POST /mods` and `DELETE /mods/:filename`**
-```json
-{ "file_name": "fabric-api-0.92.jar", "success": true, "message": "Mod installed successfully" }
-```
 
 ---
 
