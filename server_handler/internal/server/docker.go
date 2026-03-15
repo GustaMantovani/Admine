@@ -260,12 +260,23 @@ func (d *dockerMinecraftServer) StartUpInfo(ctx context.Context) string {
 		return ""
 	}
 
-	id, err := docker.GetZeroTierNodeID(ztContainerName)
-	if err != nil {
-		return ""
-	}
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
 
-	return id
+	for {
+		id, err := docker.GetZeroTierNodeID(ztContainerName)
+		if err == nil {
+			return id
+		}
+		slog.Warn("ZeroTier not ready yet, retrying", "container", ztContainerName, "error", err)
+
+		select {
+		case <-ctx.Done():
+			slog.Error("Timed out waiting for ZeroTier node ID", "container", ztContainerName)
+			return ""
+		case <-ticker.C:
+		}
+	}
 }
 
 func (d *dockerMinecraftServer) ExecuteCommand(ctx context.Context, command string) (*CommandResult, error) {
