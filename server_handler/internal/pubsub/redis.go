@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
 	"github.com/redis/go-redis/v9"
@@ -37,6 +38,7 @@ func (r *redisPubSub) Publish(topic string, msg *AdmineMessage) error {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
+	slog.Debug("Publishing pub/sub message", "topic", topic, "payload", string(data))
 	return r.client.Publish(r.ctx, topic, data).Err()
 }
 
@@ -61,6 +63,7 @@ func (r *redisPubSub) Subscribe(topics ...string) (<-chan *AdmineMessage, error)
 				if err != nil {
 					continue
 				}
+				slog.Debug("Received pub/sub message", "topic", msg.Channel, "payload", msg.Payload)
 				var admMsg AdmineMessage
 				if err := json.Unmarshal([]byte(msg.Payload), &admMsg); err != nil {
 					continue

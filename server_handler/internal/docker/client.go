@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -115,13 +116,60 @@ func GetZeroTierNodeID(containerName string) (string, error) {
 	}
 
 	outputStr := strings.TrimSpace(string(output))
+	slog.Debug("ZeroTier info output", "container", containerName, "output", outputStr)
+
 	parts := strings.Split(outputStr, " ")
 
 	if len(parts) < 3 {
 		return "", fmt.Errorf("unexpected zerotier-cli output format: %s", outputStr)
 	}
 
+	slog.Debug("ZeroTier node ID extracted", "container", containerName, "id", parts[2])
 	return parts[2], nil
+}
+
+// GetTailscaleNodeKey returns the Tailscale node's public key in "nodekey:XXXX" format by
+// executing "tailscale status --json" inside the container. The Tailscale API accepts this
+// format directly as a device identifier, so it can be used as-is in API calls.
+//
+// Returns an error if the device is not fully registered yet. Registration is confirmed by
+// waiting for TailscaleIPs to be assigned — the coordination server only assigns IPs after
+// the device has been authenticated and is visible in the API.
+func GetTailscaleNodeKey(containerName string) (string, error) {
+	cmd := exec.Command("docker", "exec", "-i", containerName, "tailscale", "status", "--json")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("Failed to execute tailscale status", "error", err)
+		return "", fmt.Errorf("failed to get tailscale status: %w", err)
+	}
+
+	var status struct {
+		BackendState string   `json:"BackendState"`
+		TailscaleIPs []string `json:"TailscaleIPs"`
+		Self         struct {
+			DeviceId string `json:"ID"`
+		} `json:"Self"`
+	}
+
+	slog.Debug("Tailscale status JSON", "container", containerName, "output", strings.TrimSpace(string(output)))
+
+	if err := json.Unmarshal(output, &status); err != nil {
+		return "", fmt.Errorf("failed to parse tailscale status JSON: %w", err)
+	}
+
+	if status.Self.DeviceId == "" {
+		return "", fmt.Errorf("tailscale public key not yet available")
+	}
+
+	// Only return once the device has a Tailscale IP — this confirms it has been
+	// registered with the coordination server and is visible in the API.
+	if len(status.TailscaleIPs) == 0 {
+		slog.Debug("Tailscale device not yet registered (no IP assigned)", "container", containerName, "backend_state", status.BackendState)
+		return "", fmt.Errorf("tailscale device not yet registered (backend: %s)", status.BackendState)
+	}
+
+	slog.Debug("Tailscale node key extracted", "container", containerName, "key", status.Self.DeviceId, "ips", status.TailscaleIPs)
+	return status.Self.DeviceId, nil
 }
 
 func WaitForContainerStart(containerName string, timeout time.Duration, ctx context.Context) error {

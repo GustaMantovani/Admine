@@ -8,25 +8,28 @@ def main [
     --dev = false
     --push_tags = true
 ] {
+    let repo_root = pwd | path expand
     let output_path = $output_path | path expand
     let $output_path  = $'($output_path)/($version)/admine-deploy-pack-linux-x86_64-($version)'
 
     print $"🚀 Starting Admine release ($version)"
 
     setup_template $TEMPLATE_PATH $output_path $force
-    
+
     print "📦 Building VPN Handler..."
     release_vpn_handler $output_path $clean
-    
+
     print "📦 Building Server Handler..."
     release_server_handler $output_path $clean
-    
+
     print "📦 Building Bot..."
     release_bot $output_path $clean
-    
+
+    if ($dev) { copy_dev_configs $repo_root $output_path }
+
     print "🗜️  Creating archives..."
     create_compress_archives $output_path
-    
+
     if (not $dev) { create_git_tag $version $push_tags $force }
 
     print $"✅ Release ($version) completed successfully!"
@@ -117,6 +120,30 @@ def release_bot [output_path: path, clean: bool] {
     if (not ($target_dir | path exists)) { mkdir $target_dir }
     cp $binary_path $'($target_dir)/bot'
     print "  ✓ Bot ready"
+}
+
+# Dev mode: overwrite release configs with the local project configs so the
+# build can be tested immediately without manual reconfiguration.
+# Must run before create_compress_archives so the files are included in the archives.
+def copy_dev_configs [repo_root: path, output_path: path] {
+    print "🔧 Dev mode: copying local configs into release..."
+
+    let configs = [
+        [$'($repo_root)/server_handler/server_handler_config.yaml', $'($output_path)/server_handler/server_handler_config.yaml'],
+        [$'($repo_root)/vpn_handler/etc/vpn_handler_config.toml',   $'($output_path)/vpn_handler/etc/vpn_handler_config.toml'],
+        [$'($repo_root)/bot/bot_config.json',                        $'($output_path)/bot/bot_config.json'],
+    ]
+
+    for pair in $configs {
+        let src = $pair.0
+        let dst = $pair.1
+        if ($src | path exists) {
+            cp $src $dst
+            print $"  ✓ ($src | path basename)"
+        } else {
+            print $"  ⚠️  Skipped \(not found\): ($src | path relative-to $repo_root)"
+        }
+    }
 }
 
 def create_compress_archives [output_path: path] {
