@@ -95,6 +95,8 @@ type ZeroTierSidecarConfig struct {
 	ContainerName string `yaml:"container_name"`
 	// ApiSecret is optionally passed as ZEROTIER_API_SECRET inside the ZeroTier container.
 	ApiSecret string `yaml:"api_secret"`
+	// DataPath is the host directory bind-mounted as /var/lib/zerotier-one inside the container.
+	DataPath string `yaml:"data_path"`
 }
 
 // TailscaleSidecarConfig controls the optional Tailscale sidecar container.
@@ -107,6 +109,8 @@ type TailscaleSidecarConfig struct {
 	Hostname string `yaml:"hostname"`
 	// ContainerName is the name assigned to the Tailscale container.
 	ContainerName string `yaml:"container_name"`
+	// DataPath is the host directory bind-mounted as /var/lib/tailscale inside the container.
+	DataPath string `yaml:"data_path"`
 }
 
 type WebServerConfig struct {
@@ -156,10 +160,12 @@ func NewDefaultConfig() *Config {
 			ZeroTier: ZeroTierSidecarConfig{
 				Enabled:       true,
 				ContainerName: "zerotier",
+				DataPath:      "./zerotier-data",
 			},
 			Tailscale: TailscaleSidecarConfig{
 				Enabled:       false,
 				ContainerName: "tailscale",
+				DataPath:      "./tailscale-data",
 			},
 		},
 		WebSever: WebServerConfig{

@@ -27,6 +27,7 @@ type composeZeroTierData struct {
 	NetworkID     string
 	ContainerName string
 	ApiSecret     string
+	DataPath      string
 }
 
 // composeTailscaleData holds Tailscale sidecar configuration for the template.
@@ -35,6 +36,7 @@ type composeTailscaleData struct {
 	AuthKey       string
 	Hostname      string
 	ContainerName string
+	DataPath      string
 }
 
 // composeDockerData holds Docker runtime configuration for the template.
@@ -73,12 +75,14 @@ func GenerateDockerCompose(cfg *config.Config) error {
 			NetworkID:     mc.ZeroTier.NetworkID,
 			ContainerName: mc.ZeroTier.ContainerName,
 			ApiSecret:     mc.ZeroTier.ApiSecret,
+			DataPath:      mc.ZeroTier.DataPath,
 		},
 		Tailscale: composeTailscaleData{
 			Enabled:       mc.Tailscale.Enabled,
 			AuthKey:       mc.Tailscale.AuthKey,
 			Hostname:      mc.Tailscale.Hostname,
 			ContainerName: mc.Tailscale.ContainerName,
+			DataPath:      mc.Tailscale.DataPath,
 		},
 		Docker: composeDockerData{
 			ContainerName: mc.Docker.ContainerName,

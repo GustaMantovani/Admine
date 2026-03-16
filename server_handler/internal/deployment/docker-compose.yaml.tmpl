@@ -12,7 +12,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - zerotier-data:/var/lib/zerotier-one
+      - {{ .ZeroTier.DataPath }}:/var/lib/zerotier-one
     entrypoint:
       - /bin/sh
       - -c
@@ -33,7 +33,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - tailscale-data:/var/lib/tailscale
+      - {{ .Tailscale.DataPath }}:/var/lib/tailscale
     environment:
       TS_AUTHKEY: "{{ .Tailscale.AuthKey }}"
       TS_STATE_DIR: "/var/lib/tailscale"
@@ -77,13 +77,3 @@ services:
       - {{ .Docker.DataPath }}:/data
     stdin_open: true
     tty: true
-{{- if or .ZeroTier.Enabled .Tailscale.Enabled }}
-
-volumes:
-{{- if .ZeroTier.Enabled }}
-  zerotier-data:
-{{- end }}
-{{- if .Tailscale.Enabled }}
-  tailscale-data:
-{{- end }}
-{{- end }}
