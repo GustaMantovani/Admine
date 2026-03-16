@@ -1,207 +1,145 @@
-# Admine-slim Configuration Tutorial
+# Admine Deploy Pack — Configuration Guide
 
-This tutorial details the necessary configurations to run the Admine-slim system. Since this is a slim version for delivery, many things are already configured - you only need to add your personal credentials.
+This guide covers everything you need to do before running `./admine.sh start`. All credentials stay in the three config files inside this directory — nothing else needs to change.
+
+---
 
 ## 1. Discord Bot Configuration
 
-In the `bot_config.json` file, you need to configure:
-
-### Discord Bot Token:
-
-1. Access the [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create a new application
-3. Go to the "Bot" section and click "Add Bot"
-4. Copy the token and replace the current value in `discord.token`
-5. Enable the necessary "Privileged Gateway Intents" (MESSAGE CONTENT, SERVER MEMBERS, PRESENCE)
-6. In the "OAuth2" section, use the URL Generator to create an invite link with bot permissions and select the necessary permissions
-
-### Administrators:
-
-- Add the user IDs who will be bot administrators to the `discord.administrators` array
-- Example: `"administrators": ["123456789012345678", "876543210987654321"]`
-
-### Channels:
-
-- Add the channel IDs where the bot can operate to the `discord.channel_ids` array
-- To get IDs, enable "Developer Mode" in Discord (Settings > Advanced)
-- Right-click on channels/users and select "Copy ID"
-
-### SSL Verification (Optional):
-
-By default, the bot **disables SSL certificate verification** to avoid connection errors in environments without proper CA certificates (e.g., compiled binaries, minimal containers). A warning will be logged when verification is off.
-
-To enable SSL verification, add the following to your `bot_config.json`:
+Edit `bot/bot_config.json`:
 
 ```json
 {
-    "security": {
-        "ssl_verify": true
-    },
     "discord": {
-        "...": "..."
+        "token": "YOUR_DISCORD_BOT_TOKEN",
+        "commandprefix": "!mc",
+        "administrators": ["your_discord_user_id"],
+        "channel_ids": ["your_channel_id"]
     }
 }
 ```
 
-## 2. ZeroTier VPN Configuration
+**How to get these values:**
 
-In the `vpn_handler_config.toml` file, you need to configure:
+1. Go to [discord.com/developers/applications](https://discord.com/developers/applications), create an application, then go to the **Bot** tab and copy the token.
+2. Enable the **Message Content**, **Server Members**, and **Presence** privileged gateway intents on the same page.
+3. Enable Developer Mode in Discord (Settings → Advanced) and right-click any user or channel to copy their ID.
 
-### ZeroTier API Key:
+**SSL verification** is disabled by default (avoids CA issues in minimal environments). To enable it:
 
-1. Create an account at [my.zerotier.com](https://my.zerotier.com)
-2. Go to "Account" and generate an API Access Token
-3. Add the token to the `api_key` field in the `[vpn_config]` section
+```json
+{
+    "security": { "ssl_verify": true },
+    "discord": { "...": "..." }
+}
+```
 
-### Network ID:
+---
 
-1. Create a new network in the ZeroTier panel
-2. Copy the Network ID (format: 8056c2e21c000001)
-3. Add it to the `network_id` field in the `[vpn_config]` section
-4. Configure network access permissions as needed
+## 2. VPN Configuration
+
+Edit `vpn_handler/etc/vpn_handler_config.toml`. Choose **one** provider.
+
+### Option A — ZeroTier
+
+```toml
+[vpn_config]
+vpn_type   = "Zerotier"
+api_key    = "your_zerotier_api_token"
+network_id = "your_zerotier_network_id"
+```
+
+1. Create an account at [my.zerotier.com](https://my.zerotier.com).
+2. Under **Account**, generate an API Access Token.
+3. Create a network and copy its Network ID.
+
+Also enable ZeroTier in `server_handler/server_handler_config.yaml`:
+
+```yaml
+minecraft_server:
+  zerotier:
+    enabled: true
+    network_id: "your_zerotier_network_id"
+```
+
+### Option B — Tailscale
+
+```toml
+[vpn_config]
+vpn_type   = "Tailscale"
+api_key    = "tskey-api-..."
+network_id = "your-tailnet-slug.ts.net"
+```
+
+1. Go to [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys) and generate an **API access token** (for `api_key`).
+2. Your tailnet slug is shown on the Settings page (e.g. `example.ts.net`).
+
+Also enable Tailscale in `server_handler/server_handler_config.yaml`:
+
+```yaml
+minecraft_server:
+  tailscale:
+    enabled: true
+    auth_key: "tskey-auth-..."     # reusable, ephemeral recommended
+    hostname:  "minecraft-server"  # optional
+```
+
+Generate the `auth_key` at the same keys page — use type **Auth key**, enable **Reusable** and **Ephemeral**.
+
+---
 
 ## 3. Minecraft Server Configuration
 
-### Minecraft Environment:
+Edit `server_handler/server_handler_config.yaml`. At minimum set the server type, version, and RCON password:
 
-The system supports both **Fabric** and **Forge** mod loaders. You can configure the Minecraft server by editing the `.env` file in the respective server folder:
-
-**For Fabric** (`minecraft_server/fabric/.env`):
-```env
-NETWORK_ID=your_zerotier_network_id
+```yaml
+minecraft_server:
+  rcon_password: "your_secure_rcon_password"
+  image:
+    type:    "FABRIC"    # VANILLA | FABRIC | FORGE | NEOFORGE | PAPER | MODRINTH | …
+    version: "1.20.1"
+    extra_env:
+      RCON_PASSWORD: "your_secure_rcon_password"
+      MEMORY: "4G"
 ```
 
-**For Forge** (`minecraft_server/forge/.env`):
-```env
-NETWORK_ID=your_zerotier_network_id
-```
+The `rcon_password` and `RCON_PASSWORD` env var **must match exactly**. All other fields have sensible defaults.
 
-### Choosing the Server Version
+The Minecraft server runs via [`itzg/docker-minecraft-server`](https://github.com/itzg/docker-minecraft-server). See its documentation for the full list of supported types and environment variables.
 
-The Minecraft version, mod loader version, Java version, and other settings are defined in the Docker image tag used in docker-compose.yml.
-For example:
-```
-image: ghcr.io/gustamantovani/admine/minecraft_server:mc-1.21.7-forge57.0.2-java24-graalvm-zerotier
-```
+---
 
-To change the server version, update the image tag accordingly. For instance, to use Fabric 0.17.2 on Minecraft 1.21.1:
-
-```
-image: ghcr.io/gustamantovani/admine/minecraft_server:mc-1.21.1-fabric0.17.2-installer1.1.0-java21-graalvm-zerotier
-```
-
-### Mods Configuration:
-
-- Place your mod files (`.jar`) in the `mods/` folder of your chosen server type:
-  - **Fabric mods**: `minecraft_server/fabric/mods/`
-  - **Forge mods**: `minecraft_server/forge/mods/`
-- Ensure mods are compatible with your chosen Minecraft version
-- The server will automatically load mods from this folder on startup
-
-### Server Properties:
-
-- Server configurations are located in the `config/` folder
-- You can modify `server.properties`, `eula.txt`, and other server settings
-
-#### `server.properties` Configuration:
-
-This file contains the main server settings. Key configurations include:
-
-- **Server Details**:
-  - `server-port=25565` - Port for players to connect
-  - `rcon.port=25575` - RCON port for remote administration
-  - `rcon.password=password` - RCON password (change this!)
-  - `motd=Your Server Message` - Message displayed in server list
-
-- **Gameplay Settings**:
-  - `difficulty=normal` - Game difficulty (peaceful, easy, normal, hard)
-  - `gamemode=survival` - Default game mode
-  - `max-players=10` - Maximum number of players
-  - `allow-flight=true` - Allow players to fly
-  - `enable-command-block=true` - Enable command blocks
-
-- **Security**:
-  - `enforce-whitelist=true` - Only whitelisted players can join
-  - `online-mode=false` - Set to true for premium servers
-  - `rcon.password=password` - **⚠️ IMPORTANT: Change this password!**
-
-### 🔒 RCON Password Security:
-
-**It is highly recommended to change the default RCON password** for security reasons. You need to update it in **both** locations:
-
-1. **Server Properties** (`minecraft_server/fabric/config/server.properties` or `minecraft_server/forge/config/server.properties`):
-   ```properties
-   rcon.password=your_secure_password
-   ```
-
-2. **Server Handler Configuration** (`server_handler/server_handler_config.yaml`):
-   ```yaml
-   minecraft_server:
-     runtime_type: "docker"
-     server_type: "fabric"  # or "forge" - used to auto-generate compose_path
-     rcon_address: "127.0.0.1:25575"
-     rcon_password: "your_secure_password"
-     docker:
-       compose_path: "../minecraft_server/fabric/docker-compose.yaml"  # Optional: auto-generated if omitted
-       container_name: "mine_server"
-       service_name: "mine_server"
-   ```
-
-**Make sure both passwords match exactly**, otherwise the server handler won't be able to communicate with the Minecraft server.
-
-**Configuration Notes**:
-- The `server_handler_config.yaml` file has **default values for all fields**
-- If the config file doesn't exist, the system will use sensible defaults
-- The `compose_path` is **optional** - if not specified, it will be automatically generated as `../minecraft_server/{server_type}/docker-compose.yaml`
-- You only need to specify fields that differ from the defaults
-- Minimum recommended configuration: `server_type` and `rcon_password`
-
-#### `user_jvm_args.txt` Configuration:
-
-This file controls Java Virtual Machine settings for server performance:
-
-```plaintext
-# Memory allocation (adjust based on your server's RAM)
--Xms2G    # Minimum RAM allocation (2GB)
--Xmx2G    # Maximum RAM allocation (2GB)
-
-# For better performance, you can add:
-# -XX:+UseG1GC                    # Use G1 garbage collector
-# -XX:+UnlockExperimentalVMOptions
-# -XX:MaxGCPauseMillis=100        # Reduce lag spikes
-```
-
-**Memory Recommendations**:
-- **Light modpacks**: 2-4GB (`-Xmx4G`)
-- **Medium modpacks**: 4-6GB (`-Xmx6G`)
-- **Heavy modpacks**: 6-8GB+ (`-Xmx8G`)
-
-## 4. System Initialization
-
-After configuring your credentials, you can start the system with:
+## 4. Start
 
 ```bash
 ./admine.sh start
 ```
 
-## System Usage
+This starts Redis (Docker Compose), then `server_handler`, `vpn_handler`, and `bot` as background processes. Logs go to `/tmp/admine/logs/`.
 
-- Bot commands are available as slash commands (/) in Discord
-- After starting the system, commands will be automatically registered in Discord
-- To manage the server or VPN, use the available commands in Discord
+```bash
+./admine.sh status                   # Show status of all services
+./admine.sh logs                     # Last 50 lines from all logs
+./admine.sh logs bot -f              # Follow bot logs
+./admine.sh logs server_handler -n 100
+./admine.sh restart vpn_handler      # Restart a single service
+./admine.sh stop                     # Stop everything
+```
 
-## Functionality Verification
+---
 
-- Check if the bot is online in Discord
-- Verify if slash commands are available on the server
-- Check if Docker containers are running with `docker ps`
+## Discord Commands Reference
 
-Now your Admine should be working correctly!
+**Server Control**: `/on` `/off` `/restart`
 
-## About the Project
+**Monitoring**: `/status` `/info` `/resources` `/logs`
 
-For more detailed information about the full Admine project, including documentation, architecture details, and development guides, please visit the main repository:
+**Administration**: `/command <cmd>` `/adm <user>` `/add_channel` `/remove_channel`
 
-**🔗 [Admine - Full Project Repository](https://github.com/GustaMantovani/Admine)**
+**Mod Management**: `/install_mod` `/list_mods` `/remove_mod <file>`
 
-This slim version contains only the essential components needed for deployment. The main repository includes additional features, development tools, and comprehensive documentation.
+**VPN**: `/auth <id>` `/vpn_id` `/server_ips`
+
+---
+
+For the full project documentation visit **[github.com/GustaMantovani/Admine](https://github.com/GustaMantovani/Admine)**.

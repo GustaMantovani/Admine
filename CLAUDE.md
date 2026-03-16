@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Admine** is an infrastructure management solution for Minecraft servers running on Linux. It orchestrates server lifecycle management, ZeroTier VPN connectivity, and a Discord-based administration interface.
+**Admine** is an infrastructure management solution for Minecraft servers running on Linux. It orchestrates server lifecycle management, VPN connectivity (ZeroTier or Tailscale), and a Discord-based administration interface.
 
 The system is composed of four independently deployable components that communicate **exclusively through Redis Pub/Sub**:
 
 - **`server_handler/`** (Go) — Orchestrates Minecraft server lifecycle via dynamically generated Docker Compose
-- **`vpn_handler/`** (Rust) — Manages ZeroTier network membership and authorizations
+- **`vpn_handler/`** (Rust) — Manages VPN network membership and authorizations (ZeroTier or Tailscale, switchable via config)
 - **`bot/`** (Python) — Discord bot; translates user commands to Pub/Sub messages
 - **Redis** — The sole inter-component communication bus (channels: `server_channel`, `command_channel`, `vpn_channel`)
 
@@ -81,7 +81,7 @@ All dependency injection is explicit via constructors — no global state.
 
 ### VPN Handler internals
 
-- `src/vpn/` — ZeroTier Central API client
+- `src/vpn/` — `TVpnClient` trait + `ZerotierVpn` and `TailscaleVpn` implementations; `VpnFactory` selects the provider from config
 - `src/pub_sub/` — Redis integration
 - `src/persistence/` — Sled embedded DB for local state
 - `src/queue_handler.rs` — Event queue processing
