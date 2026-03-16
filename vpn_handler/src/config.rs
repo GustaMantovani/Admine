@@ -81,7 +81,17 @@ impl Config {
         };
 
         let content = std::fs::read_to_string(&config_path)?;
-        Ok(toml::from_str(&content)?)
+        let mut config: Self = toml::from_str(&content)?;
+
+        // Default api_url to Tailscale's base when vpn_type is Tailscale and
+        // the user did not override api_url (still has the ZeroTier default).
+        if matches!(config.vpn_config.vpn_type, VpnType::Tailscale)
+            && config.vpn_config.api_url == "https://api.zerotier.com/api/v1"
+        {
+            config.vpn_config.api_url = "https://api.tailscale.com/api/v2".to_string();
+        }
+
+        Ok(config)
     }
 }
 

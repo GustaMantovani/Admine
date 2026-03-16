@@ -47,7 +47,8 @@ type MinecraftServerConfig struct {
 	RuntimeType              string                `yaml:"runtime_type"`
 	Docker                   DockerConfig          `yaml:"docker"`
 	Image                    MinecraftImageConfig  `yaml:"image"`
-	ZeroTier                 ZeroTierSidecarConfig `yaml:"zerotier"`
+	ZeroTier                 ZeroTierSidecarConfig  `yaml:"zerotier"`
+	Tailscale                TailscaleSidecarConfig `yaml:"tailscale"`
 	ServerOnTimeout          time.Duration         `yaml:"server_up_timeout"`
 	ServerOffTimeout         time.Duration         `yaml:"server_off_timeout"`
 	ServerCommandExecTimeout time.Duration         `yaml:"server_command_exec_timeout"`
@@ -94,6 +95,18 @@ type ZeroTierSidecarConfig struct {
 	ContainerName string `yaml:"container_name"`
 	// ApiSecret is optionally passed as ZEROTIER_API_SECRET inside the ZeroTier container.
 	ApiSecret string `yaml:"api_secret"`
+}
+
+// TailscaleSidecarConfig controls the optional Tailscale sidecar container.
+type TailscaleSidecarConfig struct {
+	// Enabled controls whether the Tailscale sidecar service is included in the generated compose file.
+	Enabled bool `yaml:"enabled"`
+	// AuthKey is passed as TS_AUTHKEY inside the Tailscale container for automatic authentication.
+	AuthKey string `yaml:"auth_key"`
+	// Hostname sets TS_HOSTNAME inside the container. Defaults to the container name if empty.
+	Hostname string `yaml:"hostname"`
+	// ContainerName is the name assigned to the Tailscale container.
+	ContainerName string `yaml:"container_name"`
 }
 
 type WebServerConfig struct {
@@ -143,6 +156,10 @@ func NewDefaultConfig() *Config {
 			ZeroTier: ZeroTierSidecarConfig{
 				Enabled:       true,
 				ContainerName: "zerotier",
+			},
+			Tailscale: TailscaleSidecarConfig{
+				Enabled:       false,
+				ContainerName: "tailscale",
 			},
 		},
 		WebSever: WebServerConfig{

@@ -22,6 +22,25 @@ services:
       ZEROTIER_API_SECRET: "{{ .ZeroTier.ApiSecret }}"
 {{- end }}
 {{- end }}
+{{- if .Tailscale.Enabled }}
+  {{ .Tailscale.ContainerName }}:
+    image: tailscale/tailscale
+    container_name: {{ .Tailscale.ContainerName }}
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - tailscale-data:/var/lib/tailscale
+    environment:
+      TS_AUTHKEY: "{{ .Tailscale.AuthKey }}"
+      TS_STATE_DIR: "/var/lib/tailscale"
+{{- if .Tailscale.Hostname }}
+      TS_HOSTNAME: "{{ .Tailscale.Hostname }}"
+{{- end }}
+{{- end }}
 
   {{ .Docker.ContainerName }}:
     image: itzg/minecraft-server{{- if .Minecraft.JavaVersion }}:{{ .Minecraft.JavaVersion }}{{ end }}
@@ -29,6 +48,9 @@ services:
 {{- if .ZeroTier.Enabled }}
     depends_on:
       - {{ .ZeroTier.ContainerName }}
+{{- else if .Tailscale.Enabled }}
+    depends_on:
+      - {{ .Tailscale.ContainerName }}
 {{- end }}
     ports:
       - "25565:25565"
@@ -55,8 +77,13 @@ services:
       - {{ .Docker.DataPath }}:/data
     stdin_open: true
     tty: true
-{{- if .ZeroTier.Enabled }}
+{{- if or .ZeroTier.Enabled .Tailscale.Enabled }}
 
 volumes:
+{{- if .ZeroTier.Enabled }}
   zerotier-data:
+{{- end }}
+{{- if .Tailscale.Enabled }}
+  tailscale-data:
+{{- end }}
 {{- end }}

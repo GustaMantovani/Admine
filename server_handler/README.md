@@ -98,7 +98,7 @@ The only implementation is `dockerMinecraftServer` (`internal/server/docker.go`)
 
 The handler ignores messages whose `origin` matches `app.self_origin_name`, preventing feedback loops.
 
-After a successful `server_on` or `restart`, publishes a `server_on` message with the ZeroTier node ID (from `StartUpInfo`).
+After a successful `server_on` or `restart`, publishes a `server_on` message with the VPN node identifier (from `StartUpInfo`): the ZeroTier node ID or the Tailscale node key (`nodekey:XXXX`), depending on which provider is enabled.
 
 ---
 
@@ -211,6 +211,12 @@ minecraft_server:
     network_id: ""
     container_name: "zerotier"
     api_secret: ""
+
+  tailscale:
+    enabled: false
+    auth_key: ""       # TS_AUTHKEY passed to the container for automatic authentication
+    hostname: ""       # TS_HOSTNAME (optional, defaults to container name)
+    container_name: "tailscale"
 
 web_server:
   host: "0.0.0.0"

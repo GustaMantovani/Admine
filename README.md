@@ -50,7 +50,7 @@ Users can interact with the system through Discord commands:
 - [Installation](#installation)
   - [1. Download the deploy pack](#1-download-the-deploy-pack)
   - [2. Configure Discord](#2-configure-discord)
-  - [3. Configure ZeroTier VPN](#3-configure-zerotier-vpn)
+  - [3. Configure VPN](#3-configure-vpn)
   - [4. Configure the Minecraft server](#4-configure-the-minecraft-server)
   - [5. Start](#5-start)
 - [Running on free cloud environments](#running-on-free-cloud-environments)
@@ -118,17 +118,52 @@ Edit `bot/bot_config.json`. The only required section is `discord`:
 
 To create a bot and get your token: [Discord Developer Portal](https://discord.com/developers/applications). Enable the **Message Content**, **Server Members**, and **Presence** privileged gateway intents. To get user/channel IDs, enable Developer Mode in Discord (Settings → Advanced) and right-click any user or channel.
 
-### 3. Configure ZeroTier VPN
+### 3. Configure VPN
 
-Edit `vpn_handler/etc/vpn_handler_config.toml`. The required fields are `api_key` and `network_id`:
+Edit `vpn_handler/etc/vpn_handler_config.toml`. Set `vpn_type` to either `"Zerotier"` or `"Tailscale"` and fill in the corresponding credentials.
+
+**Option A — ZeroTier**
 
 ```toml
 [vpn_config]
+vpn_type   = "Zerotier"
 api_key    = "your_zerotier_api_token"
 network_id = "your_zerotier_network_id"
 ```
 
-To get these: create an account at [my.zerotier.com](https://my.zerotier.com), generate an API Access Token under Account, and create a network to get the Network ID.
+Create an account at [my.zerotier.com](https://my.zerotier.com), generate an API Access Token under Account, and create a network to get the Network ID.
+
+Also enable the ZeroTier sidecar in `server_handler/server_handler_config.yaml`:
+
+```yaml
+minecraft_server:
+  zerotier:
+    enabled: true
+    network_id: "your_zerotier_network_id"
+```
+
+**Option B — Tailscale**
+
+```toml
+[vpn_config]
+vpn_type   = "Tailscale"
+api_key    = "tskey-api-..."
+network_id = "your-tailnet-slug.ts.net"
+```
+
+Generate an API access token at [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys). The `network_id` is your tailnet slug (visible on the Settings page).
+
+Also enable the Tailscale sidecar in `server_handler/server_handler_config.yaml`:
+
+```yaml
+minecraft_server:
+  tailscale:
+    enabled: true
+    auth_key: "tskey-auth-..."
+    hostname: "minecraft-server"   # optional
+```
+
+Generate a Tailscale auth key at [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys) (type: reusable, ephemeral recommended).
 
 ### 4. Configure the Minecraft server
 
@@ -176,7 +211,7 @@ Logs are written to `/tmp/admine/logs/`.
 - Linux (x86_64 or arm64)
 - Docker with Compose plugin
 - A Discord bot token
-- A ZeroTier account with an API key and network
+- A VPN account: either [ZeroTier](https://www.zerotier.com) (API key + network ID) or [Tailscale](https://tailscale.com) (API key + auth key + tailnet slug)
 
 ---
 
@@ -184,7 +219,7 @@ Logs are written to `/tmp/admine/logs/`.
 
 The typical problem with hosting a Minecraft server is needing a machine with a public IP. Most home connections and all free cloud environments sit behind NAT — the machine has no public IP and cannot accept inbound connections from the internet.
 
-Admine was designed specifically for this scenario. Instead of requiring port forwarding or a public IP, it uses [ZeroTier](https://www.zerotier.com) to create a virtual network overlay: the server joins the VPN and players connect to it through that overlay IP. The server never needs to be reachable from the public internet.
+Admine was designed specifically for this scenario. Instead of requiring port forwarding or a public IP, it uses a VPN overlay network ([ZeroTier](https://www.zerotier.com) or [Tailscale](https://tailscale.com)): the server joins the VPN and players connect to it through that overlay IP. The server never needs to be reachable from the public internet.
 
 This means you can run a Minecraft server for free on any of the following platforms:
 
@@ -234,10 +269,10 @@ Azure Cloud Shell provides a free Linux shell with 5 GB persistent storage mount
 
 The key is that **all outbound connections, no inbound**:
 
-- The Minecraft server container joins the ZeroTier network by making an outbound connection to ZeroTier's coordination servers — no port forwarding needed.
+- The Minecraft server container joins the VPN network (ZeroTier or Tailscale) by making an outbound connection to the provider's coordination servers — no port forwarding needed.
 - The bot connects to Discord via a persistent WebSocket (outbound).
 - Redis is local to the machine.
-- Players connect to the server using its ZeroTier overlay IP after being authorized via `/auth`.
+- Players connect to the server using its VPN overlay IP after being authorized via `/auth`.
 
 The host machine never needs to be directly reachable from the internet.
 
@@ -290,9 +325,9 @@ gdown --folder --workers 8 --continue "https://drive.google.com/drive/folders/<f
 ### Architecture overview
 
 ```
-Discord ──► bot ──► Redis Pub/Sub ──► server_handler ──► Docker (Minecraft)
+Discord ──► bot ──► Redis Pub/Sub ──► server_handler ──► Docker (Minecraft + VPN sidecar)
                          │
-                         └──────────► vpn_handler ──────► ZeroTier Central API
+                         └──────────► vpn_handler ──────► VPN API (ZeroTier or Tailscale)
 ```
 
 All inter-component communication flows exclusively through Redis Pub/Sub. No component calls another directly. The bot is the only entry point for user-initiated actions.
@@ -330,7 +365,7 @@ bot               Redis (server_channel)    server_handler
  │                                              └─ docker compose up
  │
  │                                          server_handler → Redis (vpn_channel)
- │                                          server_on (zerotier node ID) ──────────────►
+ │                                          server_on (VPN node ID) ──────────────────►
  │
  │                Redis (vpn_channel)       vpn_handler
  │◄── new_server_ips ◄────────────────────── process_server_up
@@ -354,7 +389,7 @@ bot               Redis (server_channel)    server_handler
 
 ```
 bot               Redis (command_channel)    vpn_handler
- │── auth_member ──────────────────────────────► auth_member(id) via ZeroTier API
+ │── auth_member ──────────────────────────────► auth_member(id) via VPN API
                                                    └─ publish auth_member_success
 ```
 
@@ -363,6 +398,6 @@ bot               Redis (command_channel)    vpn_handler
 Each component has its own detailed README:
 
 - [server_handler/README.md](server_handler/README.md) — Go service: Docker lifecycle, RCON, mod management, pub/sub routing, config reference
-- [vpn_handler/README.md](vpn_handler/README.md) — Rust service: ZeroTier integration, persistence, pub/sub routing, config reference
+- [vpn_handler/README.md](vpn_handler/README.md) — Rust service: ZeroTier/Tailscale integration, persistence, pub/sub routing, config reference
 - [bot/README.md](bot/README.md) — Python bot: command routing, event handling, service abstractions, config reference
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Development guide: local setup, testing, commit conventions, release process

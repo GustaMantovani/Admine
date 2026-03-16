@@ -29,6 +29,14 @@ type composeZeroTierData struct {
 	ApiSecret     string
 }
 
+// composeTailscaleData holds Tailscale sidecar configuration for the template.
+type composeTailscaleData struct {
+	Enabled       bool
+	AuthKey       string
+	Hostname      string
+	ContainerName string
+}
+
 // composeDockerData holds Docker runtime configuration for the template.
 type composeDockerData struct {
 	ContainerName string
@@ -39,6 +47,7 @@ type composeDockerData struct {
 type composeTemplateData struct {
 	Minecraft composeMinecraftData
 	ZeroTier  composeZeroTierData
+	Tailscale composeTailscaleData
 	Docker    composeDockerData
 }
 
@@ -64,6 +73,12 @@ func GenerateDockerCompose(cfg *config.Config) error {
 			NetworkID:     mc.ZeroTier.NetworkID,
 			ContainerName: mc.ZeroTier.ContainerName,
 			ApiSecret:     mc.ZeroTier.ApiSecret,
+		},
+		Tailscale: composeTailscaleData{
+			Enabled:       mc.Tailscale.Enabled,
+			AuthKey:       mc.Tailscale.AuthKey,
+			Hostname:      mc.Tailscale.Hostname,
+			ContainerName: mc.Tailscale.ContainerName,
 		},
 		Docker: composeDockerData{
 			ContainerName: mc.Docker.ContainerName,

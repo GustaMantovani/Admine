@@ -1,5 +1,6 @@
 use crate::errors::VpnError;
 use crate::vpn::public_ip::PublicIp;
+use crate::vpn::tailscale_vpn::TailscaleVpn;
 use crate::vpn::vpn::DynVpn;
 use crate::vpn::zerotier_vpn::ZerotierVpn;
 use serde::Deserialize;
@@ -10,6 +11,7 @@ use zerotier_central_api::apis::configuration::Configuration;
 pub enum VpnType {
     Zerotier,
     PublicIp,
+    Tailscale,
 }
 
 pub struct VpnFactory;
@@ -36,6 +38,8 @@ impl VpnFactory {
             }
 
             VpnType::PublicIp => Ok(Box::new(PublicIp::new())),
+
+            VpnType::Tailscale => Ok(Box::new(TailscaleVpn::new(api_url, api_key, network_id))),
         }
     }
 }

@@ -87,6 +87,7 @@ func (eh *EventHandler) serverUp() {
 	defer infoCancel()
 
 	startInfo := eh.server.StartUpInfo(infoCtx)
+	slog.Debug("VPN startup info", "node_key", startInfo)
 	eh.publish([]string{"server_on"}, startInfo)
 
 	slog.Info("Server started successfully")
@@ -157,6 +158,7 @@ func (eh *EventHandler) restart() {
 	defer infoCancel()
 
 	startInfo := eh.server.StartUpInfo(infoCtx)
+	slog.Debug("VPN startup info", "node_key", startInfo)
 	eh.publish([]string{"server_on"}, startInfo)
 
 	slog.Info("Server restarted successfully")

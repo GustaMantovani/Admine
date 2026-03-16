@@ -136,7 +136,7 @@ impl Handle {
                 .iter()
                 .map(|ip| ip.to_string())
                 .collect::<Vec<String>>()
-                .join(","),
+                .join(", "),
         );
 
         let serialized_message = match serde_json::to_string(&new_message) {

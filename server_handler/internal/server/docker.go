@@ -255,6 +255,25 @@ func (d *dockerMinecraftServer) Logs(ctx context.Context, n int) ([]string, erro
 }
 
 func (d *dockerMinecraftServer) StartUpInfo(ctx context.Context) string {
+	if d.cfg.Tailscale.Enabled && d.cfg.Tailscale.ContainerName != "" {
+		tsContainer := d.cfg.Tailscale.ContainerName
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for {
+			key, err := docker.GetTailscaleNodeKey(tsContainer)
+			if err == nil {
+				return key
+			}
+			slog.Warn("Tailscale not ready yet, retrying", "container", tsContainer, "error", err)
+			select {
+			case <-ctx.Done():
+				slog.Error("Timed out waiting for Tailscale node key", "container", tsContainer)
+				return ""
+			case <-ticker.C:
+			}
+		}
+	}
+
 	ztContainerName := d.cfg.ZeroTier.ContainerName
 	if !d.cfg.ZeroTier.Enabled || ztContainerName == "" {
 		return ""
