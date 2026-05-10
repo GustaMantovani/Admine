@@ -19,7 +19,7 @@ services:
       - "zerotier-one & sleep 3 && zerotier-cli join {{ .ZeroTier.NetworkID }} && wait"
 {{- if .ZeroTier.ApiSecret }}
     environment:
-      ZEROTIER_API_SECRET: "{{ .ZeroTier.ApiSecret }}"
+      ZEROTIER_API_SECRET: "{{ escapeDollar .ZeroTier.ApiSecret }}"
 {{- end }}
 {{- end }}
 {{- if .Tailscale.Enabled }}
@@ -35,7 +35,7 @@ services:
     volumes:
       - {{ .Tailscale.DataPath }}:/var/lib/tailscale
     environment:
-      TS_AUTHKEY: "{{ .Tailscale.AuthKey }}"
+      TS_AUTHKEY: "{{ escapeDollar .Tailscale.AuthKey }}"
       TS_STATE_DIR: "/var/lib/tailscale"
 {{- if .Tailscale.Hostname }}
       TS_HOSTNAME: "{{ .Tailscale.Hostname }}"
@@ -60,7 +60,7 @@ services:
       TYPE: "{{ .Minecraft.Type }}"
       VERSION: "{{ .Minecraft.Version }}"
       ENABLE_RCON: "true"
-      RCON_PASSWORD: "{{ .Minecraft.RconPassword }}"
+      RCON_PASSWORD: "{{ escapeDollar .Minecraft.RconPassword }}"
 {{- if .Minecraft.FabricLoaderVersion }}
       FABRIC_LOADER_VERSION: "{{ .Minecraft.FabricLoaderVersion }}"
 {{- end }}
@@ -71,7 +71,7 @@ services:
       MODPACK: "{{ .Minecraft.ModpackURL }}"
 {{- end }}
 {{- range $k, $v := .Minecraft.ExtraEnv }}
-      {{ $k }}: "{{ $v }}"
+      {{ $k }}: "{{ escapeDollar $v }}"
 {{- end }}
     volumes:
       - {{ .Docker.DataPath }}:/data

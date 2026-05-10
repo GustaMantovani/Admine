@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/GustaMantovani/Admine/server_handler/internal/config"
 )
+
+// escapeComposeDollar doubles every '$' so docker compose treats the value
+// as a literal instead of triggering ${VAR} interpolation. Required for
+// secrets like bcrypt hashes that legitimately contain '$'.
+func escapeComposeDollar(s string) string {
+	return strings.ReplaceAll(s, "$", "$$")
+}
 
 // composeMinecraftData holds Minecraft image configuration for the template.
 type composeMinecraftData struct {
@@ -90,7 +98,9 @@ func GenerateDockerCompose(cfg *config.Config) error {
 		},
 	}
 
-	tmpl, err := template.New("docker-compose").Parse(composeTemplate)
+	tmpl, err := template.New("docker-compose").Funcs(template.FuncMap{
+		"escapeDollar": escapeComposeDollar,
+	}).Parse(composeTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse compose template: %w", err)
 	}
