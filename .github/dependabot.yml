@@ -1,17 +1,33 @@
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    target-branch: "develop"
     directory: "/vpn_handler"
     schedule:
       interval: "monthly"
+    groups:
+      cargo-deps:
+        patterns: ["*"]
+
   - package-ecosystem: "gomod"
-    target-branch: "develop"
     directory: "/server_handler"
     schedule:
       interval: "monthly"
+    groups:
+      gomod-deps:
+        patterns: ["*"]
+
   - package-ecosystem: "pip"
-    target-branch: "develop"
     directory: "/bot"
     schedule:
       interval: "monthly"
+    groups:
+      pip-deps:
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      gha-deps:
+        patterns: ["*"]
