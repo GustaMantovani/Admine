@@ -9,7 +9,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 redis = { version = "1.2", features = ["tokio-comp"] }
-serde_with = { version = "3.18", default-features = false, features = ["base64", "std", "macros"] }
+serde_with = { version = "3.19", default-features = false, features = ["base64", "std", "macros"] }
 url = "2.5"
 reqwest = { version = "0.13", features = ["json", "multipart"] }
 log = "0.4"
@@ -18,7 +18,7 @@ thiserror = "2.0.18"
 async-trait = "0.1"
 sled = "0.34"
 actix-web = "4"
-zerotier-central-api = "=1.0.3"
+zerotier-central-api = "=1.2.1"
 public-ip-address = "0.4.0"
 strum = { version = "0.28", features = ["derive"] }
 envy = "0.4"
