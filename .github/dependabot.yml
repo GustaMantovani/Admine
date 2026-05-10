@@ -7,6 +7,11 @@ updates:
     groups:
       cargo-deps:
         patterns: ["*"]
+    ignore:
+      # 1.2.1 ships incompatible internal reqwest versions (0.11 + 0.13 via
+      # progenitor 0.14 codegen). Pin to 1.0.3 until upstream fixes the
+      # generated client. See PR #247.
+      - dependency-name: "zerotier-central-api"
 
   - package-ecosystem: "gomod"
     directory: "/server_handler"
