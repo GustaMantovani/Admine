@@ -1,5 +1,3 @@
 package vpn
 
-type Provider interface{}
-
-type Peer struct{}
+type Vpn interface{}
