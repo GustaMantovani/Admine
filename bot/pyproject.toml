@@ -20,11 +20,11 @@ packages = [{include = "bot", from = "src"}]
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^9.0.3"
+pytest = "^9.1.1"
 pytest-asyncio = "^1.4.0"
-ruff = "^0.15.15"
+ruff = "^0.15.20"
 mypy = "^2.1.0"
-pyinstaller = "^6.20.0"
+pyinstaller = "^6.21.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
