@@ -1,8 +1,0 @@
-{
-    "discord": {
-        "token": "",
-        "commandprefix": "!mc",
-        "administrators": [],
-        "channel_ids": []
-    }
-}

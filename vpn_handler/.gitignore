@@ -1,6 +1,0 @@
-/target
-/etc/sled/vpn_store.db
-/etc/log4rs.yaml
-/etc/zerotier_handler.log
-/etc/vpn_handler_config.toml
-.idea
