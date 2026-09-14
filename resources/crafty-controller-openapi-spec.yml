@@ -1,0 +1,2091 @@
+openapi: 3.0.4
+info:
+  title: Crafty V2 API
+  description: Documentation for interacting with Crafty controller 4's v2 API.
+  termsOfService: https://gitlab.com/crafty-controller/crafty-4/-/blob/master/LICENSE
+  contact:
+    email: info@arcadiatech.org
+  version: 2.0.1
+externalDocs:
+  description: Crafty Controller Website
+  url: https://craftycontrol.com
+servers:
+  - url: "{baseUrl}"
+    description: "Custom server"
+    variables:
+      baseUrl:
+        default: "https://api.example.com"
+        description: "Full base URL, e.g. https://localhost:8443"
+security:
+  - bearerAuth: []
+tags:
+  - name: Authentication
+    description: Crafty authentication API requests
+  - name: Roles
+    description: User role actions
+  - name: Servers
+    description: Server actions
+  - name: Users
+    description: User actions
+  - name: Crafty
+    description: Crafty management requests
+  - name: Metrics
+    description: Prometheus/OpenMetrics endpoints for monitoring Crafty and servers
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ServerID:
+      name: serverID
+      in: path
+      required: true
+      description: Target server's ID.
+      schema:
+        type: string
+        example: 5adcec83-684c-4555-a7e9-9d913203d07e
+    TaskID:
+      name: TaskID
+      in: path
+      required: true
+      description: Target Task ID
+      schema:
+        type: integer
+        example: 1
+    WebhookID:
+      name: webhookID
+      in: path
+      required: true
+      description: Target webhook ID
+      schema:
+        type: integer
+        example: 1
+    UserID:
+      name: userID
+      in: path
+      required: true
+      description: Target User ID
+      schema:
+        type: integer
+        example: 1
+  schemas:
+    StatusOK:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+    StatusError:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        error:
+          type: string
+          example: ERROR_CODE
+        error_data:
+          type: string
+          example: Detailed information about error.
+    Role:
+      properties:
+        role_id:
+          type: integer
+          example: 1
+        created:
+          type: string
+          example: 05/18/2022, 16:25:43
+        last_update:
+          type: string
+          example: 2022-05-18T16:25:45.377352
+        role_name:
+          type: string
+          example: test 1234
+        manager:
+          type: integer
+          example: 1
+        mfa_required:
+          type: boolean
+          example: false
+    RolesSchema:
+      properties:
+        status:
+          type: string
+          example: ok
+        data:
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/Role"
+    NewClonedServer:
+      properties:
+        status:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            new_server_id:
+              type: string
+              example: 5adcec83-684c-4555-a7e9-9d913203d07e
+    RolesWithQueryParameter:
+      properties:
+        status:
+          type: string
+          example: ok
+        data:
+          type: array
+          items:
+            type: integer
+    Server:
+      properties:
+        server_id:
+          type: string
+          example: 5adcec83-684c-4555-a7e9-9d913203d07e
+        created:
+          type: string
+          example: 2022-05-18T22:36:04.751211
+        server_uuid:
+          type: string
+          example: 5adcec83-684c-4555-a7e9-9d913203d07e
+        server_name:
+          type: string
+          example: Example Server
+        path:
+          type: string
+          example: /servers/e7e107ed-b4fd-4f87-b2dd-b66b4930706e
+        backup_path:
+          type: string
+          example: /backups/e7e107ed-b4fd-4f87-b2dd-b66b4930706e
+        executable:
+          type: string
+          example: paper-1.18.2.jar
+        log_path:
+          type: string
+          example: /servers/e7e107ed-b4fd-4f87-b2dd-b66b4930706e/logs/latest.log
+        execution_command:
+          type: string
+          example: java -Xms1000M -Xmx2000M -jar /servers/e7e107ed-b4fd-4f87-b2dd-b66b4930706e/paper-1.18.2.jar nogui
+        auto_start:
+          type: boolean
+          example: false
+        auto_start_delay:
+          type: integer
+          example: 10
+        crash_detection:
+          type: boolean
+          example: false
+        stop_command:
+          type: string
+          example: stop
+        executable_update_url:
+          type: string
+        server_ip:
+          type: string
+          example: 127.0.0.1
+        server_port:
+          type: integer
+          example: 25565
+        logs_delete_after:
+          type: integer
+          example: 0
+        type:
+          type: string
+          example: minecraft-java
+    CreateJavaServer:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Example Java server.
+        monitoring_type:
+          type: string
+          example: minecraft_java
+        minecraft_java_monitoring_data:
+          type: object
+          properties:
+            host:
+              type: string
+              example: 127.0.0.1
+            port:
+              type: integer
+              example: 25565
+        create_type:
+          type: string
+          example: minecraft_java
+        minecraft_java_create_data:
+          type: object
+          properties:
+            create_type:
+              type: string
+              example: download_jar
+            download_jar_create_data:
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: mc_java_servers
+                type:
+                  type: string
+                  example: paper
+                version:
+                  type: string
+                  example: 1.18.2
+                mem_min:
+                  type: integer
+                  example: 1
+                mem_max:
+                  type: integer
+                  example: 2
+                server_properties_port:
+                  type: integer
+                  example: 25565
+    CreateBedrockServer:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Example Bedrock server.
+        monitoring_type:
+          type: string
+          example: minecraft_bedrock
+        minecraft_bedrock_monitoring_data:
+          type: object
+          properties:
+            host:
+              type: string
+              example: 127.0.0.1
+            port:
+              type: integer
+              example: 19132
+        create_type:
+          type: string
+          example: minecraft_bedrock
+        minecraft_bedrock_create_data:
+          type: object
+          properties:
+            create_type:
+              type: string
+              example: download_exe
+            download_exe_create_data:
+              type: object
+              properties:
+                agree_to_eula:
+                  type: boolean
+                  example: true
+
+    Webhook:
+      type: object
+      properties:
+        webhook_type:
+          type: string
+          example: Discord
+        name:
+          type: string
+          example: Example webhook
+        url:
+          type: string
+          example: https://webhook.example.com/
+        bot_name:
+          type: string
+          example: Example bot
+        trigger:
+          type: string
+          example: server_start
+        body:
+          type: string
+          example: Webhook body text.
+        enabled:
+          type: boolean
+          example: true
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        created:
+          type: string
+          example: 05/18/2022, 01:43:56
+        username:
+          type: string
+          example: admin
+        enabled:
+          type: boolean
+          example: true
+        superuser:
+          type: boolean
+          example: true
+        lang:
+          type: string
+          example: en_EN
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+          example: dbc0c2aa-690a-46c3-aa67-db8e3bde0cd0
+        date:
+          type: string
+          example: 2023/10/18
+        title:
+          type: string
+          example: Crafty Notification Center
+        desc:
+          type: string
+          example: This is the Crafty notification center. This allows Arcadia Technology and Crafty Controller send notifications directly to you!
+        link:
+          type: string
+          example: https://discord.com/channels/640894866934726656/654307216970612746
+paths:
+  /api/v2/auth/invalidate_tokens:
+    post:
+      tags:
+        - Authentication
+      summary: Sign out all user's sessions
+      description: Revokes all sessions of the signed in user. Requires valid login session or bearer token.
+      responses:
+        200:
+          description: Successfully invalidated all user sessions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/auth/login:
+    post:
+      security: []
+      tags:
+        - Authentication
+      summary: Log in and get a token
+      description: Login with username and password and get an API token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: password123
+                totp:
+                  type: string
+                  example: 123456
+                backup_code:
+                  type: string
+                  example: abc-xyz
+      responses:
+        200:
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: abc...xyz123
+                      user_id:
+                        type: string
+                        example: 1
+                      page:
+                        type: string
+                        example: /panel/dashboard
+        400:
+          description: Invalid credentials for format.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/crafty/resetPass:
+    get:
+      tags:
+        - Crafty
+      summary: Initiate password recovery system.
+      description: Initial password recovery. No permissions required.
+      responses:
+        200:
+          description: Successfully started password reset procedure.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: string
+                    example: Lockout account has been activated for 1 hour. Please find temporary credentials in the terminal
+        425:
+          description: Request sent before end of previous anti-lockout.
+          content:
+            application/json:
+              schema:
+                properties:
+                  schema:
+                    properties:
+                      status:
+                        type: string
+                        example: error
+                      data:
+                        type: string
+                        example: Lockout recovery already in progress
+  /api/v2/crafty/announcements:
+    get:
+      tags:
+        - Crafty
+      summary: Get announcements
+      description: Get announcements that are shown to the user
+      responses:
+        200:
+          description: Successfully got announcements for user.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      $ref: "#/components/schemas/Announcement"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    post:
+      tags:
+        - Crafty
+      summary: Clear a notification.
+      description: Clear a notification. It will no longer show after clearing.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                id:
+                  type: string
+                  example: dbc0c2aa-690a-46c3-aa67-db8e3bde0cd0
+      responses:
+        200:
+          description: Successfully cleared notification.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/crafty/check:
+    get:
+      tags:
+        - Crafty
+      summary: Status check
+      description: Crafty status/alive check.
+      responses:
+        200:
+          description: Successful status check
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+  /api/v2/crafty/config:
+    get:
+      parameters:
+        - in: query
+          name: ids
+          schema:
+            type: boolean
+            example: true
+          required: false
+          description: Get only ids
+      tags:
+        - Crafty
+      deprecated: true
+      summary: Get Crafty's config
+      description: Get Crafty's config. Requires superuser permission. Currently unused.
+      responses:
+        200:
+          description: Successfully got user's roles.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                      example: 1
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    patch:
+      tags:
+        - Crafty
+      summary: Modify config.jso
+      description: Modify config.json. Requires superuser permission.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                https_port:
+                  type: integer
+                  example: 8443
+                language:
+                  type: string
+                  example: en_EN
+                cookie_expire:
+                  type: integer
+                  example: 30
+                show_errors:
+                  type: boolean
+                  example: true
+                history_max_age:
+                  type: integer
+                  example: 0
+                status_update_frequency_seconds:
+                  type: integer
+                  example: 30
+                delete_default_json:
+                  type: boolean
+                  example: false
+                show_contribute_link:
+                  type: boolean
+                  example: true
+                virtual_terminal_lines:
+                  type: integer
+                  example: 300
+                max_log_lines:
+                  type: integer
+                  example: 700
+                max_audit_entries:
+                  type: integer
+                  example: 7
+                disabled_language_files:
+                  type: array
+                  items:
+                    type: string
+                    example: fr_FR
+                stream_size_GB:
+                  type: integer
+                  example: 1
+                keywords:
+                  type: array
+                  items:
+                    type: string
+                    example: ["help", "chunk"]
+                allow_nsfw_profile_pictures:
+                  type: boolean
+                  example: true
+                enable_user_self_delete:
+                  type: boolean
+                  example: false
+                reset_secrets_on_next_boot:
+                  type: boolean
+                  example: false
+                monitored_mounts:
+                  type: array
+                  items:
+                    type: string
+                    example: "\\"
+                dir_size_poll_freq_minutes:
+                  type: integer
+                  example: 5
+                crafty_logs_delete_after_days:
+                  type: integer
+                  example: 5
+                big_bucket_repo:
+                  type: string
+                  example: https://jars.arcadiatech.org
+                enable_otp_skew:
+                  type: boolean
+                  example: false
+                max_login_attempts:
+                  type: integer
+                  example: 3
+                superMFA:
+                  type: boolean
+                  example: false
+      responses:
+        200:
+          description: Successfully updated config.json
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/crafty/config/customize:
+    get:
+      parameters:
+        - in: query
+          name: ids
+          schema:
+            type: boolean
+            example: true
+      tags:
+        - Crafty
+      deprecated: true
+      summary: Currently unused
+      description: Get Crafty customizations. Currently unused. Requires superuser.
+      responses:
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    patch:
+      tags:
+        - Crafty
+      summary: Update Crafty customizations
+      description: Update Crafty customizations. Requires superuser permissions.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                photo:
+                  type: string
+                  example: background.jpg
+                opacity:
+                  type: string
+                  example: 100
+      responses:
+        200:
+          description: Successfully updated login photo.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      photo:
+                        type: string
+                        example: background.jpg
+                      opacity:
+                        type: string
+                        example: 100
+  /api/v2/roles:
+    get:
+      parameters:
+        - in: query
+          name: ids
+          schema:
+            type: boolean
+          description: Returns only role IDs, not additional role information
+      tags:
+        - Roles
+      summary: Get all Roles
+      description: Get all roles. Requires superuser permission.
+      responses:
+        200:
+          description: Example response body for /api/v2/roles
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/RolesSchema"
+                  - $ref: "#/components/schemas/RolesWithQueryParameter"
+        403:
+          description: Access denied response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    post:
+      # Need additional properties not in old documentation.
+      tags:
+        - Roles
+      summary: Create a role
+      description: Requires superuser permission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Example role
+                server:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      server_id:
+                        type: string
+                        example: e7e107ed-b4fd-4f87-b2dd-b66b4930706e
+                      permissions:
+                        type: string
+                        example: 10101101
+                manager:
+                  type: integer
+                  example: 1
+                mfa_required:
+                  type: boolean
+                  example: false
+      responses:
+        200:
+          description: Successfully created the role
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      role_id:
+                        type: integer
+                        example: 1
+        403:
+          description: Access denied response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/roles/{roleID}:
+    get:
+      parameters:
+        - in: path
+          name: roleID
+          schema:
+            type: integer
+          required: true
+          description: Role ID of the role to query
+      tags:
+        - Roles
+      summary: Get a role
+      description: Get information about a role. Requires superuser permission.
+      responses:
+        200:
+          description: Successfully got a role.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    $ref: "#/components/schemas/Role"
+        403:
+          description: Invalid user or permissions for action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    delete:
+      parameters:
+        - in: path
+          name: roleID
+          schema:
+            type: integer
+            example: 1
+          required: true
+          description: ID of role to delete.
+      tags:
+        - Roles
+      summary: Delete a role.
+      description: Deletes the specified role. Requires superuser permission.
+      responses:
+        200:
+          description: Successfully deleted role.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: string
+                    example: 1
+        403:
+          description: Invalid user or permissions for action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    patch:
+      parameters:
+        - in: path
+          name: roleID
+          schema:
+            type: integer
+            example: 1
+          required: true
+          description: ID of role to update.
+      tags:
+        - Roles
+      summary: Modify a role.
+      description: Modify the specified role. Requires superuser permission.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Example role.
+                server:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      server_id:
+                        type: string
+                        example: 54d4cbb0-2a2b-4529-9e72-4682ebcb9330
+                      permissions:
+                        type: string
+                        example: 10101101
+                manager:
+                  type: integer
+                  example: 1
+                mfa_required:
+                  type: boolean
+                  example: false
+      responses:
+        200:
+          description: Successfully updated role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Invalid user or permissions for action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+        400:
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/roles/{roleID}/servers:
+    get:
+      parameters:
+        - in: path
+          name: roleID
+          schema:
+            type: integer
+          required: true
+          description: Role ID of the role to query
+        - in: query
+          name: ids
+          schema:
+            type: boolean
+            example: true
+      tags:
+        - Roles
+      summary: Get a Role's servers
+      description: Get all the servers that a role has access to. Requires superuser permissions
+      responses:
+        200:
+          description: Successfully got a role's servers
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        server_id:
+                          type: string
+                          example: 54d4cbb0-2a2b-4529-9e72-4682ebcb9330
+                        permissions:
+                          type: string
+                          example: 10101101
+        403:
+          description: Invalid user or permissions for action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/roles/{roleID}/users:
+    get:
+      parameters:
+        - in: path
+          name: roleID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      tags:
+        - Roles
+      summary: Get a role's user
+      description: Get all the users of a specified role. Requires superuser.
+      responses:
+        200:
+          description: Successfully got a role's users
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                      example: 1
+  /api/v2/servers:
+    get:
+      tags:
+        - Servers
+      summary: Get all servers you have access to.
+      description: Get all servers the user has access to. Requires any valid user token.
+      responses:
+        200:
+          description: Returns all servers user has access to.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Server"
+    post:
+      tags:
+        - Servers
+      summary: Create a server
+      description: Create a server. Requires server creation permission.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CreateJavaServer"
+                - $ref: "#/components/schemas/CreateBedrockServer"
+      responses:
+        200:
+          description: Successfully created new server
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      new_server_id:
+                        type: string
+                        example: f53b7b9d-48cc-40f1-89ce-331bda9458ba
+                      new_server_uuid:
+                        type: string
+                        example: f53b7b9d-48cc-40f1-89ce-331bda9458ba
+  /api/v2/servers/{serverID}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Get a server's data
+      description: Get all information from a server. Requires access to the server.
+      responses:
+        200:
+          description: Successfully got server information.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    # Appears to be the response from getting a role. Likely incorrect.
+                    type: object
+                    properties:
+                      role_id:
+                        type: integer
+                        example: 1
+                      created:
+                        type: string
+                        example: 05/18/2022, 22:49:11
+                      last_update:
+                        type: string
+                        example: 2022-05-18T16:25:45.377352
+                      role_name:
+                        type: string
+                        example: test 1234
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Delete a server
+      description: Delete a server. Requires config permission to target server.
+      responses:
+        200:
+          description: Successfully deleted target server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+    patch:
+      parameters:
+        - in: path
+          name: serverID
+          required: true
+          description: Server ID of server to modify
+          schema:
+            type: string
+            example: f53b7b9d-48cc-40f1-89ce-331bda9458ba
+      summary: Modify a server
+      description: Modify a server. Requires config permission to target server.
+      tags:
+        - Servers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                server_name:
+                  type: string
+                  example: New server name
+      responses:
+        200:
+          description: Successfully modified server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+  /api/v2/servers/{serverID}/action/{action}:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - in: path
+          name: action
+          description: Action to send to server.
+          required: true
+          schema:
+            type: string
+            enum:
+              [
+                clone_server,
+                start_server,
+                stop_server,
+                restart_server,
+                kill_server,
+                backup_server,
+                update_executable,
+              ]
+      summary: Send an action to a server
+      description: Send an action to a server. Requires command permission on server.
+      tags:
+        - Servers
+      responses:
+        200:
+          description: Successfully send command to target server.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StatusOK"
+                  - $ref: "#/components/schemas/NewClonedServer"
+  /api/v2/servers/{serverID}/stdin:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      summary: Send a STDin command to the server.
+      description: Sends a STDin command to the server. Requires command permission for the server. This is the equivalent of server console commands. Don't sent the slash!
+      tags:
+        - Servers
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: say Hello World!
+      responses:
+        200:
+          description: Successfully send STDin to the server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+  /api/v2/servers/{serverID}/logs:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - in: query
+          name: file
+          description: Whether to read the log file or stdout. Defaults to false (standard out).
+          schema:
+            type: boolean
+            example: false
+        - in: query
+          name: colors
+          description: Whether to add HTML coloring or not. Defaults to false (no color).
+          schema:
+            type: boolean
+            example: false
+        - in: query
+          name: raw
+          description: Whether to disable ANSI stripping or not. Defaults to false (no ANSI stripping).
+          schema:
+            type: boolean
+            example: false
+        - in: query
+          name: html
+          description: Whether to output in HTML with &lt;br/&gt;'s or with the standard API JSON format with an array of lines. Defaults to false
+          schema:
+            type: boolean
+            example: false
+      summary: Get a server's logs
+      description: Get a server's logs. Requires logs permission to the server.
+      tags:
+        - Servers
+      responses:
+        200:
+          description: Successfully got server logs.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      example:
+                        [
+                          "[18:27:57 INFO]: Starting minecraft server version 1.18.2",
+                          "[18:27:57 INFO]: Loading properties",
+                        ]
+  /api/v2/servers/{serverID}/public:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      summary: Get a server's public data
+      description: Get a server's public data. Requires logged in permission.
+      tags:
+        - Servers
+      responses:
+        200:
+          description: Successfully got server's public data.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      server_id:
+                        type: string
+                        example: f53b7b9d-48cc-40f1-89ce-331bda9458ba
+                      created:
+                        type: string
+                        example: 2022-05-25T01:24:22.427327
+                      server_name:
+                        type: string
+                        example: Example server
+                      type:
+                        type: string
+                        example: minecraft-java
+  /api/v2/servers/{serverID}/stats:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Get a server's statistics
+      description: Get a server's statistics. Requires access to a server.
+      responses:
+        200:
+          description: Successfully got server stats
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    $ref: "#/components/schemas/Server"
+                  started:
+                    type: string
+                    example: 2022-05-25 15:44:05
+                  running:
+                    type: boolean
+                    example: true
+                  cpu:
+                    type: integer
+                    example: 0.33
+                  mem:
+                    type: string
+                    example: "42.2MB"
+                  mem_percent:
+                    type: string
+                    example: 5.0
+                  world_name:
+                    type: string
+                    example: Example server
+                  world_size:
+                    type: string
+                    example: 10.3MB
+                  server_port:
+                    type: integer
+                    example: 25565
+                  int_ping_results:
+                    type: string
+                    example: "True"
+                  online:
+                    type: integer
+                    example: 5
+                  max:
+                    type: integer
+                    example: 20
+                  players:
+                    type: string
+                    example: "[]"
+                  desc:
+                    type: string
+                    example: A Minecraft Server
+                  icon:
+                    type: string
+                    example: ""
+                  version:
+                    type: string
+                    example: 1.21.3
+                  updating:
+                    type: boolean
+                    example: false
+                  waiting_start:
+                    type: boolean
+                    example: false
+                  first_run:
+                    type: boolean
+                    example: false
+                  crashed:
+                    type: boolean
+                    example: false
+        403:
+          description: Authentication incorrect or failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/servers/{serverID}/users:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Get all users with access to a server
+      description: Get all users with access to a server. Requires access to a server, user config permission, and roles config permission.
+      responses:
+        200:
+          description: Successfully got users with access to a server.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                      example: [1, 3]
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/servers/{serverID}/tasks:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Create a schedule for a server
+      description: Create a schedule for a server. Requires schedule permission to the server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Example Task
+                enabled:
+                  type: boolean
+                  example: true
+                action:
+                  type: string
+                  example: custom_command
+                interval:
+                  type: integer
+                  example: 1
+                interval_type:
+                  type: string
+                  example: minutes
+                command:
+                  type: string
+                  example: say hello world
+                parent:
+                  type: string
+                  example: null
+                one_time:
+                  type: boolean
+                  example: false
+                cron_string:
+                  type: string
+                  example: ""
+                delay:
+                  type: integer
+                  example: 0
+      responses:
+        200:
+          description: Successfully created new schedule
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      schedule_id:
+                        type: string
+                        example: 3
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/servers/{serverID}/tasks/{TaskID}:
+    patch:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - $ref: "#/components/parameters/TaskID"
+      tags:
+        - Servers
+      summary: Modify a Schedule for a Server
+      description: Modify a schedule for a server. Requires Schedule permission for the target server.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: "Test 5678"
+                enabled:
+                  type: boolean
+                  example: false
+      responses:
+        200:
+          description: Successfully modified schedule.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - $ref: "#/components/parameters/TaskID"
+      tags:
+        - Servers
+      summary: Remove a schedule
+      description: Remove a schedule. Requires server schedule permission.
+      responses:
+        200:
+          description: Successfully deleted schedule.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/servers/{serverID}/webhook:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Get all server webhooks
+      description: Get all server webhooks. Requires config permission to the server.
+      responses:
+        200:
+          description: Successfully got all server webhooks.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      1:
+                        $ref: "#/components/schemas/Webhook"
+                      2:
+                        $ref: "#/components/schemas/Webhook"
+    post:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      tags:
+        - Servers
+      summary: Create a server webhook
+      description: Create a server webhook. Requires server config permission.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                webhook_type:
+                  type: string
+                  example: Discord
+                name:
+                  type: string
+                  example: My example Webhook
+                url:
+                  type: string
+                  example: https://webhook-url.example.com
+                bot_name:
+                  type: string
+                  example: Crafty Bot
+                trigger:
+                  type: array
+                  items:
+                    type: string
+                    example: server_start
+                body:
+                  type: string
+                  example: Server Has Started
+                enabled:
+                  type: boolean
+                  example: true
+      responses:
+        200:
+          description: Successfully created webhook.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      webhook_id:
+                        type: integer
+                        example: 1
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/server/{serverID}/webhook/{webhookID}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - $ref: "#/components/parameters/WebhookID"
+      tags:
+        - Servers
+      summary: Get a webhook
+      description: Get a webhook by ID. Requires config permission.
+      responses:
+        200:
+          description: Successfully got webhook details.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      1:
+                        $ref: "#/components/schemas/Webhook"
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - $ref: "#/components/parameters/WebhookID"
+      tags:
+        - Servers
+      summary: Delete a webhook
+      description: Delete a webhook by ID. Requires config permission to the server.
+      responses:
+        200:
+          description: Successfully deleted webhook.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    patch:
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+        - $ref: "#/components/parameters/WebhookID"
+      tags:
+        - Servers
+      summary: Modify a Server Webhook
+      description: Modify a server webhook. Requires config permission.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                webhook_type:
+                  type: string
+                  example: status
+      responses:
+        200:
+          description: Successfully modified webhook.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+        403:
+          description: Failed authentication or Invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/users:
+    get:
+      parameters:
+        - in: query
+          name: ids
+          required: false
+          description: If true, only returns IDs, no other information.
+          schema:
+            type: boolean
+            example: false
+      tags:
+        - Users
+      summary: Get all the users
+      description: Get all the users. Requires user config permission.
+      responses:
+        200:
+          description: Successfully got all users.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    post:
+      tags:
+        - Users
+      summary: Create a user
+      description: Create a user. Requires user config permission.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        200:
+          description: Successfully created user.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      user_ud:
+                        type: string
+                        example: 3
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/users/{userID}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      tags:
+        - Users
+      summary: Get a user
+      description: Get a user. Requires user config permission if not viewing self.
+      responses:
+        200:
+          description: Successfully got user.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: integer
+                        example: 3
+                      created:
+                        type: string
+                        example: 05/24/2022, 09:44:33
+                      last_login:
+                        type: string
+                        example: 2022-05-24T09:44:33.646325
+                      last_update:
+                        type: string
+                        example: 05/24/2022, 09:44:33
+                      last_ip:
+                        type: string
+                        example: 127.0.0.1
+                      username:
+                        type: string
+                        example: example
+                      enabled:
+                        type: boolean
+                        example: true
+                      superuser:
+                        type: boolean
+                        example: true
+                      lang:
+                        type: string
+                        example: fi_FI
+                      support_logs:
+                        type: string
+                        example: ""
+                      server_order:
+                        type: string
+                        example: ""
+                      preparing:
+                        type: boolean
+                        example: false
+                      hints:
+                        type: boolean
+                        example: true
+                      roles:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Role"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      tags:
+        - Users
+      summary: Delete a user
+      description: Get a user. Requires user config permission if not viewing self.
+      responses:
+        200:
+          description: Successfully deleted user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+    patch:
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      tags:
+        - Users
+      summary: Modify a user
+      description: Get a user. Requires user config permission if not viewing self.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                username:
+                  type: string
+                  example: exmaple
+                roles:
+                  type: array
+                  items:
+                    type: integer
+                    example: 1
+      responses:
+        200:
+          description: Successfully updated user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOK"
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/users/{userID}/permissions:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      tags:
+        - Users
+      summary: Get a user's Crafty permissions.
+      description: Get a user's Crafty permissions. Requires user config permission if not viewing self.
+      responses:
+        200:
+          description: Successfully got a user's permissions.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      permissions:
+                        type: string
+                        example: 110
+                      counters:
+                        type: object
+                        properties:
+                          SERVER_CREATION:
+                            type: integer
+                            example: 3
+                          USER_CONFIG:
+                            type: integer
+                            example: 0
+                          ROLES_CONFIG:
+                            type: integer
+                            example: 0
+                      limits:
+                        type: object
+                        properties:
+                          SERVER_CREATION:
+                            type: integer
+                            example: 5
+                          USER_CONFIG:
+                            type: integer
+                            example: 0
+                          ROLES_CONFIG:
+                            type: integer
+                            example: 0
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/users/{userID}/pfp:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      tags:
+        - Users
+      summary: Get a user's profile picture
+      description: Get a user's profile picture. Requires logged in.
+      responses:
+        200:
+          description: Successfully got user's profile picture.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: string
+                    example: https://www.gravatar.com/avatar/93431c5d5a2b6a10ab3d5106d44d5590?default=404&rating=g
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /api/v2/users/{userID}/public:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      tags:
+        - Users
+      summary: Get a user's public data
+      description: Get a user's public data. Requires logged in.
+      responses:
+        200:
+          description: Successfully got user's public data.
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: integer
+                        example: 3
+                      created:
+                        type: string
+                        example: 05/24/2022, 09:44:33
+                      username:
+                        type: string
+                        example: example
+                      enabled:
+                        type: boolean
+                        example: true
+                      superuser:
+                        type: boolean
+                        example: true
+                      lang:
+                        type: string
+                        example: fi_FI
+                      roles:
+                        type: array
+                        items:
+                          type: integer
+                          example: 1
+        403:
+          description: Failed authentication or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Global Crafty metrics
+      description: |
+        Returns Crafty's global Prometheus/OpenMetrics registry.
+        Includes Python runtime metrics and Crafty instance metadata.
+      responses:
+        200:
+          description: Metrics output in OpenMetrics format.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP python_gc_objects_collected_total Objects collected during gc
+                # TYPE python_gc_objects_collected_total counter
+                python_gc_objects_collected_total{generation="0"} 10836.0
+                python_gc_objects_collected_total{generation="1"} 4676.0
+                python_gc_objects_collected_total{generation="2"} 99.0
+                # HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+                # TYPE python_gc_objects_uncollectable_total counter
+                python_gc_objects_uncollectable_total{generation="0"} 0.0
+                python_gc_objects_uncollectable_total{generation="1"} 0.0
+                python_gc_objects_uncollectable_total{generation="2"} 0.0
+                # HELP python_gc_collections_total Number of times this generation was collected
+                # TYPE python_gc_collections_total counter
+                python_gc_collections_total{generation="0"} 167.0
+                python_gc_collections_total{generation="1"} 15.0
+                python_gc_collections_total{generation="2"} 1.0
+                # HELP python_info Python platform information
+                # TYPE python_info gauge
+                python_info{implementation="CPython",major="3",minor="12",patchlevel="9",version="3.12.9"} 1.0
+                # HELP Crafty_Controller_info Infos of this Crafty Instance
+                # TYPE Crafty_Controller_info gauge
+                Crafty_Controller_info{docker="False",version="4.6.2"} 1.0
+        403:
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /metrics/host:
+    get:
+      tags:
+        - Metrics
+      summary: Host system metrics
+      description: |
+        Returns host-level CPU and memory metrics from the machine running Crafty.
+        Output is Prometheus/OpenMetrics format.
+      responses:
+        200:
+          description: Host metrics in OpenMetrics format.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP CPU_Usage The CPU usage of the server
+                # TYPE CPU_Usage gauge
+                CPU_Usage 1.54
+                # HELP Mem_Usage The Memory usage of the server
+                # TYPE Mem_Usage gauge
+                Mem_Usage 63.8
+        400:
+          description: User lacks global access permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+        403:
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+  /metrics/servers/{serverID}:
+    get:
+      tags:
+        - Metrics
+      summary: Metrics for a specific managed server
+      description: |
+        Returns detailed Prometheus/OpenMetrics metrics for a Crafty-managed server,
+        including CPU, memory, version, and player information.
+        Requires that the authenticated user has access to the target server.
+      parameters:
+        - $ref: "#/components/parameters/ServerID"
+      responses:
+        200:
+          description: Server metrics in OpenMetrics format.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP CPU_Usage The CPU usage of the server
+                # TYPE CPU_Usage gauge
+                CPU_Usage{server_id="ef3fb2d1-a94c-4d9b-8c65-c4274be706cb"} 0.78
+                # HELP Mem_Usage The Memory usage of the server
+                # TYPE Mem_Usage gauge
+                Mem_Usage{server_id="ef3fb2d1-a94c-4d9b-8c65-c4274be706cb"} 4.0
+                # HELP Minecraft_Version_info The version of the minecraft of this server
+                # TYPE Minecraft_Version_info gauge
+                Minecraft_Version_info{server_id="ef3fb2d1-a94c-4d9b-8c65-c4274be706cb",version="Paper 1.21.10"} 1.0
+                # HELP online_players The number of players online for a server
+                # TYPE online_players gauge
+                online_players{server_id="ef3fb2d1-a94c-4d9b-8c65-c4274be706cb"} 0.0
+        400:
+          description: User does not have permission for this server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"
+        403:
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusError"

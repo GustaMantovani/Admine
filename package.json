@@ -1,6 +1,6 @@
 {
   "name": "admine",
-  "module": "index.ts",
+  "module": "src/entrypoints/cli/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -8,5 +8,8 @@
   },
   "peerDependencies": {
     "typescript": "^7"
+  },
+  "scripts": {
+    "cli": "bun run src/entrypoints/cli/index.ts"
   }
 }
