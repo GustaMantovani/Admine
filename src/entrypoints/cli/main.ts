@@ -23,6 +23,9 @@ switch (command) {
         const result = await createMinecraftServerUseCase.execute(newMinecraftServerData);
         console.log("Server created:", result);
         break;
+    case "list":
+        await craftyProvider.listServers();
+        break;
     default:
         console.log(`Unknown command: ${command}`);
         break;

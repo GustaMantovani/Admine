@@ -12,6 +12,8 @@
   },
   "scripts": {
     "cli": "bun run src/entrypoints/cli/main.ts",
-    "generate:crafty-client": "rm -rf dependencies/crafty-api-client && openapi-generator-cli generate -i resources/crafty-controller-openapi-spec.yml -g typescript-fetch -o dependencies/crafty-api-client --additional-properties=supportsES6=true,withInterfaces=true,enumUnknownDefaultCase=true"
+    "generate:crafty-client": "rm -rf dependencies/crafty-api-client && openapi-generator-cli generate -i resources/crafty-controller-openapi-spec.yml -g typescript-fetch -o dependencies/crafty-api-client --additional-properties=supportsES6=true,withInterfaces=true,enumUnknownDefaultCase=true",
+    "typecheck": "tsc --noemit"
+    
   }
 }

@@ -5,8 +5,7 @@ import type { CreateMinecraftServerRequest } from "../types/create-minecraft-ser
 export class CreateMinecraftServerUseCase {
     constructor(private readonly minecraftServerProvider: MinecraftServerProvider) {}
 
-    async execute(createServerRequest: CreateMinecraftServerRequest): Promise<MinecraftServer> {
-        const server = this.minecraftServerProvider.createServer(createServerRequest);
-        return server;
+    async execute(createServerRequest: CreateMinecraftServerRequest): Promise<string> {
+        return this.minecraftServerProvider.createServer(createServerRequest);
     }
 }

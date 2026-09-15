@@ -13,22 +13,17 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
         this.serversApi = new ServersApi(this.craftyApiClientConfiguration);
     };
 
-    async createServer(createServerRequest: CreateMinecraftServerRequest): Promise<MinecraftServer> {
+    async createServer(createServerRequest: CreateMinecraftServerRequest): Promise<string> {
         const craftyCreateServerRequest = toCraftyCreateServerRequest(createServerRequest);
-        const serverCreateCraftyResponse = await this.serversApi.apiV2ServersPost({ apiV2ServersPostRequest: craftyCreateServerRequest });
-
-        return new MinecraftServer(
-            serverCreateCraftyResponse.data!.newServerUuid!,
-            createServerRequest.name,
-            createServerRequest.type,
-            createServerRequest.version,
-            '127.0.0.1',
-            [],
-            craftyCreateServerRequest.port,
-            createServerRequest.minimumMemory,
-            createServerRequest.maximumMemory,
-        );
+        return (await this.serversApi.apiV2ServersPost({ apiV2ServersPostRequest: craftyCreateServerRequest }))!.data!.newServerId!;
     };
+
+
+    async listServers(): Promise<MinecraftServer[]> {
+        const serverListCraftyResponse = await this.serversApi.apiV2ServersGet();
+        console.log(null, 4, serverListCraftyResponse.data)
+        return [];
+    }
 
 
 }

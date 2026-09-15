@@ -1,11 +1,8 @@
 import type { ApiV2ServersPostRequest, CreateBedrockServer, CreateHytaleServer, CreateJavaServer } from "../../../../dependencies/crafty-api-client";
+import { SERVERS_HOST_FOR_ADMINE, DEFAULT_BEDROCK_PORT, DEFAULT_HYTALE_PORT, DEFAULT_JAVA_PORT, DEFAULT_MAXIMUM_MEMORY, DEFAULT_MINIMUM_MEMORY } from "../../constants";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 
-const DEFAULT_JAVA_PORT = 25565;
-const DEFAULT_BEDROCK_PORT = 19132;
-const DEFAULT_HYTALE_PORT = 5520;
-const DEFAULT_MINIMUM_MEMORY = 1;
-const DEFAULT_MAXIMUM_MEMORY = 2;
+
 
 export function resolvePort(request: CreateMinecraftServerRequest): number {
     if (request.port != null) {
@@ -33,14 +30,14 @@ export function toCraftyCreateServerRequest(request: CreateMinecraftServerReques
     }
 }
 
-function toCraftyCreateJavaServer(request: CreateMinecraftServerRequest): CreateJavaServer {
+function toCraftyCreateJavaServer(request: CreateMinecraftServerRequest): CreateJavaServer & { createType: "minecraft_java" } {
     const port = resolvePort(request);
 
     return {
         name: request.name,
         monitoringType: "minecraft_java",
         minecraftJavaMonitoringData: {
-            host: "127.0.0.1",
+            host: SERVERS_HOST_FOR_ADMINE,
             port,
         },
         createType: "minecraft_java",
@@ -58,12 +55,12 @@ function toCraftyCreateJavaServer(request: CreateMinecraftServerRequest): Create
     };
 }
 
-function toCraftyCreateBedrockServer(request: CreateMinecraftServerRequest): CreateBedrockServer {
+function toCraftyCreateBedrockServer(request: CreateMinecraftServerRequest): CreateBedrockServer & { createType: "minecraft_bedrock" } {
     return {
         name: request.name,
         monitoringType: "minecraft_bedrock",
         minecraftBedrockMonitoringData: {
-            host: "127.0.0.1",
+            host: SERVERS_HOST_FOR_ADMINE,
             port: resolvePort(request),
         },
         createType: "minecraft_bedrock",
@@ -76,12 +73,12 @@ function toCraftyCreateBedrockServer(request: CreateMinecraftServerRequest): Cre
     };
 }
 
-function toCraftyCreateHytaleServer(request: CreateMinecraftServerRequest): CreateHytaleServer {
+function toCraftyCreateHytaleServer(request: CreateMinecraftServerRequest): CreateHytaleServer & { createType: "hytale" } {
     return {
         name: request.name,
         monitoringType: "hytale",
         hytaleMonitoringData: {
-            host: "127.0.0.1",
+            host: SERVERS_HOST_FOR_ADMINE,
             port: resolvePort(request),
         },
         createType: "hytale",
