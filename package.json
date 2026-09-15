@@ -1,15 +1,17 @@
 {
   "name": "admine",
-  "module": "src/entrypoints/cli/index.ts",
+  "module": "src/entrypoints/cli/main.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.41.0",
     "@types/bun": "^1.4.2"
   },
   "peerDependencies": {
     "typescript": "^7"
   },
   "scripts": {
-    "cli": "bun run src/entrypoints/cli/index.ts"
+    "cli": "bun run src/entrypoints/cli/main.ts",
+    "generate:crafty-client": "rm -rf dependencies/crafty-api-client && openapi-generator-cli generate -i resources/crafty-controller-openapi-spec.yml -g typescript-fetch -o dependencies/crafty-api-client --additional-properties=supportsES6=true,withInterfaces=true,enumUnknownDefaultCase=true"
   }
 }

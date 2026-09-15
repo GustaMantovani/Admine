@@ -196,6 +196,8 @@ components:
           example: minecraft-java
     CreateJavaServer:
       type: object
+      required:
+        - create_type
       properties:
         name:
           type: string
@@ -244,6 +246,8 @@ components:
                   example: 25565
     CreateBedrockServer:
       type: object
+      required:
+        - create_type
       properties:
         name:
           type: string
@@ -275,6 +279,47 @@ components:
                 agree_to_eula:
                   type: boolean
                   example: true
+    CreateHytaleServer:
+      type: object
+      required:
+        - create_type
+      properties:
+        name:
+          type: string
+          example: Example Hytale server.
+        monitoring_type:
+          type: string
+          example: hytale
+        hytale_monitoring_data:
+          type: object
+          properties:
+            host:
+              type: string
+              example: 127.0.0.1
+            port:
+              type: integer
+              example: 5520
+        create_type:
+          type: string
+          example: hytale
+        hytale_create_data:
+          type: object
+          properties:
+            create_type:
+              type: string
+              example: download_exe
+            download_exe_create_data:
+              type: object
+              properties:
+                agree_to_eula:
+                  type: boolean
+                  example: true
+                mem_min:
+                  type: number
+                  example: 1
+                mem_max:
+                  type: number
+                  example: 2
 
     Webhook:
       type: object
@@ -1020,6 +1065,13 @@ paths:
               oneOf:
                 - $ref: "#/components/schemas/CreateJavaServer"
                 - $ref: "#/components/schemas/CreateBedrockServer"
+                - $ref: "#/components/schemas/CreateHytaleServer"
+              discriminator:
+                propertyName: create_type
+                mapping:
+                  minecraft_java: "#/components/schemas/CreateJavaServer"
+                  minecraft_bedrock: "#/components/schemas/CreateBedrockServer"
+                  hytale: "#/components/schemas/CreateHytaleServer"
       responses:
         200:
           description: Successfully created new server
