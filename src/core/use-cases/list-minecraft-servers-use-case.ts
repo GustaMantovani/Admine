@@ -5,7 +5,6 @@ export class ListMinecraftServersUseCase {
     constructor(private readonly minecraftServerProvider: MinecraftServerProvider) {}
 
     async execute(): Promise<MinecraftServer[]> {
-        const servers = this.minecraftServerProvider.listServers();
-        return servers;
+        return this.minecraftServerProvider.listServers();
     }
 }
