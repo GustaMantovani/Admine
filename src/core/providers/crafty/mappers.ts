@@ -1,4 +1,4 @@
-import { SERVERS_HOST_FOR_ADMINE, DEFAULT_BEDROCK_PORT, DEFAULT_HYTALE_PORT, DEFAULT_JAVA_PORT, DEFAULT_MAXIMUM_MEMORY, DEFAULT_MINIMUM_MEMORY } from "../../constants";
+import { SERVERS_HOST_FOR_ADMINE, DEFAULT_BEDROCK_PORT, DEFAULT_HYTALE_PORT, DEFAULT_JAVA_PORT, DEFAULT_MAXIMUM_MEMORY, DEFAULT_MINIMUM_MEMORY, DEFAULT_MINECRAFT_SERVER_VERSION } from "../../constants";
 import { MinecraftServer } from "../../domain/minecraft-server";
 import type { MinecraftServerType } from "../../domain/minecraft-server-type";
 import { UnknownMinecraftServerType } from "../../errors";
@@ -24,7 +24,7 @@ export function resolvePort(request: CreateMinecraftServerRequest): number {
         case "hytale":
             return DEFAULT_HYTALE_PORT;
         default:
-            throw new UnknownMinecraftServerType(`${request.type} is not a valid server type`)
+            return DEFAULT_JAVA_PORT;
     }
 }
 
@@ -37,7 +37,7 @@ export function toCraftyCreateServerRequest(request: CreateMinecraftServerReques
         case "hytale":
             return toCraftyCreateHytaleServer(request);
         default:
-            throw new UnknownMinecraftServerType(`${request.type} is not a valid server type`)
+            return toCraftyCreateJavaServer(request);
     }
 }
 
@@ -57,7 +57,7 @@ function toCraftyCreateJavaServer(request: CreateMinecraftServerRequest): Crafty
             download_jar_create_data: {
                 category: "mc_java_servers",
                 type: "paper",
-                version: request.version,
+                version: request.version ?? DEFAULT_MINECRAFT_SERVER_VERSION,
                 mem_min: request.minimumMemory ?? DEFAULT_MINIMUM_MEMORY,
                 mem_max: request.maximumMemory ?? DEFAULT_MAXIMUM_MEMORY,
                 server_properties_port: port,

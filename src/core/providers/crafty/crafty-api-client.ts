@@ -10,11 +10,11 @@ export class CraftyApiClient {
     ) { }
 
     async createServer(body: CraftyCreateServer): Promise<CraftyCreateServerResult> {
-        return this.request("POST", "/api/v2/servers", body);
+        return this.request("POST", "/servers", body);
     }
 
     async listServers(): Promise<CraftyServer[]> {
-        return this.request("GET", "/api/v2/servers");
+        return this.request("GET", "/servers");
     }
 
     private async request<T>(method: string, path: string, body?: unknown, headers?: Record<string, unknown>): Promise<T> {

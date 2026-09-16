@@ -1,5 +1,5 @@
 import { CreateMinecraftServerUseCase, type CreateMinecraftServerRequest } from "../../core";
-import { DEFAULT_CRAFTY_API_BASE_PATH, DEFAULT_MINECRAFT_SERVER_TYPE, DEFAULT_MINECRAFT_SERVER_VERSION } from "../../core/constants";
+import { CRAFTY_API_BASE_PATH, CRAFTY_API_TOKEN, DEFAULT_MINECRAFT_SERVER_TYPE, DEFAULT_MINECRAFT_SERVER_VERSION } from "../../core/constants";
 import { CraftyMinecraftServerProvider } from "../../core/providers/crafty/crafty-minecraft-server-provider";
 import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
 import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
@@ -8,15 +8,15 @@ import { ListMinecraftServersUseCase } from "../../core/use-cases/list-minecraft
 
 let argCounter = 2;
 
-function getNextArg(): string | undefined {
+export function getNextArg(): string | undefined {
     return Bun.argv[argCounter++];
 }
 
 const command = getNextArg();
 
 const craftyApiClient = new CraftyApiClient(
-    process.env.CRAFTY_API_BASE_PATH ?? DEFAULT_CRAFTY_API_BASE_PATH,
-    process.env.CRAFTY_API_TOKEN ?? "",
+    CRAFTY_API_BASE_PATH,
+    CRAFTY_API_TOKEN,
 );
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
 const createMinecraftServerUseCase = new CreateMinecraftServerUseCase(craftyProvider);
@@ -36,11 +36,11 @@ switch (command) {
                 length: 2
             }),
             type: typeArg,
-            version: versionArg || DEFAULT_MINECRAFT_SERVER_VERSION,
+            version: versionArg,
         };
 
         const id = await createMinecraftServerUseCase.execute(newMinecraftServerData);
-        console.log("Server created:", {...newMinecraftServerData, id});
+        console.log("Server created:", { ...newMinecraftServerData, id });
         break;
     case "list":
         console.table(await listMinecraftServerUseCase.execute());
