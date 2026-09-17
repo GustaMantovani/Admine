@@ -6,6 +6,6 @@ export class CreateMinecraftServerUseCase {
     constructor(private readonly minecraftServerProvider: MinecraftServerProvider) {}
 
     async execute(createServerRequest: CreateMinecraftServerRequest): Promise<string> {
-        return this.minecraftServerProvider.createServer(createServerRequest);
+        return this.minecraftServerProvider.create(createServerRequest);
     }
 }

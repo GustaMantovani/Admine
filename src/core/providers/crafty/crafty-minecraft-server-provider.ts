@@ -6,19 +6,22 @@ import type { CraftyApiClient } from "./crafty-api-client";
 
 
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
-    constructor(private readonly craftyApiClient: CraftyApiClient) {};
+    constructor(private readonly craftyApiClient: CraftyApiClient) { };
 
-    async createServer(createServerRequest: CreateMinecraftServerRequest): Promise<string> {
+    async create(createServerRequest: CreateMinecraftServerRequest): Promise<string> {
         const craftyCreateServerRequest = toCraftyCreateServerRequest(createServerRequest);
         const result = await this.craftyApiClient.createServer(craftyCreateServerRequest);
         return result.new_server_id;
     };
 
 
-    async listServers(): Promise<MinecraftServer[]> {
+    async list(): Promise<MinecraftServer[]> {
         const servers = await this.craftyApiClient.listServers();
         return servers.map(toMinecraftServer);
     }
 
+    async start(id: string): Promise<void> {
+        return this.craftyApiClient.sendAction(id, 'start_server');
+    }
 
 }

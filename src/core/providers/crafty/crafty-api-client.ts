@@ -1,3 +1,4 @@
+import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateServerResult } from "./dtos/crafty-create-server-result";
 import type { CraftyResponse } from "./dtos/crafty-response";
@@ -15,6 +16,10 @@ export class CraftyApiClient {
 
     async listServers(): Promise<CraftyServer[]> {
         return this.request("GET", "/servers");
+    }
+
+    async sendAction(serverId: string, action: CraftyAction): Promise<void> {
+        return this.request("POST", `/servers/${serverId}/action/${action}`);
     }
 
     private async request<T>(method: string, path: string, body?: unknown, headers?: Record<string, unknown>): Promise<T> {

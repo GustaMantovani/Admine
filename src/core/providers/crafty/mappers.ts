@@ -123,6 +123,7 @@ export function toMinecraftServer(dto: CraftyServer): MinecraftServer {
         dto.server_id,
         dto.server_name,
         mapServerTypesToEnum(dto.type),
+        'unknow',
         undefined,
         SERVERS_HOST_FOR_ADMINE,
         [],

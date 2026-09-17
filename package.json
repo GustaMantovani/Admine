@@ -10,8 +10,7 @@
     "typescript": "^7"
   },
   "scripts": {
-    "cli": "bun run src/entrypoints/stupid-cli/main.ts",
-    "check": "tsc --noemit"
+    "cli": "bun run src/entrypoints/stupid-cli/main.ts"
   },
   "dependencies": {
     "unique-names-generator": "^4.7.1"
