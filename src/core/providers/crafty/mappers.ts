@@ -8,6 +8,7 @@ import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-serve
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyServer } from "./dtos/crafty-server";
+import type { CraftyServerStatus } from "./dtos/crafty-server-status";
 
 
 
@@ -118,12 +119,17 @@ function mapServerTypesToEnum(dto: string): MinecraftServerType {
     return mapped as MinecraftServerType;
 }
 
-export function toMinecraftServer(dto: CraftyServer): MinecraftServer {
+export function toMinecraftServerStatus(status: CraftyServerStatus | undefined): MinecraftServer["status"] {
+    if (status === undefined) return "unknow";
+    return status.running ? "on" : "off";
+}
+
+export function toMinecraftServer(dto: CraftyServer, status: CraftyServerStatus | undefined): MinecraftServer {
     return new MinecraftServer(
         dto.server_id,
         dto.server_name,
         mapServerTypesToEnum(dto.type),
-        'unknow',
+        toMinecraftServerStatus(status),
         undefined,
         SERVERS_HOST_FOR_ADMINE,
         [],

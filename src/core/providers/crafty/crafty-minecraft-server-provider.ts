@@ -16,12 +16,19 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 
 
     async list(): Promise<MinecraftServer[]> {
-        const servers = await this.craftyApiClient.listServers();
-        return servers.map(toMinecraftServer);
+        const [servers, statuses] = await Promise.all([
+            this.craftyApiClient.listServers(),
+            this.craftyApiClient.getServersStatus(),
+        ]);
+        const statusById = new Map(statuses.map(status => [status.id, status]));
+        return servers.map(dto => toMinecraftServer(dto, statusById.get(dto.server_id)));
     }
 
     async start(id: string): Promise<void> {
-        return this.craftyApiClient.sendAction(id, 'start_server');
+        const result = await this.craftyApiClient.sendAction(id, 'start_server');
+        if (result.status === 'error') {
+            throw new Error(`Crafty failed to start server ${id}: ${result.error} | ${result.error_data}`);
+        }
     }
 
 }
