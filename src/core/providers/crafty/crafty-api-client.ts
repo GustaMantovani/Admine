@@ -4,7 +4,10 @@ import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateServerResult } from "./dtos/crafty-create-server-result";
 import type { CraftyResponse } from "./dtos/crafty-response";
 import type { CraftyServer } from "./dtos/crafty-server";
+import type { CraftyServerDetail } from "./dtos/crafty-server-detail";
+import type { CraftyServerStats } from "./dtos/crafty-server-stats";
 import type { CraftyServerStatus } from "./dtos/crafty-server-status";
+import type { CraftyStopAllResult } from "./dtos/crafty-stop-all-result";
 
 export class CraftyApiClient {
     constructor(
@@ -20,31 +23,62 @@ export class CraftyApiClient {
         return this.request("GET", "/servers");
     }
 
+    async getServer(serverId: string): Promise<CraftyServerDetail> {
+        return this.request("GET", `/servers/${serverId}`);
+    }
+
     async getServersStatus(): Promise<CraftyServerStatus[]> {
         return this.request("GET", "/servers/status");
     }
 
-    async sendAction(serverId: string, action: CraftyAction): Promise<CraftyActionExecutionResult> {
-        return this.request("POST", `/servers/${serverId}/action/${action}`);
+    async getServerStats(serverId: string): Promise<CraftyServerStats> {
+        return this.request("GET", `/servers/${serverId}/stats`);
     }
 
-    private async request<T>(method: string, path: string, body?: unknown, headers?: Record<string, unknown>): Promise<T> {
+    async getServerLogs(serverId: string): Promise<string[]> {
+        return this.request("GET", `/servers/${serverId}/logs`);
+    }
+
+    async sendAction(serverId: string, action: CraftyAction): Promise<CraftyActionExecutionResult> {
+        return this.send("POST", `/servers/${serverId}/action/${action}`);
+    }
+
+    // Crafty reads the stdin body as raw text, not JSON
+    async sendCommand(serverId: string, command: string): Promise<CraftyActionExecutionResult> {
+        return this.send("POST", `/servers/${serverId}/stdin`, command);
+    }
+
+    async deleteServer(serverId: string, removeFiles: boolean): Promise<CraftyActionExecutionResult> {
+        return this.send("DELETE", `/servers/${serverId}${removeFiles ? "?files=true" : ""}`);
+    }
+
+    async stopAllServers(): Promise<CraftyStopAllResult> {
+        return this.request("POST", "/servers/stop_all");
+    }
+
+    // For endpoints that wrap their payload in { status, data }
+    private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+        const json = await this.send<CraftyResponse<T>>(method, path, body);
+        return json.data;
+    }
+
+    private async send<T>(method: string, path: string, body?: unknown): Promise<T> {
+        const isText = typeof body === "string";
+
         const response = await fetch(`${this.baseUrl}${path}`, {
             method,
             headers: {
                 Authorization: `Bearer ${this.token}`,
-                "Content-Type": "application/json",
-                ...headers
+                "Content-Type": isText ? "text/plain" : "application/json",
             },
-            body: body === undefined ? undefined : JSON.stringify(body),
+            body: body === undefined ? undefined : isText ? body : JSON.stringify(body),
         });
 
         if (!response.ok) {
             throw new CraftyApiError(response.status, await response.text());
         }
 
-        const json = (await response.json()) as CraftyResponse<T>;
-        return json.data;
+        return (await response.json()) as T;
     }
 }
 
@@ -53,6 +87,19 @@ export class CraftyApiError extends Error {
         public readonly status: number,
         public readonly body: string,
     ) {
-        super(`Crafty API responded with ${status}: ${body}`);
+        super(`Crafty API responded with ${status}: ${CraftyApiError.summarize(body)}`);
+    }
+
+    // Crafty answers with { error, error_data } JSON or, on unhandled errors, a Python traceback
+    private static summarize(body: string): string {
+        try {
+            const json = JSON.parse(body) as { error?: string; error_data?: string };
+            if (json.error !== undefined) {
+                return json.error_data ? `${json.error} (${json.error_data})` : json.error;
+            }
+        } catch { }
+
+        const lines = body.trim().split("\n");
+        return lines[lines.length - 1] ?? body;
     }
 }

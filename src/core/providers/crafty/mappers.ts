@@ -1,6 +1,6 @@
 import { SERVERS_HOST_FOR_ADMINE, DEFAULT_BEDROCK_PORT, DEFAULT_HYTALE_PORT, DEFAULT_JAVA_PORT, DEFAULT_MAXIMUM_MEMORY, DEFAULT_MINIMUM_MEMORY, DEFAULT_MINECRAFT_SERVER_VERSION } from "../../constants";
 import { MinecraftServer } from "../../domain/minecraft-server";
-import type { MinecraftServerType } from "../../domain/minecraft-server-type";
+import { MinecraftServerType } from "../../domain/minecraft-server-type";
 import { UnknownMinecraftServerType } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { CraftyCreateBedrockServer } from "./dtos/crafty-create-bedrock-server";
@@ -8,7 +8,8 @@ import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-serve
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyServer } from "./dtos/crafty-server";
-import type { CraftyServerStatus } from "./dtos/crafty-server-status";
+import type { CraftyServerStats } from "./dtos/crafty-server-stats";
+import type { MinecraftServerStats } from "../../domain/minecraft-server-stats";
 
 
 
@@ -105,31 +106,36 @@ function toCraftyCreateHytaleServer(request: CreateMinecraftServerRequest): Craf
     };
 }
 
-function mapServerTypesToEnum(dto: string): MinecraftServerType {
-    const mapping: Record<string, string> = {
-        "minecraft-java": "java",
-        "minecraft-bedrock": "bedrock",
-        "hytale": "hytale"
-    }
+// Crafty also manages types Admine doesn't support yet, such as "steam_cmd"
+const CRAFTY_SERVER_TYPES: Record<string, MinecraftServerType> = {
+    "minecraft-java": MinecraftServerType.Java,
+    "minecraft-bedrock": MinecraftServerType.Bedrock,
+    "hytale": MinecraftServerType.Hytale,
+};
 
-    const mapped = mapping[dto];
+export function isSupportedCraftyServerType(type: string): boolean {
+    return type in CRAFTY_SERVER_TYPES;
+}
+
+function mapServerTypesToEnum(dto: string): MinecraftServerType {
+    const mapped = CRAFTY_SERVER_TYPES[dto];
 
     if (mapped == undefined) throw new UnknownMinecraftServerType(`Cant map server type from string ${dto}`);
 
-    return mapped as MinecraftServerType;
+    return mapped;
 }
 
-export function toMinecraftServerStatus(status: CraftyServerStatus | undefined): MinecraftServer["status"] {
-    if (status === undefined) return "unknow";
-    return status.running ? "on" : "off";
+export function toMinecraftServerStatus(running: boolean | undefined): MinecraftServer["status"] {
+    if (running === undefined) return "unknow";
+    return running ? "on" : "off";
 }
 
-export function toMinecraftServer(dto: CraftyServer, status: CraftyServerStatus | undefined): MinecraftServer {
+export function toMinecraftServer(dto: CraftyServer, running: boolean | undefined): MinecraftServer {
     return new MinecraftServer(
         dto.server_id,
         dto.server_name,
         mapServerTypesToEnum(dto.type),
-        toMinecraftServerStatus(status),
+        toMinecraftServerStatus(running),
         undefined,
         SERVERS_HOST_FOR_ADMINE,
         [],
@@ -137,4 +143,35 @@ export function toMinecraftServer(dto: CraftyServer, status: CraftyServerStatus 
         undefined,
         undefined
     );
+}
+
+// Crafty stores Python's str(False) in text stats while the server is offline
+function fromCraftyText(value: string): string | undefined {
+    return value === "" || value === "False" ? undefined : value;
+}
+
+export function toMinecraftServerStats(dto: CraftyServerStats): MinecraftServerStats {
+    return {
+        running: dto.running,
+        crashed: dto.crashed,
+        startedAt: fromCraftyText(dto.started),
+        cpu: dto.cpu,
+        memoryBytes: Number(dto.mem),
+        memoryPercent: dto.mem_percent,
+        playersOnline: dto.online,
+        maxPlayers: dto.max,
+        version: fromCraftyText(dto.version),
+        worldName: dto.world_name,
+        worldSize: dto.world_size,
+    };
+}
+
+// Crafty runs each log line through Python's html.escape
+export function fromCraftyLogLine(line: string): string {
+    return line
+        .replaceAll("&lt;", "<")
+        .replaceAll("&gt;", ">")
+        .replaceAll("&quot;", '"')
+        .replaceAll("&#x27;", "'")
+        .replaceAll("&amp;", "&");
 }

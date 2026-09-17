@@ -1,0 +1,20 @@
+export type CraftyServerStats = {
+    created: string;
+    started: string;
+    running: boolean;
+    cpu: number;
+    mem: number | string;
+    mem_percent: number;
+    world_name: string;
+    world_size: string;
+    server_port: number;
+    online: number;
+    max: number;
+    players: string;
+    desc: string;
+    version: string;
+    updating: boolean;
+    waiting_start: boolean;
+    crashed: boolean;
+    importing: boolean;
+};
