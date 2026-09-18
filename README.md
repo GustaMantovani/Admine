@@ -34,7 +34,7 @@ Users can interact with the system through Discord commands:
 - `/remove_channel` - Remove a channel authorization
 
 **Mod Management**
-- `/install_mod` - Install a mod from a file upload or URL
+- `/install_mod` - Install a mod from a file upload (`file:<attachment>`) or URL (`url:<url>`)
 - `/list_mods` - List all installed mods
 - `/remove_mod <file>` - Remove an installed mod
 
