@@ -1,26 +1,11 @@
 import { parseArgs } from "node:util";
-import { CreateMinecraftServerUseCase, type CreateMinecraftServerRequest } from "../../core";
+import { MinecraftServerUseCases, type CreateMinecraftServerRequest } from "../../core";
 import { CRAFTY_API_BASE_PATH, CRAFTY_API_TOKEN, DEFAULT_MINECRAFT_SERVER_TYPE } from "../../core/constants";
 import { CraftyMinecraftServerProvider } from "../../core/providers/crafty/crafty-minecraft-server-provider";
 import { CraftyApiClient, CraftyApiError } from "../../core/providers/crafty/crafty-api-client";
 import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
 import { MinecraftServerActionError, UnknownMinecraftServerType } from "../../core/errors";
 import { adjectives, animals, colors, uniqueNamesGenerator } from "unique-names-generator";
-import { ListMinecraftServersUseCase } from "../../core/use-cases/list-minecraft-servers-use-case";
-import { StartMinecraftServerUseCase } from "../../core/use-cases/start-minecraft-server-use-case";
-import { StopMinecraftServerUseCase } from "../../core/use-cases/stop-minecraft-server-use-case";
-import { RestartMinecraftServerUseCase } from "../../core/use-cases/restart-minecraft-server-use-case";
-import { KillMinecraftServerUseCase } from "../../core/use-cases/kill-minecraft-server-use-case";
-import { BackupMinecraftServerUseCase } from "../../core/use-cases/backup-minecraft-server-use-case";
-import { UpdateMinecraftServerUseCase } from "../../core/use-cases/update-minecraft-server-use-case";
-import { CloneMinecraftServerUseCase } from "../../core/use-cases/clone-minecraft-server-use-case";
-import { GetMinecraftServerUseCase } from "../../core/use-cases/get-minecraft-server-use-case";
-import { GetMinecraftServerStatsUseCase } from "../../core/use-cases/get-minecraft-server-stats-use-case";
-import { GetMinecraftServerLogsUseCase } from "../../core/use-cases/get-minecraft-server-logs-use-case";
-import { SendMinecraftServerCommandUseCase } from "../../core/use-cases/send-minecraft-server-command-use-case";
-import { DeleteMinecraftServerUseCase } from "../../core/use-cases/delete-minecraft-server-use-case";
-import { StopAllMinecraftServersUseCase } from "../../core/use-cases/stop-all-minecraft-servers-use-case";
-import { AcceptMinecraftServerEulaUseCase } from "../../core/use-cases/accept-minecraft-server-eula-use-case";
 
 class UsageError extends Error { }
 
@@ -47,22 +32,7 @@ const craftyApiClient = new CraftyApiClient(
     CRAFTY_API_TOKEN,
 );
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
-const createMinecraftServerUseCase = new CreateMinecraftServerUseCase(craftyProvider);
-const listMinecraftServerUseCase = new ListMinecraftServersUseCase(craftyProvider);
-const startMinecraftServerUseCase = new StartMinecraftServerUseCase(craftyProvider);
-const stopMinecraftServerUseCase = new StopMinecraftServerUseCase(craftyProvider);
-const restartMinecraftServerUseCase = new RestartMinecraftServerUseCase(craftyProvider);
-const killMinecraftServerUseCase = new KillMinecraftServerUseCase(craftyProvider);
-const backupMinecraftServerUseCase = new BackupMinecraftServerUseCase(craftyProvider);
-const updateMinecraftServerUseCase = new UpdateMinecraftServerUseCase(craftyProvider);
-const cloneMinecraftServerUseCase = new CloneMinecraftServerUseCase(craftyProvider);
-const getMinecraftServerUseCase = new GetMinecraftServerUseCase(craftyProvider);
-const getMinecraftServerStatsUseCase = new GetMinecraftServerStatsUseCase(craftyProvider);
-const getMinecraftServerLogsUseCase = new GetMinecraftServerLogsUseCase(craftyProvider);
-const sendMinecraftServerCommandUseCase = new SendMinecraftServerCommandUseCase(craftyProvider);
-const deleteMinecraftServerUseCase = new DeleteMinecraftServerUseCase(craftyProvider);
-const stopAllMinecraftServersUseCase = new StopAllMinecraftServersUseCase(craftyProvider);
-const acceptMinecraftServerEulaUseCase = new AcceptMinecraftServerEulaUseCase(craftyProvider);
+const minecraftServers = new MinecraftServerUseCases(craftyProvider);
 
 const USAGE_MESSAGE = `Usage: bun run cli <command> [args]
 
@@ -94,15 +64,15 @@ const commands: Record<string, () => Promise<void>> = {
             version: versionArg,
         };
 
-        const id = await createMinecraftServerUseCase.execute(newMinecraftServerData);
+        const id = await minecraftServers.create(newMinecraftServerData);
         console.log("Server created:", { ...newMinecraftServerData, id });
     },
 
-    'list': async () => console.table(await listMinecraftServerUseCase.execute()),
+    'list': async () => console.table(await minecraftServers.list()),
 
-    'info': async () => console.log(await getMinecraftServerUseCase.execute(requireArg(0, "id"))),
+    'info': async () => console.log(await minecraftServers.get(requireArg(0, "id"))),
 
-    'stats': async () => console.log(await getMinecraftServerStatsUseCase.execute(requireArg(0, "id"))),
+    'stats': async () => console.log(await minecraftServers.stats(requireArg(0, "id"))),
 
     'logs': async () => {
         const lastLines = flags.lines === undefined ? undefined : Number(flags.lines);
@@ -110,47 +80,47 @@ const commands: Record<string, () => Promise<void>> = {
             throw new UsageError(`--lines must be a positive integer, got "${flags.lines}"`);
         }
 
-        const lines = await getMinecraftServerLogsUseCase.execute(requireArg(0, "id"), lastLines);
+        const lines = await minecraftServers.logs(requireArg(0, "id"), lastLines);
         console.log(lines.join("\n"));
     },
 
     'start': async () => {
-        await startMinecraftServerUseCase.execute(requireArg(0, "id"));
-        console.table(await listMinecraftServerUseCase.execute());
+        await minecraftServers.start(requireArg(0, "id"));
+        console.table(await minecraftServers.list());
     },
 
     'stop': async () => {
-        await stopMinecraftServerUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.stop(requireArg(0, "id"));
         console.log("Stop requested");
     },
 
     'restart': async () => {
-        await restartMinecraftServerUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.restart(requireArg(0, "id"));
         console.log("Restart requested");
     },
 
     'kill': async () => {
-        await killMinecraftServerUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.kill(requireArg(0, "id"));
         console.log("Kill requested");
     },
 
     'backup': async () => {
-        await backupMinecraftServerUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.backup(requireArg(0, "id"));
         console.log("Backup started");
     },
 
     'update': async () => {
-        await updateMinecraftServerUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.update(requireArg(0, "id"));
         console.log("Update started");
     },
 
     'clone': async () => {
-        await cloneMinecraftServerUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.clone(requireArg(0, "id"));
         console.log("Clone started");
     },
 
     'eula': async () => {
-        await acceptMinecraftServerEulaUseCase.execute(requireArg(0, "id"));
+        await minecraftServers.acceptEula(requireArg(0, "id"));
         console.log("EULA accepted");
     },
 
@@ -159,7 +129,7 @@ const commands: Record<string, () => Promise<void>> = {
         const consoleCommand = args.slice(1).join(" ");
         if (consoleCommand === "") throw new UsageError(`Missing argument <command> for "cmd"`);
 
-        await sendMinecraftServerCommandUseCase.execute(id, consoleCommand);
+        await minecraftServers.sendCommand(id, consoleCommand);
         console.log(`Sent: ${consoleCommand}`);
     },
 
@@ -167,7 +137,7 @@ const commands: Record<string, () => Promise<void>> = {
         const id = requireArg(0, "id");
 
         if (!flags.yes) {
-            const server = await getMinecraftServerUseCase.execute(id);
+            const server = await minecraftServers.get(id);
             const what = flags.files ? "and ALL its files" : "(files are kept on disk)";
             const answer = prompt(`Delete server "${server.name}" (${id}) ${what}? Type the server name to confirm:`);
             if (answer !== server.name) {
@@ -176,12 +146,12 @@ const commands: Record<string, () => Promise<void>> = {
             }
         }
 
-        await deleteMinecraftServerUseCase.execute(id, flags.files);
+        await minecraftServers.delete(id, flags.files);
         console.log("Server deleted");
     },
 
     'stop-all': async () => {
-        const count = await stopAllMinecraftServersUseCase.execute();
+        const count = await minecraftServers.stopAll();
         console.log(`Stopping ${count} server(s)`);
     },
 }

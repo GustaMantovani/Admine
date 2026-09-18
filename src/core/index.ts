@@ -1,4 +1,4 @@
 export type { CreateMinecraftServerRequest } from "./types/create-minecraft-server-request";
 export type { MinecraftServer } from "./domain/minecraft-server";
 export type { MinecraftServerProvider } from "./providers/minecraft-server-provider";
-export { CreateMinecraftServerUseCase } from "./use-cases/create-minecraft-server-use-case";
+export { MinecraftServerUseCases } from "./use-cases/minecraft-server-use-cases";
