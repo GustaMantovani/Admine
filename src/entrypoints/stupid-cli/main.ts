@@ -1,181 +1,168 @@
-import { parseArgs } from "node:util";
-import { MinecraftServerUseCases, type CreateMinecraftServerRequest } from "../../core";
-import { CRAFTY_API_BASE_PATH, CRAFTY_API_TOKEN, DEFAULT_MINECRAFT_SERVER_TYPE } from "../../core/constants";
+import {
+	adjectives,
+	animals,
+	colors,
+	uniqueNamesGenerator,
+} from "unique-names-generator";
+import {
+	type CreateMinecraftServerRequest,
+	MinecraftServerUseCases,
+} from "../../core";
+import {
+	CRAFTY_API_BASE_PATH,
+	CRAFTY_API_TOKEN,
+	DEFAULT_MINECRAFT_SERVER_TYPE,
+} from "../../core/constants";
+import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
 import { CraftyMinecraftServerProvider } from "../../core/providers/crafty/crafty-minecraft-server-provider";
-import { CraftyApiClient, CraftyApiError } from "../../core/providers/crafty/crafty-api-client";
-import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
-import { MinecraftServerActionError, UnknownMinecraftServerType } from "../../core/errors";
-import { adjectives, animals, colors, uniqueNamesGenerator } from "unique-names-generator";
+import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
 
-class UsageError extends Error { }
+let argCounter = 2;
 
-const { positionals, values: flags } = parseArgs({
-    args: Bun.argv.slice(2),
-    allowPositionals: true,
-    options: {
-        files: { type: "boolean", default: false },
-        lines: { type: "string" },
-        yes: { type: "boolean", short: "y", default: false },
-    },
-});
-
-const [command, ...args] = positionals;
-
-function requireArg(index: number, name: string): string {
-    const value = args[index];
-    if (value === undefined) throw new UsageError(`Missing argument <${name}> for "${command}"`);
-    return value;
+export function getNextStdinArg(): string | undefined {
+	return Bun.argv[argCounter++];
 }
+
+type CLICommand =
+	| "create"
+	| "list"
+	| "info"
+	| "stats"
+	| "logs"
+	| "start"
+	| "stop"
+	| "restart"
+	| "kill"
+	| "backup"
+	| "update"
+	| "clone"
+	| "eula"
+	| "cmd"
+	| "delete"
+	| "stop-all"
+	| "unknow";
+const command: CLICommand = getNextStdinArg() as CLICommand | "unknow";
 
 const craftyApiClient = new CraftyApiClient(
-    CRAFTY_API_BASE_PATH,
-    CRAFTY_API_TOKEN,
+	CRAFTY_API_BASE_PATH,
+	CRAFTY_API_TOKEN,
 );
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
-const minecraftServers = new MinecraftServerUseCases(craftyProvider);
+const minecraftServerUseCases = new MinecraftServerUseCases(craftyProvider);
 
-const USAGE_MESSAGE = `Usage: bun run cli <command> [args]
+const commands: Record<CLICommand, () => Promise<void>> = {
+	create: async () => {
+		const nameArg = getNextStdinArg();
+		const typeArg =
+			(getNextStdinArg()?.toLocaleLowerCase() as MinecraftServerType) ||
+			DEFAULT_MINECRAFT_SERVER_TYPE;
+		const versionArg = getNextStdinArg();
 
-  create [name] [type] [version]   Create a server (type: java | bedrock | hytale)
-  list                             List servers and their status
-  info <id>                        Show a server
-  stats <id>                       Show CPU, memory and players of a server
-  logs <id> [--lines N]            Show the server console output
-  start | stop | restart | kill <id>
-  backup <id>                      Start a backup
-  update <id>                      Update the server executable
-  clone <id>                       Clone a stopped server
-  eula <id>                        Accept the Minecraft EULA (Java servers won't start without it)
-  cmd <id> <command...>            Send a command to the server console
-  delete <id> [--files] [-y]       Delete a server (--files also removes its files)
-  stop-all                         Stop every running server`;
+		const newMinecraftServerData: CreateMinecraftServerRequest = {
+			name:
+				nameArg ||
+				uniqueNamesGenerator({
+					dictionaries: [adjectives, animals, colors],
+					separator: " ",
+					length: 2,
+				}),
+			type: typeArg,
+			version: versionArg,
+		};
 
-const commands: Record<string, () => Promise<void>> = {
-    'create': async () => {
-        const [nameArg, typeArg, versionArg] = args;
+		const id = await minecraftServerUseCases.create(newMinecraftServerData);
+		console.log("Server created:", { ...newMinecraftServerData, id });
+	},
 
-        const newMinecraftServerData: CreateMinecraftServerRequest = {
-            name: nameArg || uniqueNamesGenerator({
-                dictionaries: [adjectives, animals, colors],
-                separator: ' ',
-                length: 2
-            }),
-            type: typeArg?.toLocaleLowerCase() as MinecraftServerType || DEFAULT_MINECRAFT_SERVER_TYPE,
-            version: versionArg,
-        };
+	list: async () => console.table(await minecraftServerUseCases.list()),
 
-        const id = await minecraftServers.create(newMinecraftServerData);
-        console.log("Server created:", { ...newMinecraftServerData, id });
-    },
+	info: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		console.table(await minecraftServerUseCases.get(serverIdArg));
+	},
 
-    'list': async () => console.table(await minecraftServers.list()),
+	stats: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		console.table(await minecraftServerUseCases.stats(serverIdArg));
+	},
 
-    'info': async () => console.log(await minecraftServers.get(requireArg(0, "id"))),
+	logs: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		const linesArg = getNextStdinArg();
+		const lines = await minecraftServerUseCases.logs(
+			serverIdArg,
+			linesArg ? Number(linesArg) : undefined,
+		);
+		console.log(lines.join("\n"));
+	},
 
-    'stats': async () => console.log(await minecraftServers.stats(requireArg(0, "id"))),
+	start: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.start(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'logs': async () => {
-        const lastLines = flags.lines === undefined ? undefined : Number(flags.lines);
-        if (lastLines !== undefined && (!Number.isInteger(lastLines) || lastLines <= 0)) {
-            throw new UsageError(`--lines must be a positive integer, got "${flags.lines}"`);
-        }
+	stop: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.stop(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-        const lines = await minecraftServers.logs(requireArg(0, "id"), lastLines);
-        console.log(lines.join("\n"));
-    },
+	restart: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.restart(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'start': async () => {
-        await minecraftServers.start(requireArg(0, "id"));
-        console.table(await minecraftServers.list());
-    },
+	kill: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.kill(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'stop': async () => {
-        await minecraftServers.stop(requireArg(0, "id"));
-        console.log("Stop requested");
-    },
+	backup: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.backup(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'restart': async () => {
-        await minecraftServers.restart(requireArg(0, "id"));
-        console.log("Restart requested");
-    },
+	update: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.update(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'kill': async () => {
-        await minecraftServers.kill(requireArg(0, "id"));
-        console.log("Kill requested");
-    },
+	clone: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.clone(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'backup': async () => {
-        await minecraftServers.backup(requireArg(0, "id"));
-        console.log("Backup started");
-    },
+	eula: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		await minecraftServerUseCases.acceptEula(serverIdArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'update': async () => {
-        await minecraftServers.update(requireArg(0, "id"));
-        console.log("Update started");
-    },
+	cmd: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		const consoleCommandArg = Bun.argv.slice(argCounter).join(" ");
+		await minecraftServerUseCases.sendCommand(serverIdArg, consoleCommandArg);
+	},
 
-    'clone': async () => {
-        await minecraftServers.clone(requireArg(0, "id"));
-        console.log("Clone started");
-    },
+	delete: async () => {
+		const serverIdArg = getNextStdinArg()!;
+		const removeFilesArg = getNextStdinArg() === "--files";
+		await minecraftServerUseCases.delete(serverIdArg, removeFilesArg);
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'eula': async () => {
-        await minecraftServers.acceptEula(requireArg(0, "id"));
-        console.log("EULA accepted");
-    },
+	"stop-all": async () => {
+		await minecraftServerUseCases.stopAll();
+		console.table(await minecraftServerUseCases.list());
+	},
 
-    'cmd': async () => {
-        const id = requireArg(0, "id");
-        const consoleCommand = args.slice(1).join(" ");
-        if (consoleCommand === "") throw new UsageError(`Missing argument <command> for "cmd"`);
+	unknow: async () => console.log(`Unknown command: ${command}`),
+};
 
-        await minecraftServers.sendCommand(id, consoleCommand);
-        console.log(`Sent: ${consoleCommand}`);
-    },
-
-    'delete': async () => {
-        const id = requireArg(0, "id");
-
-        if (!flags.yes) {
-            const server = await minecraftServers.get(id);
-            const what = flags.files ? "and ALL its files" : "(files are kept on disk)";
-            const answer = prompt(`Delete server "${server.name}" (${id}) ${what}? Type the server name to confirm:`);
-            if (answer !== server.name) {
-                console.log("Aborted");
-                return;
-            }
-        }
-
-        await minecraftServers.delete(id, flags.files);
-        console.log("Server deleted");
-    },
-
-    'stop-all': async () => {
-        const count = await minecraftServers.stopAll();
-        console.log(`Stopping ${count} server(s)`);
-    },
-}
-
-const handler = commands[command!];
-
-if (handler === undefined) {
-    if (command !== undefined) console.error(`Unknown command: ${command}\n`);
-    console.log(USAGE_MESSAGE);
-    process.exitCode = 1;
-} else {
-    try {
-        await handler();
-    } catch (error) {
-        if (
-            error instanceof UsageError ||
-            error instanceof CraftyApiError ||
-            error instanceof MinecraftServerActionError ||
-            error instanceof UnknownMinecraftServerType
-        ) {
-            console.error(`Error: ${error.message}`);
-            process.exitCode = 1;
-        } else {
-            throw error;
-        }
-    }
-}
+await commands[command]();

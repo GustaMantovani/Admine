@@ -1,4 +1,4 @@
 export type CraftyResponse<T> = {
-    status: string;
-    data: T;
+	status: string;
+	data: T;
 };

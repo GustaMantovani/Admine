@@ -1,4 +1,4 @@
 export type CraftyStopAllResult = {
-    message: string;
-    count: number;
+	message: string;
+	count: number;
 };

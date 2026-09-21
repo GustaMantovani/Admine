@@ -1,109 +1,127 @@
-import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
-import { MinecraftServer } from "../../domain/minecraft-server";
-import type { MinecraftServerStats } from "../../domain/minecraft-server-stats";
 import { MinecraftServerActionError } from "../../errors";
-import { fromCraftyLogLine, isSupportedCraftyServerType, toCraftyCreateServerRequest, toMinecraftServer, toMinecraftServerStats } from "./mappers";
+import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
+import type { MinecraftServer } from "../../types/minecraft-server";
+import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
-
+import {
+	fromCraftyLogLine,
+	isSupportedCraftyServerType,
+	toCraftyCreateServerRequest,
+	toMinecraftServer,
+	toMinecraftServerStats,
+} from "./mappers";
 
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
-    constructor(private readonly craftyApiClient: CraftyApiClient) { };
+	constructor(private readonly craftyApiClient: CraftyApiClient) {}
 
-    async create(createServerRequest: CreateMinecraftServerRequest): Promise<string> {
-        const craftyCreateServerRequest = toCraftyCreateServerRequest(createServerRequest);
-        const result = await this.craftyApiClient.createServer(craftyCreateServerRequest);
-        return result.new_server_id;
-    };
+	async create(
+		createServerRequest: CreateMinecraftServerRequest,
+	): Promise<string> {
+		const craftyCreateServerRequest =
+			toCraftyCreateServerRequest(createServerRequest);
+		const result = await this.craftyApiClient.createServer(
+			craftyCreateServerRequest,
+		);
+		return result.new_server_id;
+	}
 
+	async list(): Promise<MinecraftServer[]> {
+		const [servers, statuses] = await Promise.all([
+			this.craftyApiClient.listServers(),
+			this.craftyApiClient.getServersStatus(),
+		]);
+		const runningById = new Map(
+			statuses.map((status) => [status.id, status.running]),
+		);
+		return servers
+			.filter((dto) => isSupportedCraftyServerType(dto.type))
+			.map((dto) => toMinecraftServer(dto, runningById.get(dto.server_id)));
+	}
 
-    async list(): Promise<MinecraftServer[]> {
-        const [servers, statuses] = await Promise.all([
-            this.craftyApiClient.listServers(),
-            this.craftyApiClient.getServersStatus(),
-        ]);
-        const runningById = new Map(statuses.map(status => [status.id, status.running]));
-        return servers
-            .filter(dto => isSupportedCraftyServerType(dto.type))
-            .map(dto => toMinecraftServer(dto, runningById.get(dto.server_id)));
-    }
+	async get(id: string): Promise<MinecraftServer> {
+		const [server, stats] = await Promise.all([
+			this.craftyApiClient.getServer(id),
+			this.craftyApiClient.getServerStats(id),
+		]);
+		return toMinecraftServer(server, stats.running);
+	}
 
-    async get(id: string): Promise<MinecraftServer> {
-        const [server, stats] = await Promise.all([
-            this.craftyApiClient.getServer(id),
-            this.craftyApiClient.getServerStats(id),
-        ]);
-        return toMinecraftServer(server, stats.running);
-    }
+	async stats(id: string): Promise<MinecraftServerStats> {
+		return toMinecraftServerStats(
+			await this.craftyApiClient.getServerStats(id),
+		);
+	}
 
-    async stats(id: string): Promise<MinecraftServerStats> {
-        return toMinecraftServerStats(await this.craftyApiClient.getServerStats(id));
-    }
+	async logs(id: string): Promise<string[]> {
+		const lines = await this.craftyApiClient.getServerLogs(id);
+		return lines.map(fromCraftyLogLine);
+	}
 
-    async logs(id: string): Promise<string[]> {
-        const lines = await this.craftyApiClient.getServerLogs(id);
-        return lines.map(fromCraftyLogLine);
-    }
+	async start(id: string): Promise<void> {
+		return this.runAction(id, "start_server");
+	}
 
-    async start(id: string): Promise<void> {
-        return this.runAction(id, 'start_server');
-    }
+	async stop(id: string): Promise<void> {
+		return this.runAction(id, "stop_server");
+	}
 
-    async stop(id: string): Promise<void> {
-        return this.runAction(id, 'stop_server');
-    }
+	async restart(id: string): Promise<void> {
+		return this.runAction(id, "restart_server");
+	}
 
-    async restart(id: string): Promise<void> {
-        return this.runAction(id, 'restart_server');
-    }
+	async kill(id: string): Promise<void> {
+		return this.runAction(id, "kill_server");
+	}
 
-    async kill(id: string): Promise<void> {
-        return this.runAction(id, 'kill_server');
-    }
+	async backup(id: string): Promise<void> {
+		return this.runAction(id, "backup_server");
+	}
 
-    async backup(id: string): Promise<void> {
-        return this.runAction(id, 'backup_server');
-    }
+	async update(id: string): Promise<void> {
+		return this.runAction(id, "update_executable");
+	}
 
-    async update(id: string): Promise<void> {
-        return this.runAction(id, 'update_executable');
-    }
+	async clone(id: string): Promise<void> {
+		return this.runAction(id, "clone_server");
+	}
 
-    async clone(id: string): Promise<void> {
-        return this.runAction(id, 'clone_server');
-    }
+	async acceptEula(id: string): Promise<void> {
+		return this.runAction(id, "eula");
+	}
 
-    async acceptEula(id: string): Promise<void> {
-        return this.runAction(id, 'eula');
-    }
+	async sendCommand(id: string, command: string): Promise<void> {
+		const result = await this.craftyApiClient.sendCommand(id, command);
+		this.throwIfFailed(result, `send command to server ${id}`);
+	}
 
-    async sendCommand(id: string, command: string): Promise<void> {
-        const result = await this.craftyApiClient.sendCommand(id, command);
-        this.throwIfFailed(result, `send command to server ${id}`);
-    }
+	async delete(id: string, removeFiles: boolean): Promise<void> {
+		const result = await this.craftyApiClient.deleteServer(id, removeFiles);
+		this.throwIfFailed(result, `delete server ${id}`);
+	}
 
-    async delete(id: string, removeFiles: boolean): Promise<void> {
-        const result = await this.craftyApiClient.deleteServer(id, removeFiles);
-        this.throwIfFailed(result, `delete server ${id}`);
-    }
+	async stopAll(): Promise<number> {
+		const result = await this.craftyApiClient.stopAllServers();
+		return result.count;
+	}
 
-    async stopAll(): Promise<number> {
-        const result = await this.craftyApiClient.stopAllServers();
-        return result.count;
-    }
+	private async runAction(id: string, action: CraftyAction): Promise<void> {
+		const result = await this.craftyApiClient.sendAction(id, action);
+		this.throwIfFailed(result, `run ${action} on server ${id}`);
+	}
 
-    private async runAction(id: string, action: CraftyAction): Promise<void> {
-        const result = await this.craftyApiClient.sendAction(id, action);
-        this.throwIfFailed(result, `run ${action} on server ${id}`);
-    }
-
-    // Some Crafty failures come back as HTTP 200 with status "error"
-    private throwIfFailed(result: CraftyActionExecutionResult, operation: string): void {
-        if (result.status === 'error') {
-            const details = result.error_data ? ` (${result.error_data})` : "";
-            throw new MinecraftServerActionError(`Crafty failed to ${operation}: ${result.error ?? "unknown error"}${details}`);
-        }
-    }
+	// Some Crafty failures come back as HTTP 200 with status "error"
+	private throwIfFailed(
+		result: CraftyActionExecutionResult,
+		operation: string,
+	): void {
+		if (result.status === "error") {
+			const details = result.error_data ? ` (${result.error_data})` : "";
+			throw new MinecraftServerActionError(
+				`Crafty failed to ${operation}: ${result.error ?? "unknown error"}${details}`,
+			);
+		}
+	}
 }
