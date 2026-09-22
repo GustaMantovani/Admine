@@ -20,7 +20,7 @@ import type { MinecraftServerType } from "../../core/types/minecraft-server-type
 let argCounter = 2;
 
 export function getNextStdinArg(): string | undefined {
-	return Bun.argv[argCounter++];
+  return Bun.argv[argCounter++];
 }
 
 type CLICommand =
