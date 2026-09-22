@@ -39,7 +39,7 @@ type CLICommand =
 	| "eula"
 	| "cmd"
 	| "delete"
-    | "stop-all"
+  | "stop-all"
 	| "help"
 	| "unknow";
 const command: CLICommand = getNextStdinArg() as CLICommand | "unknow";
