@@ -134,7 +134,7 @@ export function isSupportedCraftyServerType(type: string): boolean {
 function mapServerTypesToEnum(dto: string): MinecraftServerType {
 	const mapped = CRAFTY_SERVER_TYPES[dto];
 
-	if (mapped == undefined)
+	if (mapped === undefined)
 		throw new UnknownMinecraftServerType(
 			`Cant map server type from string ${dto}`,
 		);

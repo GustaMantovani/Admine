@@ -2,31 +2,31 @@
 	"code_actions_on_format": {
 		"source.fixAll.biome": true,
 		"source.suppressRule.inline.biome": false,
-		"source.suppressRule.topLevel.biome": false,
+		"source.suppressRule.topLevel.biome": false
 	},
 	"autosave": {
-    "after_delay": {
-      "milliseconds": 1000
-    }
-  },
-  "format_on_save": "on",
-  "languages": {
-    "JavaScript": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      }
-    },
-    "TypeScript": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      }
-    },
-    "JSON": {
-      "formatter": { "language_server": { "name": "biome" } }
-    }
-  }
+		"after_delay": {
+			"milliseconds": 1000
+		}
+	},
+	"format_on_save": "on",
+	"languages": {
+		"JavaScript": {
+			"formatter": { "language_server": { "name": "biome" } },
+			"code_actions_on_format": {
+				"source.fixAll.biome": true,
+				"source.organizeImports.biome": true
+			}
+		},
+		"TypeScript": {
+			"formatter": { "language_server": { "name": "biome" } },
+			"code_actions_on_format": {
+				"source.fixAll.biome": true,
+				"source.organizeImports.biome": true
+			}
+		},
+		"JSON": {
+			"formatter": { "language_server": { "name": "biome" } }
+		}
+	}
 }
