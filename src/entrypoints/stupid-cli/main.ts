@@ -39,7 +39,8 @@ type CLICommand =
 	| "eula"
 	| "cmd"
 	| "delete"
-	| "stop-all"
+    | "stop-all"
+	| "help"
 	| "unknow";
 const command: CLICommand = getNextStdinArg() as CLICommand | "unknow";
 
@@ -49,6 +50,34 @@ const craftyApiClient = new CraftyApiClient(
 );
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
 const minecraftServerUseCases = new MinecraftServerUseCases(craftyProvider);
+
+function cliHelp() {
+    console.log(`Unknown command: ${command}`);
+    const HELP_STRING = `Usage: bun run cli <command> [args]
+
+    Servers:
+      create [name] [type] [version]   Create a server (type: java | bedrock | hytale, default: java)
+      list                             List servers and their status
+      info <id>                        Show a server's details
+      stats <id>                       Show CPU, memory, players and state of a server
+      logs <id> [lines]                Show the server console (last N lines)
+
+    Control:
+      start <id>                       Start the server
+      stop <id>                        Stop the server
+      restart <id>                     Restart the server
+      kill <id>                        Force-kill the server process
+      eula <id>                        Accept the EULA (Java servers won't start without it)
+      stop-all                         Stop every running server
+
+    Maintenance:
+      backup <id>                      Start a backup of the server
+      update <id>                      Update the server executable
+      clone <id>                       Clone a stopped server
+      cmd <id> <command...>            Send a command to the server console
+      delete <id> [--files]            Delete the server (--files also deletes its files)`;
+    console.log(HELP_STRING);
+}
 
 const commands: Record<CLICommand, () => Promise<void>> = {
 	create: async () => {
@@ -162,7 +191,21 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 		console.table(await minecraftServerUseCases.list());
 	},
 
-	unknow: async () => console.log(`Unknown command: ${command}`),
+  help: async () => {
+      cliHelp();
+  },
+
+  unknow: async () => {
+      cliHelp();
+      process.exit(1);
+  },
 };
 
-await commands[command]();
+const handler = commands[command];
+
+if (handler === undefined) {
+  cliHelp();
+  process.exit(1);
+};
+
+await handler();
