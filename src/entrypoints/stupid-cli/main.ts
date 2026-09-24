@@ -52,7 +52,6 @@ const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
 const minecraftServerUseCases = new MinecraftServerUseCases(craftyProvider);
 
 function cliHelp() {
-    console.log(`Unknown command: ${command}`);
     const HELP_STRING = `Usage: bun run cli <command> [args]
 
     Servers:
@@ -128,49 +127,41 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 	start: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.start(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	stop: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.stop(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	restart: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.restart(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	kill: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.kill(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	backup: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.backup(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	update: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.update(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	clone: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.clone(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	eula: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		await minecraftServerUseCases.acceptEula(serverIdArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	cmd: async () => {
@@ -183,21 +174,20 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 		const serverIdArg = getNextStdinArg()!;
 		const removeFilesArg = getNextStdinArg() === "--files";
 		await minecraftServerUseCases.delete(serverIdArg, removeFilesArg);
-		console.table(await minecraftServerUseCases.list());
 	},
 
 	"stop-all": async () => {
 		await minecraftServerUseCases.stopAll();
-		console.table(await minecraftServerUseCases.list());
 	},
 
   help: async () => {
-      cliHelp();
+    cliHelp();
   },
 
   unknow: async () => {
-      cliHelp();
-      process.exit(1);
+    console.log(`Unknown command: ${command}`);
+    cliHelp();
+    process.exit(1);
   },
 };
 
