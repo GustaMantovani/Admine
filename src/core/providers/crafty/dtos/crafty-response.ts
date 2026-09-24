@@ -1,4 +1,5 @@
-export type CraftyResponse<T> = {
-	status: string;
+import type { CraftyActionExecutionResult } from "./crafty-action-execution-result";
+
+export type CraftyResponse<T> = CraftyActionExecutionResult & {
 	data: T;
 };

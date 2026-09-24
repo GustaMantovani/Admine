@@ -25,7 +25,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		const result = await this.craftyApiClient.createServer(
 			craftyCreateServerRequest,
 		);
-		return result.new_server_id;
+		return result.data.new_server_id;
 	}
 
 	async list(): Promise<MinecraftServer[]> {
@@ -34,9 +34,9 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			this.craftyApiClient.getServersStatus(),
 		]);
 		const runningById = new Map(
-			statuses.map((status) => [status.id, status.running]),
+			statuses.data.map((status) => [status.id, status.running]),
 		);
-		return servers
+		return servers.data
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
 			.map((dto) => toMinecraftServer(dto, runningById.get(dto.server_id)));
 	}
@@ -46,18 +46,17 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			this.craftyApiClient.getServer(id),
 			this.craftyApiClient.getServerStats(id),
 		]);
-		return toMinecraftServer(server, stats.running);
+		return toMinecraftServer(server.data, stats.data.running);
 	}
 
 	async stats(id: string): Promise<MinecraftServerStats> {
-		return toMinecraftServerStats(
-			await this.craftyApiClient.getServerStats(id),
-		);
+		const result = await this.craftyApiClient.getServerStats(id);
+		return toMinecraftServerStats(result.data);
 	}
 
 	async logs(id: string): Promise<string[]> {
-		const lines = await this.craftyApiClient.getServerLogs(id);
-		return lines.map(fromCraftyLogLine);
+		const result = await this.craftyApiClient.getServerLogs(id);
+		return result.data.map(fromCraftyLogLine);
 	}
 
 	async start(id: string): Promise<void> {
@@ -104,7 +103,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 
 	async stopAll(): Promise<number> {
 		const result = await this.craftyApiClient.stopAllServers();
-		return result.count;
+		return result.data.count;
 	}
 
 	private async runAction(id: string, action: CraftyAction): Promise<void> {

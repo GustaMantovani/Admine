@@ -1,3 +1,4 @@
+import { CraftyApiError } from "../../errors";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
@@ -17,27 +18,27 @@ export class CraftyApiClient {
 
 	async createServer(
 		body: CraftyCreateServer,
-	): Promise<CraftyCreateServerResult> {
+	): Promise<CraftyResponse<CraftyCreateServerResult>> {
 		return this.request("POST", "/servers", body);
 	}
 
-	async listServers(): Promise<CraftyServer[]> {
+	async listServers(): Promise<CraftyResponse<CraftyServer[]>> {
 		return this.request("GET", "/servers");
 	}
 
-	async getServer(serverId: string): Promise<CraftyServerDetail> {
+	async getServer(serverId: string): Promise<CraftyResponse<CraftyServerDetail>> {
 		return this.request("GET", `/servers/${serverId}`);
 	}
 
-	async getServersStatus(): Promise<CraftyServerStatus[]> {
+	async getServersStatus(): Promise<CraftyResponse<CraftyServerStatus[]>> {
 		return this.request("GET", "/servers/status");
 	}
 
-	async getServerStats(serverId: string): Promise<CraftyServerStats> {
+	async getServerStats(serverId: string): Promise<CraftyResponse<CraftyServerStats>> {
 		return this.request("GET", `/servers/${serverId}/stats`);
 	}
 
-	async getServerLogs(serverId: string): Promise<string[]> {
+	async getServerLogs(serverId: string): Promise<CraftyResponse<string[]>> {
 		return this.request("GET", `/servers/${serverId}/logs`);
 	}
 
@@ -45,7 +46,7 @@ export class CraftyApiClient {
 		serverId: string,
 		action: CraftyAction,
 	): Promise<CraftyActionExecutionResult> {
-		return this.send("POST", `/servers/${serverId}/action/${action}`);
+		return this.request("POST", `/servers/${serverId}/action/${action}`);
 	}
 
 	// Crafty reads the stdin body as raw text, not JSON
@@ -53,34 +54,24 @@ export class CraftyApiClient {
 		serverId: string,
 		command: string,
 	): Promise<CraftyActionExecutionResult> {
-		return this.send("POST", `/servers/${serverId}/stdin`, command);
+		return this.request("POST", `/servers/${serverId}/stdin`, command);
 	}
 
 	async deleteServer(
 		serverId: string,
 		removeFiles: boolean,
 	): Promise<CraftyActionExecutionResult> {
-		return this.send(
+		return this.request(
 			"DELETE",
 			`/servers/${serverId}${removeFiles ? "?files=true" : ""}`,
 		);
 	}
 
-	async stopAllServers(): Promise<CraftyStopAllResult> {
+	async stopAllServers(): Promise<CraftyResponse<CraftyStopAllResult>> {
 		return this.request("POST", "/servers/stop_all");
 	}
 
-	// For endpoints that wrap their payload in { status, data }
 	private async request<T>(
-		method: string,
-		path: string,
-		body?: unknown,
-	): Promise<T> {
-		const json = await this.send<CraftyResponse<T>>(method, path, body);
-		return json.data;
-	}
-
-	private async send<T>(
 		method: string,
 		path: string,
 		body?: unknown,
@@ -102,31 +93,5 @@ export class CraftyApiClient {
 		}
 
 		return (await response.json()) as T;
-	}
-}
-
-export class CraftyApiError extends Error {
-	constructor(
-		public readonly status: number,
-		public readonly body: string,
-	) {
-		super(
-			`Crafty API responded with ${status}: ${CraftyApiError.summarize(body)}`,
-		);
-	}
-
-	// Crafty answers with { error, error_data } JSON or, on unhandled errors, a Python traceback
-	private static summarize(body: string): string {
-		try {
-			const json = JSON.parse(body) as { error?: string; error_data?: string };
-			if (json.error !== undefined) {
-				return json.error_data
-					? `${json.error} (${json.error_data})`
-					: json.error;
-			}
-		} catch {}
-
-		const lines = body.trim().split("\n");
-		return lines[lines.length - 1] ?? body;
 	}
 }
