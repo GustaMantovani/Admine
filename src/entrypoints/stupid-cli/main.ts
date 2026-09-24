@@ -48,7 +48,14 @@ const craftyApiClient = new CraftyApiClient(
 	CRAFTY_API_BASE_PATH,
 	CRAFTY_API_TOKEN,
 );
+
+if (command === 'help') {
+  cliHelp();
+  process.exit(0);
+};
+
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
+await craftyProvider.setup();
 const minecraftServerUseCases = new MinecraftServerUseCases(craftyProvider);
 
 function cliHelp() {
@@ -56,7 +63,7 @@ function cliHelp() {
 
     Servers:
       create [name] [type] [version]   Create a server (type: java | bedrock | hytale, default: java)
-      list                             List servers and their status
+      list                             List servers
       info <id>                        Show a server's details
       stats <id>                       Show CPU, memory, players and state of a server
       logs <id> [lines]                Show the server console (last N lines)

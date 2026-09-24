@@ -17,3 +17,15 @@ export const DEFAULT_MAXIMUM_MEMORY = 4;
 export const CRAFTY_API_BASE_PATH =
 	Bun.env.ADMINE_CRAFTY_API_BASE_PATH || "https://localhost:8443/api/v2";
 export const CRAFTY_API_TOKEN = requiredEnv("ADMINE_CRAFTY_API_TOKEN");
+export const CRAFTY_SELF_HOSTED = Bun.env.ADMINE_CRAFTY_SELF_HOSTED === "true";
+export const CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP =
+	Bun.env.ADMINE_CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP ||
+	'docker run --name crafty_container --detach --restart always -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/crafty-data/backups:/crafty/backups" -v "/$(pwd)/crafty-data/logs:/crafty/logs" -v "/$(pwd)/crafty-data/servers:/crafty/servers" -v "/$(pwd)/crafty-data/config:/crafty/app/config" -v "/$(pwd)/crafty-data/import:/crafty/import" arcadiatechnology/crafty-4:latest';
+export const CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS = Number.parseInt(
+	Bun.env.ADMINE_CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS || "10000",
+	10,
+);
+// This command must return a success exit code when the server is running, or any other exit code otherwise
+export const CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK =
+	Bun.env.ADMINE_CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK ||
+	"docker inspect -f '{{.State.Running}}' crafty_container | grep -q true";

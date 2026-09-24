@@ -1,3 +1,10 @@
+import { $ } from "bun";
+import {
+	CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS,
+	CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK,
+	CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP,
+	CRAFTY_SELF_HOSTED,
+} from "../../constants";
 import { MinecraftServerActionError } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../../types/minecraft-server";
@@ -17,6 +24,27 @@ import {
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	constructor(private readonly craftyApiClient: CraftyApiClient) {}
 
+	async setup() {
+		if (CRAFTY_SELF_HOSTED) return;
+
+		const firstInfraCheckExitCode = (
+			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK }}`
+				.nothrow()
+				.quiet()
+		).exitCode;
+		if (firstInfraCheckExitCode === 0) return;
+
+		console.log(
+			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP }}`.text(),
+		);
+
+		await Bun.sleep(CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS);
+
+		console.log(
+			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK }}`.text(),
+		);
+	}
+
 	async create(
 		createServerRequest: CreateMinecraftServerRequest,
 	): Promise<string> {
@@ -29,24 +57,19 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	}
 
 	async list(): Promise<MinecraftServer[]> {
-		const [servers, statuses] = await Promise.all([
-			this.craftyApiClient.listServers(),
-			this.craftyApiClient.getServersStatus(),
-		]);
-		const runningById = new Map(
-			statuses.data.map((status) => [status.id, status.running]),
-		);
+		const servers = await this.craftyApiClient.listServers();
+
 		return servers.data
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
-			.map((dto) => toMinecraftServer(dto, runningById.get(dto.server_id)));
+			.map((dto) => toMinecraftServer(dto));
 	}
 
-	async get(id: string): Promise<MinecraftServer> {
+	async info(id: string): Promise<MinecraftServer> {
 		const [server, stats] = await Promise.all([
 			this.craftyApiClient.getServer(id),
 			this.craftyApiClient.getServerStats(id),
 		]);
-		return toMinecraftServer(server.data, stats.data.running);
+		return toMinecraftServer(server.data, stats.data);
 	}
 
 	async stats(id: string): Promise<MinecraftServerStats> {

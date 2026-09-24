@@ -19,7 +19,7 @@ export class MinecraftServerUseCases {
 	}
 
 	async get(serverId: string): Promise<MinecraftServer> {
-		return this.minecraftServerProvider.get(serverId);
+		return this.minecraftServerProvider.info(serverId);
 	}
 
 	async stats(serverId: string): Promise<MinecraftServerStats> {

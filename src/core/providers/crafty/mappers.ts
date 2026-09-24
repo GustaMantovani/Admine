@@ -150,18 +150,18 @@ export function toMinecraftServerStatus(
 }
 
 export function toMinecraftServer(
-	dto: CraftyServer,
-	running: boolean | undefined,
+	craftyServerDto: CraftyServer,
+	craftyServerStatsDto?: CraftyServerStats | undefined,
 ): MinecraftServer {
 	return new MinecraftServer(
-		dto.server_id,
-		dto.server_name,
-		mapServerTypesToEnum(dto.type),
-		toMinecraftServerStatus(running),
-		undefined,
+		craftyServerDto.server_id,
+		craftyServerDto.server_name,
+		mapServerTypesToEnum(craftyServerDto.type),
+		toMinecraftServerStatus(craftyServerStatsDto?.running),
+		craftyServerStatsDto?.version ?? undefined,
 		SERVERS_HOST_FOR_ADMINE,
 		[],
-		dto.server_port,
+		craftyServerDto.server_port,
 		undefined,
 		undefined,
 	);

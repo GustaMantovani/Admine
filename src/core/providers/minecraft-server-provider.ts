@@ -5,7 +5,7 @@ import type { MinecraftServerStats } from "../types/minecraft-server-stats";
 export interface MinecraftServerProvider {
 	create(createServerRequest: CreateMinecraftServerRequest): Promise<string>;
 	list(): Promise<MinecraftServer[]>;
-	get(id: string): Promise<MinecraftServer>;
+	info(id: string): Promise<MinecraftServer>;
 	stats(id: string): Promise<MinecraftServerStats>;
 	logs(id: string): Promise<string[]>;
 	start(id: string): Promise<void>;
