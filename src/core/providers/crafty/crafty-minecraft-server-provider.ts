@@ -38,7 +38,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP }}`.text(),
 		);
 
-		await Bun.sleep(CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS);
+		Bun.sleepSync(CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS);
 
 		console.log(
 			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK }}`.text(),
