@@ -6,7 +6,7 @@ import {
 } from "unique-names-generator";
 import {
 	type CreateMinecraftServerRequest,
-	MinecraftServerUseCases,
+	MinecraftServerService,
 } from "../../core";
 import {
 	CRAFTY_API_BASE_PATH,
@@ -56,7 +56,7 @@ if (command === 'help') {
 
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
 await craftyProvider.setup();
-const minecraftServerUseCases = new MinecraftServerUseCases(craftyProvider);
+const minecraftServerService = new MinecraftServerService(craftyProvider);
 
 function cliHelp() {
     const HELP_STRING = `Usage: bun run cli <command> [args]
@@ -105,26 +105,26 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 			version: versionArg,
 		};
 
-		const id = await minecraftServerUseCases.create(newMinecraftServerData);
+		const id = await minecraftServerService.create(newMinecraftServerData);
 		console.log("Server created:", { ...newMinecraftServerData, id });
 	},
 
-	list: async () => console.table(await minecraftServerUseCases.list()),
+	list: async () => console.table(await minecraftServerService.list()),
 
 	info: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		console.table(await minecraftServerUseCases.get(serverIdArg));
+		console.table(await minecraftServerService.get(serverIdArg));
 	},
 
 	stats: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		console.table(await minecraftServerUseCases.stats(serverIdArg));
+		console.table(await minecraftServerService.stats(serverIdArg));
 	},
 
 	logs: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		const linesArg = getNextStdinArg();
-		const lines = await minecraftServerUseCases.logs(
+		const lines = await minecraftServerService.logs(
 			serverIdArg,
 			linesArg ? Number(linesArg) : undefined,
 		);
@@ -133,58 +133,58 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 
 	start: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.start(serverIdArg);
+		await minecraftServerService.start(serverIdArg);
 	},
 
 	stop: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.stop(serverIdArg);
+		await minecraftServerService.stop(serverIdArg);
 	},
 
 	restart: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.restart(serverIdArg);
+		await minecraftServerService.restart(serverIdArg);
 	},
 
 	kill: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.kill(serverIdArg);
+		await minecraftServerService.kill(serverIdArg);
 	},
 
 	backup: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.backup(serverIdArg);
+		await minecraftServerService.backup(serverIdArg);
 	},
 
 	update: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.update(serverIdArg);
+		await minecraftServerService.update(serverIdArg);
 	},
 
 	clone: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.clone(serverIdArg);
+		await minecraftServerService.clone(serverIdArg);
 	},
 
 	eula: async () => {
 		const serverIdArg = getNextStdinArg()!;
-		await minecraftServerUseCases.acceptEula(serverIdArg);
+		await minecraftServerService.acceptEula(serverIdArg);
 	},
 
 	cmd: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		const consoleCommandArg = Bun.argv.slice(argCounter).join(" ");
-		await minecraftServerUseCases.sendCommand(serverIdArg, consoleCommandArg);
+		await minecraftServerService.sendCommand(serverIdArg, consoleCommandArg);
 	},
 
 	delete: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		const removeFilesArg = getNextStdinArg() === "--files";
-		await minecraftServerUseCases.delete(serverIdArg, removeFilesArg);
+		await minecraftServerService.delete(serverIdArg, removeFilesArg);
 	},
 
 	"stop-all": async () => {
-		await minecraftServerUseCases.stopAll();
+		await minecraftServerService.stopAll();
 	},
 
   help: async () => {

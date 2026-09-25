@@ -26,7 +26,9 @@ export class CraftyApiClient {
 		return this.request("GET", "/servers");
 	}
 
-	async getServer(serverId: string): Promise<CraftyResponse<CraftyServerDetail>> {
+	async getServer(
+		serverId: string,
+	): Promise<CraftyResponse<CraftyServerDetail>> {
 		return this.request("GET", `/servers/${serverId}`);
 	}
 
@@ -34,7 +36,9 @@ export class CraftyApiClient {
 		return this.request("GET", "/servers/status");
 	}
 
-	async getServerStats(serverId: string): Promise<CraftyResponse<CraftyServerStats>> {
+	async getServerStats(
+		serverId: string,
+	): Promise<CraftyResponse<CraftyServerStats>> {
 		return this.request("GET", `/servers/${serverId}/stats`);
 	}
 
