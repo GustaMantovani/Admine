@@ -13,8 +13,8 @@ import {
 	CRAFTY_API_TOKEN,
 	DEFAULT_MINECRAFT_SERVER_TYPE,
 } from "../../core/constants";
-import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
-import { CraftyMinecraftServerProvider } from "../../core/providers/crafty/crafty-minecraft-server-provider";
+import { CraftyApiClient } from "../../core/minecraft/crafty/crafty-api-client";
+import { CraftyMinecraftServerProvider } from "../../core/minecraft/crafty/crafty-minecraft-server-provider";
 import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
 
 let argCounter = 2;

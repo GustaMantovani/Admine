@@ -1,4 +1,4 @@
-import type { MinecraftServerProvider } from "../providers/minecraft-server-provider";
+import type { MinecraftServerProvider } from "../minecraft/minecraft-server-provider";
 import type { CreateMinecraftServerRequest } from "../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../types/minecraft-server";
 import type { MinecraftServerStats } from "../types/minecraft-server-stats";
