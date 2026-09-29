@@ -25,7 +25,7 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 			const body = (await response.json()) as CraftyLoginResponse;
 			const token = body.data.token;
 
-			this.tokenStorage.setToken(token);
+			await this.tokenStorage.setToken(token);
 			return token;
 		}
 
