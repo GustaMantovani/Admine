@@ -1,4 +1,5 @@
 import { CraftyApiError } from "../../errors";
+import type { CraftyAuthProvider } from "./auth/crafty-auth-provider";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
@@ -13,7 +14,7 @@ import type { CraftyStopAllResult } from "./dtos/crafty-stop-all-result";
 export class CraftyApiClient {
 	constructor(
 		private readonly baseUrl: string,
-		private readonly token: string,
+		private readonly auth: CraftyAuthProvider,
 	) {}
 
 	async createServer(
@@ -85,7 +86,7 @@ export class CraftyApiClient {
 		const response = await fetch(`${this.baseUrl}${path}`, {
 			method,
 			headers: {
-				Authorization: `Bearer ${this.token}`,
+				Authorization: `Bearer ${await this.auth.getToken()}`,
 				"Content-Type": isText ? "text/plain" : "application/json",
 			},
 			body:

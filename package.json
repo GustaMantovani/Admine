@@ -17,6 +17,7 @@
 		"format": "biome format --write ."
 	},
 	"dependencies": {
+		"lmdb": "^3.5.7",
 		"unique-names-generator": "^4.7.1"
 	}
 }

@@ -16,6 +16,12 @@ import {
 import { CraftyApiClient } from "../../core/minecraft/crafty/crafty-api-client";
 import { CraftyMinecraftServerProvider } from "../../core/minecraft/crafty/crafty-minecraft-server-provider";
 import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
+import { open } from 'lmdb';
+import { LmdbTokenStorage } from "../../core/persistence/token-storage/lmdb-token-storage";
+import type { CraftyConfig } from "../../core/minecraft/crafty/crafty-config";
+import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/static-crafty-auth-provider";
+import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
+import { BunSecretsTokenStorage } from "../../core/persistence/token-storage/bun-secrets-token-storage";
 
 let argCounter = 2;
 
@@ -44,17 +50,36 @@ type CLICommand =
 	| "unknow";
 const command: CLICommand = getNextStdinArg() as CLICommand | "unknow";
 
-const craftyApiClient = new CraftyApiClient(
-	CRAFTY_API_BASE_PATH,
-	CRAFTY_API_TOKEN,
-);
-
 if (command === 'help') {
   cliHelp();
   process.exit(0);
 };
 
-const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient);
+// Crafty setup
+
+const config: CraftyConfig = {
+        apiBaseUrl: "https://localhost:8443/api/v2",
+        isSelfHosted: false,
+        apiToken: "token-de-teste",
+        userName: "admin",
+        password: "AX&t#%@lldaTC&ZqpLKxMrnFi1TZMv2wh61wDPdRJh4P&&Xc!bTw0X$XfxftVjmn",
+        defaultCredsFilePath: "./crafty-data/config/default.json",
+        infraSetupCommand: "docker run ...",
+        infraCheckDelay: 10000,
+        infraCheckCommand: "docker inspect -f '{{.State.Running}}' crafty_container",
+};
+
+let lmdbKv = open('admine', {});
+const tokenStorage = new LmdbTokenStorage(lmdbKv);
+//const tokenStorage = new BunSecretsTokenStorage();
+
+const authProvider = config.isSelfHosted ? new StaticCraftyAuthProvider(config) : new ManagedCraftyAuthProvider(config, tokenStorage);
+
+const craftyApiClient = new CraftyApiClient(
+	CRAFTY_API_BASE_PATH,
+	authProvider
+);
+const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config);
 await craftyProvider.setup();
 const minecraftServerService = new MinecraftServerService(craftyProvider);
 

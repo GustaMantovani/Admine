@@ -1,16 +1,11 @@
 import { $ } from "bun";
-import {
-	CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS,
-	CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK,
-	CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP,
-	CRAFTY_SELF_HOSTED,
-} from "../../constants";
 import { MinecraftServerActionError } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
+import type { CraftyConfig } from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
 import {
@@ -22,27 +17,25 @@ import {
 } from "./mappers";
 
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
-	constructor(private readonly craftyApiClient: CraftyApiClient) {}
+	constructor(
+		private readonly craftyApiClient: CraftyApiClient,
+		private readonly infraConfig: CraftyConfig,
+	) {}
 
 	async setup() {
-		if (CRAFTY_SELF_HOSTED) return;
+		// Infra setup
+		if (this.infraConfig.isSelfHosted) return;
 
 		const firstInfraCheckExitCode = (
-			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK }}`
-				.nothrow()
-				.quiet()
+			await $`${{ raw: this.infraConfig.infraCheckCommand }}`.nothrow().quiet()
 		).exitCode;
 		if (firstInfraCheckExitCode === 0) return;
 
-		console.log(
-			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP }}`.text(),
-		);
+		console.log(await $`${{ raw: this.infraConfig.infraSetupCommand }}`.text());
 
-		Bun.sleepSync(CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS);
+		Bun.sleepSync(this.infraConfig.infraCheckDelay);
 
-		console.log(
-			await $`${{ raw: CRAFTY_INFRAESTRUTURE_COMMAND_SRTING_CHECK }}`.text(),
-		);
+		console.log(await $`${{ raw: this.infraConfig.infraCheckCommand }}`.text());
 	}
 
 	async create(
