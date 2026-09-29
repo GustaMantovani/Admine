@@ -1,5 +1,4 @@
 import { MinecraftServerType } from "./types/minecraft-server-type";
-import { requiredEnv } from "./utils";
 
 export const SERVERS_HOST_FOR_ADMINE =
 	Bun.env.ADMINE_SERVERS_HOST_FOR_ADMINE || "127.0.0.1";

@@ -21,7 +21,6 @@ import { LmdbTokenStorage } from "../../core/persistence/token-storage/lmdb-toke
 import type { CraftyConfig } from "../../core/minecraft/crafty/crafty-config";
 import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/static-crafty-auth-provider";
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
-import { BunSecretsTokenStorage } from "../../core/persistence/token-storage/bun-secrets-token-storage";
 
 let argCounter = 2;
 
@@ -62,16 +61,15 @@ const config: CraftyConfig = {
         isSelfHosted: false,
         apiToken: "token-de-teste",
         userName: "admin",
-        password: "AX&t#%@lldaTC&ZqpLKxMrnFi1TZMv2wh61wDPdRJh4P&&Xc!bTw0X$XfxftVjmn",
+        password: "f#IwsvSS$BDiJaKHJqVOq%*lIq5rJdvND6reX4FPFs5h*6iXyuGAPqxLDNSQLcr4",
         defaultCredsFilePath: "./crafty-data/config/default.json",
-        infraSetupCommand: "docker run ...",
+        infraSetupCommand: 'docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest',
         infraCheckDelay: 10000,
-        infraCheckCommand: "docker inspect -f '{{.State.Running}}' crafty_container",
+        infraCheckCommand: "docker inspect -f '{{.State.Running}}' crafty_container | grep -q true",
 };
 
-let lmdbKv = open('admine', {});
+let lmdbKv = open('.data/admine', {});
 const tokenStorage = new LmdbTokenStorage(lmdbKv);
-//const tokenStorage = new BunSecretsTokenStorage();
 
 const authProvider = config.isSelfHosted ? new StaticCraftyAuthProvider(config) : new ManagedCraftyAuthProvider(config, tokenStorage);
 

@@ -31,11 +31,11 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		).exitCode;
 		if (firstInfraCheckExitCode === 0) return;
 
-		console.log(await $`${{ raw: this.infraConfig.infraSetupCommand }}`.text());
+		await $`${{ raw: this.infraConfig.infraSetupCommand }}`;
 
 		Bun.sleepSync(this.infraConfig.infraCheckDelay);
 
-		console.log(await $`${{ raw: this.infraConfig.infraCheckCommand }}`.text());
+		await $`${{ raw: this.infraConfig.infraCheckCommand }}`;
 	}
 
 	async create(
