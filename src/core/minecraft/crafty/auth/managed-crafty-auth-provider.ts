@@ -31,4 +31,21 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 
 		return storedToken;
 	}
+
+	async getNewToken(): Promise<string> {
+		const response = await fetch(`${this.config.apiBaseUrl}/auth/login`, {
+			method: "POST",
+			body: JSON.stringify({
+				username: this.config.userName,
+				password: this.config.password,
+			}),
+			headers: { "Content-Type": "application/json" },
+		});
+
+		const body = (await response.json()) as CraftyLoginResponse;
+		const token = body.data.token;
+
+		await this.tokenStorage.setToken(token);
+		return token;
+	}
 }

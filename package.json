@@ -18,6 +18,7 @@
 	},
 	"dependencies": {
 		"lmdb": "^3.5.7",
+		"p-retry": "^8.0.1",
 		"unique-names-generator": "^4.7.1"
 	}
 }

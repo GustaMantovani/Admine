@@ -1,3 +1,4 @@
 export interface CraftyAuthProvider {
-	getToken(): Promise<string>;
-}
+		getToken(): Promise<string>;
+		getNewToken(): Promise<string>;
+	}

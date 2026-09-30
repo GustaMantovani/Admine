@@ -61,7 +61,7 @@ const config: CraftyConfig = {
         isSelfHosted: false,
         apiToken: "token-de-teste",
         userName: "admin",
-        password: "f#IwsvSS$BDiJaKHJqVOq%*lIq5rJdvND6reX4FPFs5h*6iXyuGAPqxLDNSQLcr4",
+        password: "e&s%fF$c@7kPs7sdLdiyv*6F3qvydP&tl*!$F8WR6K$o4Zs3N!6l2nzXt&47z8NP",
         defaultCredsFilePath: "./crafty-data/config/default.json",
         infraSetupCommand: 'docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest',
         infraCheckDelay: 10000,

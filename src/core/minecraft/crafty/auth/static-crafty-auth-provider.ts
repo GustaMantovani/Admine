@@ -7,4 +7,8 @@ export class StaticCraftyAuthProvider implements CraftyAuthProvider {
 	async getToken(): Promise<string> {
 		return this.config.apiToken;
 	}
+
+	async getNewToken(): Promise<string> {
+		return this.config.apiToken;
+	}
 }

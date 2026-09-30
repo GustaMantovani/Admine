@@ -83,7 +83,8 @@ export class CraftyApiClient {
 	): Promise<T> {
 		const isText = typeof body === "string";
 
-		const response = await fetch(`${this.baseUrl}${path}`, {
+		const url = `${this.baseUrl}${path}`;
+		const request = {
 			method,
 			headers: {
 				Authorization: `Bearer ${await this.auth.getToken()}`,
@@ -91,7 +92,15 @@ export class CraftyApiClient {
 			},
 			body:
 				body === undefined ? undefined : isText ? body : JSON.stringify(body),
-		});
+		};
+
+		let response = await fetch(url, request);
+
+		// Get new token and retry
+		if (response.status === 403) {
+			request.headers.Authorization = await this.auth.getNewToken();
+			response = await fetch(url, request);
+		}
 
 		if (!response.ok) {
 			throw new CraftyApiError(response.status, await response.text());
