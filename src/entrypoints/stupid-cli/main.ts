@@ -10,7 +10,6 @@ import {
 } from "../../core";
 import {
 	CRAFTY_API_BASE_PATH,
-	CRAFTY_API_TOKEN,
 	DEFAULT_MINECRAFT_SERVER_TYPE,
 } from "../../core/constants";
 import { CraftyApiClient } from "../../core/minecraft/crafty/crafty-api-client";
@@ -63,7 +62,7 @@ const config: CraftyConfig = {
         userName: "admin",
         password: "e&s%fF$c@7kPs7sdLdiyv*6F3qvydP&tl*!$F8WR6K$o4Zs3N!6l2nzXt&47z8NP",
         defaultCredsFilePath: "./crafty-data/config/default.json",
-        infraSetupCommand: 'docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest',
+        infraSetupCommand: 'docker start crafty_container 2>/dev/null || docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest',
         infraCheckDelay: 10000,
         infraCheckCommand: "docker inspect -f '{{.State.Running}}' crafty_container | grep -q true",
 };

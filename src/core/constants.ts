@@ -33,7 +33,7 @@ export const CRAFTY_API_TOKEN = Bun.env.ADMINE_CRAFTY_API_TOKEN;
 export const CRAFTY_SELF_HOSTED = Bun.env.ADMINE_CRAFTY_SELF_HOSTED === "true";
 export const CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP =
 	Bun.env.ADMINE_CRAFTY_INFRAESTRUTURE_COMMAND_STRING_SETUP ||
-	'docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/crafty-data/backups:/crafty/backups" -v "/$(pwd)/crafty-data/logs:/crafty/logs" -v "/$(pwd)/crafty-data/servers:/crafty/servers" -v "/$(pwd)/crafty-data/config:/crafty/app/config" -v "/$(pwd)/crafty-data/import:/crafty/import" arcadiatechnology/crafty-4:latest';
+	'docker start crafty_container 2>/dev/null || docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest';
 export const CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS = Number(
 	Bun.env.ADMINE_CRAFTY_INFRAESTRUTURE_CHECK_DELAY_MS || 10000,
 );
