@@ -17,12 +17,16 @@ import { CraftyMinecraftServerProvider } from "../../core/minecraft/crafty/craft
 import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
 import { open } from 'lmdb';
 import { LmdbTokenStorage } from "../../core/persistence/token-storage/lmdb-token-storage";
-import type { CraftyConfig } from "../../core/minecraft/crafty/crafty-config";
 import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/static-crafty-auth-provider";
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
+import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
+import type { CraftyInfraConfig } from "../../core/minecraft/crafty/crafty-config";
+
+import rawConfig from "../../../config/cli-config.toml";
+import { loadDefaultCreds, type CliConfig } from "./cli-config";
+const config = rawConfig as CliConfig;
 
 let argCounter = 2;
-
 export function getNextStdinArg(): string | undefined {
   return Bun.argv[argCounter++];
 }
@@ -48,35 +52,28 @@ type CLICommand =
 	| "unknow";
 const command: CLICommand = getNextStdinArg() as CLICommand | "unknow";
 
-if (command === 'help') {
-  cliHelp();
-  process.exit(0);
-};
-
-// Crafty setup
-
-const config: CraftyConfig = {
-        apiBaseUrl: "https://localhost:8443/api/v2",
-        isSelfHosted: false,
-        apiToken: "token-de-teste",
-        userName: "admin",
-        password: "e&s%fF$c@7kPs7sdLdiyv*6F3qvydP&tl*!$F8WR6K$o4Zs3N!6l2nzXt&47z8NP",
-        defaultCredsFilePath: "./crafty-data/config/default.json",
-        infraSetupCommand: 'docker start crafty_container 2>/dev/null || docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest',
-        infraCheckDelay: 10000,
-        infraCheckCommand: "docker inspect -f '{{.State.Running}}' crafty_container | grep -q true",
-};
-
 let lmdbKv = open('.data/admine', {});
 const tokenStorage = new LmdbTokenStorage(lmdbKv);
 
-const authProvider = config.isSelfHosted ? new StaticCraftyAuthProvider(config) : new ManagedCraftyAuthProvider(config, tokenStorage);
+const craftyConfig = config.craftyConfig;
+
+let authProvider: CraftyAuthProvider;
+let infraConfig: CraftyInfraConfig | undefined;
+switch (craftyConfig.deployType) {
+	case 'self-hosted':
+		authProvider = new StaticCraftyAuthProvider(craftyConfig);
+		break;
+	case 'managed':
+		await loadDefaultCreds(craftyConfig);
+		authProvider = new ManagedCraftyAuthProvider(craftyConfig, tokenStorage);
+		infraConfig = craftyConfig;
+}
 
 const craftyApiClient = new CraftyApiClient(
 	CRAFTY_API_BASE_PATH,
 	authProvider
 );
-const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config);
+const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, infraConfig);
 await craftyProvider.setup();
 const minecraftServerService = new MinecraftServerService(craftyProvider);
 

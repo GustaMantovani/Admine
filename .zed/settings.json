@@ -4,11 +4,6 @@
 		"source.suppressRule.inline.biome": false,
 		"source.suppressRule.topLevel.biome": false
 	},
-	"autosave": {
-		"after_delay": {
-			"milliseconds": 1000
-		}
-	},
 	"format_on_save": "on",
 	"languages": {
 		"JavaScript": {

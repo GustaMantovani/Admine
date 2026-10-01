@@ -5,7 +5,7 @@ import type { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
-import type { CraftyConfig } from "./crafty-config";
+import type { CraftyInfraConfig } from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
 import {
@@ -19,12 +19,12 @@ import {
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
-		private readonly infraConfig: CraftyConfig,
+		private readonly infraConfig?: CraftyInfraConfig,
 	) {}
 
 	async setup() {
 		// Infra setup
-		if (this.infraConfig.isSelfHosted) return;
+		if (!this.infraConfig) return;
 
 		const firstInfraCheckExitCode = (
 			await $`${{ raw: this.infraConfig.infraCheckCommand }}`.nothrow().quiet()
