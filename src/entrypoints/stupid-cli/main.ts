@@ -9,7 +9,6 @@ import {
 	MinecraftServerService,
 } from "../../core";
 import {
-	CRAFTY_API_BASE_PATH,
 	DEFAULT_MINECRAFT_SERVER_TYPE,
 } from "../../core/constants";
 import { CraftyApiClient } from "../../core/minecraft/crafty/crafty-api-client";
@@ -70,7 +69,7 @@ switch (craftyConfig.deployType) {
 }
 
 const craftyApiClient = new CraftyApiClient(
-	CRAFTY_API_BASE_PATH,
+	craftyConfig.apiBaseUrl,
 	authProvider
 );
 const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, infraConfig);
