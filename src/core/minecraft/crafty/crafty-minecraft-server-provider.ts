@@ -19,6 +19,7 @@ import {
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
+		private readonly webhooksUrls: ,
 		private readonly infraConfig?: CraftyInfraConfig,
 	) {}
 
@@ -46,6 +47,11 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		const result = await this.craftyApiClient.createServer(
 			craftyCreateServerRequest,
 		);
+
+		const new_server_id = result.data.new_server_id;
+
+		
+		
 		return result.data.new_server_id;
 	}
 
