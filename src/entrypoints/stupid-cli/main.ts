@@ -45,8 +45,8 @@ type CLICommand =
 	| "delete"
   | "stop-all"
 	| "help"
-	| "unknow";
-const command: CLICommand = getNextStdinArg() as CLICommand | "unknow";
+	| "unknown";
+const command: CLICommand = getNextStdinArg() as CLICommand | "unknown";
 
 let lmdbKv = open('.data/admine', {});
 const tokenStorage = new LmdbTokenStorage(lmdbKv);
@@ -205,7 +205,7 @@ const commands: Record<CLICommand, () => Promise<void>> = {
     cliHelp();
   },
 
-  unknow: async () => {
+  unknown: async () => {
     console.log(`Unknown command: ${command}`);
     cliHelp();
     process.exit(1);

@@ -125,7 +125,7 @@ function mapServerTypesToEnum(dto: string): MinecraftServerType {
 
 	if (mapped === undefined)
 		throw new UnknownMinecraftServerType(
-			`Cant map server type from string ${dto}`,
+			`Can't map server type from string ${dto}`,
 		);
 
 	return mapped;
@@ -134,7 +134,7 @@ function mapServerTypesToEnum(dto: string): MinecraftServerType {
 export function toMinecraftServerStatus(
 	running: boolean | undefined,
 ): MinecraftServer["status"] {
-	if (running === undefined) return "unknow";
+	if (running === undefined) return "unknown";
 	return running ? "on" : "off";
 }
 

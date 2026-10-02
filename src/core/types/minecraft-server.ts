@@ -3,7 +3,7 @@ export class MinecraftServer {
 		public readonly id: string,
 		public readonly name: string,
 		public readonly type: "java" | "bedrock" | "hytale",
-		public readonly status: "on" | "off" | "unknow",
+		public readonly status: "on" | "off" | "unknown",
 		public readonly version?: string,
 		public admineIpAddress?: string,
 		public networkIpAddresses?: string[],
