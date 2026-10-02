@@ -1,12 +1,3 @@
-import {
-	DEFAULT_BEDROCK_PORT,
-	DEFAULT_HYTALE_PORT,
-	DEFAULT_JAVA_PORT,
-	DEFAULT_MAXIMUM_MEMORY,
-	DEFAULT_MINECRAFT_SERVER_VERSION,
-	DEFAULT_MINIMUM_MEMORY,
-	SERVERS_HOST_FOR_ADMINE,
-} from "../../constants";
 import { UnknownMinecraftServerType } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import { MinecraftServer } from "../../types/minecraft-server";
@@ -19,40 +10,36 @@ import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerStats } from "./dtos/crafty-server-stats";
 
-export function resolvePort(request: CreateMinecraftServerRequest): number {
-	if (request.port != null) {
-		return request.port;
-	}
+// Default ports are defined by each game's protocol
+const DEFAULT_PORTS: Record<MinecraftServerType, number> = {
+	[MinecraftServerType.Java]: 25565,
+	[MinecraftServerType.Bedrock]: 19132,
+	[MinecraftServerType.Hytale]: 5520,
+};
 
-	switch (request.type) {
-		case "java":
-			return DEFAULT_JAVA_PORT;
-		case "bedrock":
-			return DEFAULT_BEDROCK_PORT;
-		case "hytale":
-			return DEFAULT_HYTALE_PORT;
-		default:
-			return DEFAULT_JAVA_PORT;
-	}
+export function resolvePort(request: CreateMinecraftServerRequest): number {
+	return request.port ?? DEFAULT_PORTS[request.type] ?? DEFAULT_PORTS.java;
 }
 
 export function toCraftyCreateServerRequest(
 	request: CreateMinecraftServerRequest,
+	serversHost: string,
 ): CraftyCreateServer {
 	switch (request.type) {
 		case "java":
-			return toCraftyCreateJavaServer(request);
+			return toCraftyCreateJavaServer(request, serversHost);
 		case "bedrock":
-			return toCraftyCreateBedrockServer(request);
+			return toCraftyCreateBedrockServer(request, serversHost);
 		case "hytale":
-			return toCraftyCreateHytaleServer(request);
+			return toCraftyCreateHytaleServer(request, serversHost);
 		default:
-			return toCraftyCreateJavaServer(request);
+			return toCraftyCreateJavaServer(request, serversHost);
 	}
 }
 
 function toCraftyCreateJavaServer(
 	request: CreateMinecraftServerRequest,
+	serversHost: string,
 ): CraftyCreateJavaServer {
 	const port = resolvePort(request);
 
@@ -60,7 +47,7 @@ function toCraftyCreateJavaServer(
 		name: request.name,
 		monitoring_type: "minecraft_java",
 		minecraft_java_monitoring_data: {
-			host: SERVERS_HOST_FOR_ADMINE,
+			host: serversHost,
 			port,
 		},
 		create_type: "minecraft_java",
@@ -69,9 +56,9 @@ function toCraftyCreateJavaServer(
 			download_jar_create_data: {
 				category: "mc_java_servers",
 				type: "paper",
-				version: request.version ?? DEFAULT_MINECRAFT_SERVER_VERSION,
-				mem_min: request.minimumMemory ?? DEFAULT_MINIMUM_MEMORY,
-				mem_max: request.maximumMemory ?? DEFAULT_MAXIMUM_MEMORY,
+				version: request.version,
+				mem_min: request.minimumMemory,
+				mem_max: request.maximumMemory,
 				server_properties_port: port,
 			},
 		},
@@ -80,12 +67,13 @@ function toCraftyCreateJavaServer(
 
 function toCraftyCreateBedrockServer(
 	request: CreateMinecraftServerRequest,
+	serversHost: string,
 ): CraftyCreateBedrockServer {
 	return {
 		name: request.name,
 		monitoring_type: "minecraft_bedrock",
 		minecraft_bedrock_monitoring_data: {
-			host: SERVERS_HOST_FOR_ADMINE,
+			host: serversHost,
 			port: resolvePort(request),
 		},
 		create_type: "minecraft_bedrock",
@@ -100,12 +88,13 @@ function toCraftyCreateBedrockServer(
 
 function toCraftyCreateHytaleServer(
 	request: CreateMinecraftServerRequest,
+	serversHost: string,
 ): CraftyCreateHytaleServer {
 	return {
 		name: request.name,
 		monitoring_type: "hytale",
 		hytale_monitoring_data: {
-			host: SERVERS_HOST_FOR_ADMINE,
+			host: serversHost,
 			port: resolvePort(request),
 		},
 		create_type: "hytale",
@@ -113,8 +102,8 @@ function toCraftyCreateHytaleServer(
 			create_type: "download_exe",
 			download_exe_create_data: {
 				agree_to_eula: true,
-				mem_min: request.minimumMemory ?? DEFAULT_MINIMUM_MEMORY,
-				mem_max: request.maximumMemory ?? DEFAULT_MAXIMUM_MEMORY,
+				mem_min: request.minimumMemory,
+				mem_max: request.maximumMemory,
 			},
 		},
 	};
@@ -151,6 +140,7 @@ export function toMinecraftServerStatus(
 
 export function toMinecraftServer(
 	craftyServerDto: CraftyServer,
+	serversHost: string,
 	craftyServerStatsDto?: CraftyServerStats | undefined,
 ): MinecraftServer {
 	return new MinecraftServer(
@@ -159,7 +149,7 @@ export function toMinecraftServer(
 		mapServerTypesToEnum(craftyServerDto.type),
 		toMinecraftServerStatus(craftyServerStatsDto?.running),
 		craftyServerStatsDto?.version ?? undefined,
-		SERVERS_HOST_FOR_ADMINE,
+		serversHost,
 		[],
 		craftyServerDto.server_port,
 		undefined,

@@ -8,11 +8,9 @@ import {
 	type CreateMinecraftServerRequest,
 	MinecraftServerService,
 } from "../../core";
-import {
-	DEFAULT_MINECRAFT_SERVER_TYPE,
-} from "../../core/constants";
 import { CraftyApiClient } from "../../core/minecraft/crafty/crafty-api-client";
 import { CraftyMinecraftServerProvider } from "../../core/minecraft/crafty/crafty-minecraft-server-provider";
+import { ensureCraftyInfra } from "../../core/minecraft/crafty/crafty-infra";
 import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
 import { open } from 'lmdb';
 import { LmdbTokenStorage } from "../../core/persistence/token-storage/lmdb-token-storage";
@@ -21,9 +19,8 @@ import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/mana
 import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
 import type { CraftyInfraConfig } from "../../core/minecraft/crafty/crafty-config";
 
-import rawConfig from "../../../config/cli-config.toml";
-import { loadDefaultCreds, type CliConfig } from "./cli-config";
-const config = rawConfig as CliConfig;
+import { loadCliConfig } from "./cli-config";
+const config = await loadCliConfig();
 
 let argCounter = 2;
 export function getNextStdinArg(): string | undefined {
@@ -32,7 +29,7 @@ export function getNextStdinArg(): string | undefined {
 
 type CLICommand =
 	| "create"
-	| "list"
+	| "ls"
 	| "info"
 	| "stats"
 	| "logs"
@@ -57,23 +54,20 @@ const tokenStorage = new LmdbTokenStorage(lmdbKv);
 const craftyConfig = config.craftyConfig;
 
 let authProvider: CraftyAuthProvider;
-let infraConfig: CraftyInfraConfig | undefined;
 switch (craftyConfig.deployType) {
 	case 'self-hosted':
 		authProvider = new StaticCraftyAuthProvider(craftyConfig);
 		break;
 	case 'managed':
-		await loadDefaultCreds(craftyConfig);
+		await ensureCraftyInfra(craftyConfig);
 		authProvider = new ManagedCraftyAuthProvider(craftyConfig, tokenStorage);
-		infraConfig = craftyConfig;
 }
 
 const craftyApiClient = new CraftyApiClient(
 	craftyConfig.apiBaseUrl,
 	authProvider
 );
-const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, infraConfig);
-await craftyProvider.setup();
+const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost);
 const minecraftServerService = new MinecraftServerService(craftyProvider);
 
 function cliHelp() {
@@ -108,7 +102,7 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 		const nameArg = getNextStdinArg();
 		const typeArg =
 			(getNextStdinArg()?.toLocaleLowerCase() as MinecraftServerType) ||
-			DEFAULT_MINECRAFT_SERVER_TYPE;
+			config.minecraftServer.type;
 		const versionArg = getNextStdinArg();
 
 		const newMinecraftServerData: CreateMinecraftServerRequest = {
@@ -120,14 +114,16 @@ const commands: Record<CLICommand, () => Promise<void>> = {
 					length: 2,
 				}),
 			type: typeArg,
-			version: versionArg,
+			version: versionArg || config.minecraftServer.version,
+			minimumMemory: config.minecraftServer.minimumMemory,
+			maximumMemory: config.minecraftServer.maximumMemory,
 		};
 
 		const id = await minecraftServerService.create(newMinecraftServerData);
 		console.log("Server created:", { ...newMinecraftServerData, id });
 	},
 
-	list: async () => console.table(await minecraftServerService.list()),
+	ls: async () => console.table(await minecraftServerService.list()),
 
 	info: async () => {
 		const serverIdArg = getNextStdinArg()!;

@@ -1,11 +1,9 @@
-import { $ } from "bun";
 import { MinecraftServerActionError } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
-import type { CraftyInfraConfig } from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
 import {
@@ -19,39 +17,19 @@ import {
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
-		private readonly webhooksUrls: ,
-		private readonly infraConfig?: CraftyInfraConfig,
+		private readonly serversHost: string,
 	) {}
-
-	async setup() {
-		// Infra setup
-		if (!this.infraConfig) return;
-
-		const firstInfraCheckExitCode = (
-			await $`${{ raw: this.infraConfig.infraCheckCommand }}`.nothrow().quiet()
-		).exitCode;
-		if (firstInfraCheckExitCode === 0) return;
-
-		await $`${{ raw: this.infraConfig.infraSetupCommand }}`;
-
-		Bun.sleepSync(this.infraConfig.infraCheckDelay);
-
-		await $`${{ raw: this.infraConfig.infraCheckCommand }}`;
-	}
 
 	async create(
 		createServerRequest: CreateMinecraftServerRequest,
 	): Promise<string> {
-		const craftyCreateServerRequest =
-			toCraftyCreateServerRequest(createServerRequest);
+		const craftyCreateServerRequest = toCraftyCreateServerRequest(
+			createServerRequest,
+			this.serversHost,
+		);
 		const result = await this.craftyApiClient.createServer(
 			craftyCreateServerRequest,
 		);
-
-		const new_server_id = result.data.new_server_id;
-
-		
-		
 		return result.data.new_server_id;
 	}
 
@@ -60,7 +38,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 
 		return servers.data
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
-			.map((dto) => toMinecraftServer(dto));
+			.map((dto) => toMinecraftServer(dto, this.serversHost));
 	}
 
 	async info(id: string): Promise<MinecraftServer> {
@@ -68,7 +46,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			this.craftyApiClient.getServer(id),
 			this.craftyApiClient.getServerStats(id),
 		]);
-		return toMinecraftServer(server.data, stats.data);
+		return toMinecraftServer(server.data, this.serversHost, stats.data);
 	}
 
 	async stats(id: string): Promise<MinecraftServerStats> {
