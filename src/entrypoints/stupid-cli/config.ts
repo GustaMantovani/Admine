@@ -72,7 +72,7 @@ export async function loadCliConfig(
 	}
 
 	const needsCreds = !craftyConfig.username || !craftyConfig.password;
-	const creds = needsCreds ? await loadDefaultCreds() : undefined;
+	const creds = needsCreds ? await loadCraftyDefaultCreds() : undefined;
 
 	return {
 		...rest,
@@ -84,7 +84,7 @@ export async function loadCliConfig(
 	};
 }
 
-async function loadDefaultCreds(
+async function loadCraftyDefaultCreds(
 	credsPath = DEFAULT_CRAFTY_CREDS_FILE_PATH,
 ): Promise<CraftyCredsFile> {
 	return (await Bun.file(credsPath).json()) as CraftyCredsFile;

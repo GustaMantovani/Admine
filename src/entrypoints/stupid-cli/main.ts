@@ -17,9 +17,8 @@ import { LmdbTokenStorage } from "../../core/persistence/token-storage/lmdb-toke
 import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/static-crafty-auth-provider";
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
 import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
-import type { CraftyInfraConfig } from "../../core/minecraft/crafty/crafty-config";
 
-import { loadCliConfig } from "./cli-config";
+import { loadCliConfig } from "./config";
 const config = await loadCliConfig();
 
 let argCounter = 2;
@@ -27,7 +26,7 @@ export function getNextStdinArg(): string | undefined {
   return Bun.argv[argCounter++];
 }
 
-type CLICommand =
+type CliCommand =
 	| "create"
 	| "ls"
 	| "info"
@@ -46,7 +45,7 @@ type CLICommand =
   | "stop-all"
 	| "help"
 	| "unknown";
-const command: CLICommand = getNextStdinArg() as CLICommand | "unknown";
+const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
 
 let lmdbKv = open('.data/admine', {});
 const tokenStorage = new LmdbTokenStorage(lmdbKv);
@@ -97,7 +96,7 @@ function cliHelp() {
     console.log(HELP_STRING);
 }
 
-const commands: Record<CLICommand, () => Promise<void>> = {
+const commands: Record<CliCommand, () => Promise<void>> = {
 	create: async () => {
 		const nameArg = getNextStdinArg();
 		const typeArg =

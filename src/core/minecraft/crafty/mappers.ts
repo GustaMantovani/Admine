@@ -3,23 +3,13 @@ import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-
 import { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import { MinecraftServerType } from "../../types/minecraft-server-type";
+import { resolveServerPort } from "../server-ports";
 import type { CraftyCreateBedrockServer } from "./dtos/crafty-create-bedrock-server";
 import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-server";
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerStats } from "./dtos/crafty-server-stats";
-
-// Default ports are defined by each game's protocol
-const DEFAULT_PORTS: Record<MinecraftServerType, number> = {
-	[MinecraftServerType.Java]: 25565,
-	[MinecraftServerType.Bedrock]: 19132,
-	[MinecraftServerType.Hytale]: 5520,
-};
-
-export function resolvePort(request: CreateMinecraftServerRequest): number {
-	return request.port ?? DEFAULT_PORTS[request.type] ?? DEFAULT_PORTS.java;
-}
 
 export function toCraftyCreateServerRequest(
 	request: CreateMinecraftServerRequest,
@@ -41,7 +31,7 @@ function toCraftyCreateJavaServer(
 	request: CreateMinecraftServerRequest,
 	serversHost: string,
 ): CraftyCreateJavaServer {
-	const port = resolvePort(request);
+	const port = resolveServerPort(request);
 
 	return {
 		name: request.name,
@@ -74,7 +64,7 @@ function toCraftyCreateBedrockServer(
 		monitoring_type: "minecraft_bedrock",
 		minecraft_bedrock_monitoring_data: {
 			host: serversHost,
-			port: resolvePort(request),
+			port: resolveServerPort(request),
 		},
 		create_type: "minecraft_bedrock",
 		minecraft_bedrock_create_data: {
@@ -95,7 +85,7 @@ function toCraftyCreateHytaleServer(
 		monitoring_type: "hytale",
 		hytale_monitoring_data: {
 			host: serversHost,
-			port: resolvePort(request),
+			port: resolveServerPort(request),
 		},
 		create_type: "hytale",
 		hytale_create_data: {
@@ -120,7 +110,7 @@ export function isSupportedCraftyServerType(type: string): boolean {
 	return type in CRAFTY_SERVER_TYPES;
 }
 
-function mapServerTypesToEnum(dto: string): MinecraftServerType {
+function fromCraftyServerType(dto: string): MinecraftServerType {
 	const mapped = CRAFTY_SERVER_TYPES[dto];
 
 	if (mapped === undefined)
@@ -146,7 +136,7 @@ export function toMinecraftServer(
 	return new MinecraftServer(
 		craftyServerDto.server_id,
 		craftyServerDto.server_name,
-		mapServerTypesToEnum(craftyServerDto.type),
+		fromCraftyServerType(craftyServerDto.type),
 		toMinecraftServerStatus(craftyServerStatsDto?.running),
 		craftyServerStatsDto?.version ?? undefined,
 		serversHost,
