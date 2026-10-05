@@ -1,9 +1,9 @@
 import { CraftyApiError } from "../../errors";
 import type { CraftyAuthProvider } from "./auth/crafty-auth-provider";
 import type { CraftyAction } from "./dtos/crafty-action";
-import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
+import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
-import type { CraftyCreateServerResult } from "./dtos/crafty-create-server-result";
+import type { CraftyCreateServerResponse } from "./dtos/crafty-create-server-response";
 import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
 import type { CraftyCreateWebhookResponse } from "./dtos/crafty-create-webhook-response";
 import type { CraftyResponse } from "./dtos/crafty-response";
@@ -11,7 +11,7 @@ import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerDetail } from "./dtos/crafty-server-detail";
 import type { CraftyServerStats } from "./dtos/crafty-server-stats";
 import type { CraftyServerStatus } from "./dtos/crafty-server-status";
-import type { CraftyStopAllResult } from "./dtos/crafty-stop-all-result";
+import type { CraftyStopAllResponse } from "./dtos/crafty-stop-all-response";
 
 export class CraftyApiClient {
 	constructor(
@@ -21,7 +21,7 @@ export class CraftyApiClient {
 
 	async createServer(
 		body: CraftyCreateServer,
-	): Promise<CraftyResponse<CraftyCreateServerResult>> {
+	): Promise<CraftyResponse<CraftyCreateServerResponse>> {
 		return this.request("POST", "/servers", body);
 	}
 
@@ -59,7 +59,7 @@ export class CraftyApiClient {
 	async sendAction(
 		serverId: string,
 		action: CraftyAction,
-	): Promise<CraftyActionExecutionResult> {
+	): Promise<CraftyActionExecutionResponse> {
 		return this.request("POST", `/servers/${serverId}/action/${action}`);
 	}
 
@@ -67,21 +67,21 @@ export class CraftyApiClient {
 	async sendCommand(
 		serverId: string,
 		command: string,
-	): Promise<CraftyActionExecutionResult> {
+	): Promise<CraftyActionExecutionResponse> {
 		return this.request("POST", `/servers/${serverId}/stdin`, command);
 	}
 
 	async deleteServer(
 		serverId: string,
 		removeFiles: boolean,
-	): Promise<CraftyActionExecutionResult> {
+	): Promise<CraftyActionExecutionResponse> {
 		return this.request(
 			"DELETE",
 			`/servers/${serverId}${removeFiles ? "?files=true" : ""}`,
 		);
 	}
 
-	async stopAllServers(): Promise<CraftyResponse<CraftyStopAllResult>> {
+	async stopAllServers(): Promise<CraftyResponse<CraftyStopAllResponse>> {
 		return this.request("POST", "/servers/stop_all");
 	}
 

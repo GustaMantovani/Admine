@@ -9,7 +9,7 @@ import type {
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
 import type { CraftyAction } from "./dtos/crafty-action";
-import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
+import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import {
 	fromCraftyLogLine,
 	isSupportedCraftyServerType,
@@ -136,7 +136,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 
 	// Some Crafty failures come back as HTTP 200 with status "error"
 	private throwIfFailed(
-		result: CraftyActionExecutionResult,
+		result: CraftyActionExecutionResponse,
 		operation: string,
 	): void {
 		if (result.status === "error") {

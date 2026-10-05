@@ -1,5 +1,5 @@
-import type { CraftyActionExecutionResult } from "./crafty-action-execution-result";
+import type { CraftyActionExecutionResponse } from "./crafty-action-execution-response";
 
-export type CraftyResponse<T> = CraftyActionExecutionResult & {
+export type CraftyResponse<T> = CraftyActionExecutionResponse & {
 	data: T;
 };
