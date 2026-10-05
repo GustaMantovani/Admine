@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { CraftyConfig } from "../../core/minecraft/crafty/crafty-config";
 import type { CraftyCredsFile } from "../../core/minecraft/crafty/dtos/crafty-creds-file";
 import { MinecraftServerType } from "../../core/types/minecraft-server-type";
+import { MinecraftServerWebhookTrigger } from "../../core/types/minecraft-server-webhook-trigger";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
 	DEFAULT_CRAFTY_API_BASE_URL,
@@ -13,12 +14,18 @@ import {
 	DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY,
 	DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY,
 	DEFAULT_MINECRAFT_SERVER_TYPE,
+	DEFAULT_CRAFTY_WEBHOOK_URLS,
 	DEFAULT_MINECRAFT_SERVER_VERSION,
 	DEFAULT_SERVERS_HOST_FOR_ADMINE,
 } from "./defaults";
 
+const CraftyWebhooksSchema = z
+	.partialRecord(z.enum(MinecraftServerWebhookTrigger), z.url())
+	.default(DEFAULT_CRAFTY_WEBHOOK_URLS);
+
 const ManagedCraftySchema = z.object({
 	deployType: z.literal("managed"),
+	webhooks: CraftyWebhooksSchema,
 	apiBaseUrl: z.string().default(DEFAULT_CRAFTY_API_BASE_URL),
 	infraSetupCommand: z.string().default(DEFAULT_CRAFTY_INFRA_SETUP_COMMAND),
 	infraCheckCommand: z.string().default(DEFAULT_CRAFTY_INFRA_CHECK_COMMAND),
@@ -30,6 +37,7 @@ const ManagedCraftySchema = z.object({
 
 const SelfHostedCraftySchema = z.object({
 	deployType: z.literal("self-hosted"),
+	webhooks: CraftyWebhooksSchema,
 	apiBaseUrl: z.string(),
 	apiToken: z.string(),
 });

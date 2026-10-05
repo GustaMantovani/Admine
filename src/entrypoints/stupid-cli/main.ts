@@ -66,7 +66,7 @@ const craftyApiClient = new CraftyApiClient(
 	craftyConfig.apiBaseUrl,
 	authProvider
 );
-const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost);
+const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost, craftyConfig.webhooks);
 const minecraftServerService = new MinecraftServerService(craftyProvider);
 
 function cliHelp() {

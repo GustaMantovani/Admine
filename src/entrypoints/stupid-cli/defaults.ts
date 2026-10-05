@@ -1,4 +1,5 @@
 import { MinecraftServerType } from "../../core/types/minecraft-server-type";
+import type { MinecraftServerWebhookUrls } from "../../core/types/minecraft-server-webhook-trigger";
 
 // Files
 export const DEFAULT_CLI_CONFIG_FILE_PATH = "./config/cli-config.toml";
@@ -13,6 +14,7 @@ export const DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY = 2;
 export const DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY = 4;
 
 // Crafty
+export const DEFAULT_CRAFTY_WEBHOOK_URLS: MinecraftServerWebhookUrls = {};
 export const DEFAULT_CRAFTY_API_BASE_URL = "https://localhost:8443/api/v2";
 export const DEFAULT_CRAFTY_INFRA_SETUP_COMMAND =
 	'docker start crafty_container 2>/dev/null || docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest';

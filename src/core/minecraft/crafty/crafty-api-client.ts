@@ -4,6 +4,8 @@ import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResult } from "./dtos/crafty-action-execution-result";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateServerResult } from "./dtos/crafty-create-server-result";
+import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
+import type { CraftyCreateWebhookResponse } from "./dtos/crafty-create-webhook-response";
 import type { CraftyResponse } from "./dtos/crafty-response";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerDetail } from "./dtos/crafty-server-detail";
@@ -21,6 +23,13 @@ export class CraftyApiClient {
 		body: CraftyCreateServer,
 	): Promise<CraftyResponse<CraftyCreateServerResult>> {
 		return this.request("POST", "/servers", body);
+	}
+
+	async createWebhook(
+		serverId: string,
+		body: CraftyCreateWebhook,
+	): Promise<CraftyResponse<CraftyCreateWebhookResponse>> {
+		return this.request("POST", `/servers/${serverId}/webhook`, body);
 	}
 
 	async listServers(): Promise<CraftyResponse<CraftyServer[]>> {

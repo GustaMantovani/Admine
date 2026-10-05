@@ -3,13 +3,16 @@ import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-
 import { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import { MinecraftServerType } from "../../types/minecraft-server-type";
+import { MinecraftServerWebhookTrigger } from "../../types/minecraft-server-webhook-trigger";
 import { resolveServerPort } from "../server-ports";
 import type { CraftyCreateBedrockServer } from "./dtos/crafty-create-bedrock-server";
 import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-server";
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
+import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerStats } from "./dtos/crafty-server-stats";
+import type { CraftyWebhookTrigger } from "./dtos/crafty-webhook-trigger";
 
 export function toCraftyCreateServerRequest(
 	request: CreateMinecraftServerRequest,
@@ -96,6 +99,59 @@ function toCraftyCreateHytaleServer(
 				mem_max: request.maximumMemory,
 			},
 		},
+	};
+}
+
+const CRAFTY_WEBHOOKS: Record<
+	MinecraftServerWebhookTrigger,
+	{ trigger: CraftyWebhookTrigger; name: string }
+> = {
+	[MinecraftServerWebhookTrigger.Started]: {
+		trigger: "start_server",
+		name: "Server Started",
+	},
+	[MinecraftServerWebhookTrigger.Stopped]: {
+		trigger: "stop_server",
+		name: "Server Stopped",
+	},
+	[MinecraftServerWebhookTrigger.Crashed]: {
+		trigger: "crash_detected",
+		name: "Server Crashed",
+	},
+	[MinecraftServerWebhookTrigger.BackupCompleted]: {
+		trigger: "backup_server",
+		name: "Server Backup Completed",
+	},
+	[MinecraftServerWebhookTrigger.ExecutableUpdated]: {
+		trigger: "jar_update",
+		name: "Server Executable Updated",
+	},
+	[MinecraftServerWebhookTrigger.CommandReceived]: {
+		trigger: "send_command",
+		name: "Server Command Received",
+	},
+	[MinecraftServerWebhookTrigger.Killed]: {
+		trigger: "kill",
+		name: "Server Killed",
+	},
+};
+
+export function toCraftyCreateWebhookRequest(
+	trigger: MinecraftServerWebhookTrigger,
+	url: string,
+): CraftyCreateWebhook {
+	const { trigger: craftyTrigger, name } = CRAFTY_WEBHOOKS[trigger];
+
+	return {
+		// Crafty has no generic webhook type, so Discord's payload is used
+		webhook_type: "Discord",
+		name,
+		url,
+		bot_name: "Admine",
+		trigger: [craftyTrigger],
+		body: "{{ event_type }} | {{ server_name }} | {{ server_id }} | {{ time_iso }}",
+		color: "#005cd1",
+		enabled: true,
 	};
 }
 

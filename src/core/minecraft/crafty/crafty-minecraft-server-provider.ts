@@ -2,6 +2,10 @@ import { MinecraftServerActionError } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
+import type {
+	MinecraftServerWebhookTrigger,
+	MinecraftServerWebhookUrls,
+} from "../../types/minecraft-server-webhook-trigger";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
 import type { CraftyAction } from "./dtos/crafty-action";
@@ -10,6 +14,7 @@ import {
 	fromCraftyLogLine,
 	isSupportedCraftyServerType,
 	toCraftyCreateServerRequest,
+	toCraftyCreateWebhookRequest,
 	toMinecraftServer,
 	toMinecraftServerStats,
 } from "./mappers";
@@ -18,6 +23,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
+		private readonly webhookUrls: MinecraftServerWebhookUrls = {},
 	) {}
 
 	async create(
@@ -30,7 +36,10 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		const result = await this.craftyApiClient.createServer(
 			craftyCreateServerRequest,
 		);
-		return result.data.new_server_id;
+		const serverId = result.data.new_server_id;
+
+		await this.createWebhooks(serverId);
+		return serverId;
 	}
 
 	async list(): Promise<MinecraftServer[]> {
@@ -104,6 +113,20 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	async stopAll(): Promise<number> {
 		const result = await this.craftyApiClient.stopAllServers();
 		return result.data.count;
+	}
+
+	private async createWebhooks(serverId: string): Promise<void> {
+		const webhooks = Object.entries(this.webhookUrls) as [
+			MinecraftServerWebhookTrigger,
+			string,
+		][];
+
+		for (const [trigger, url] of webhooks) {
+			await this.craftyApiClient.createWebhook(
+				serverId,
+				toCraftyCreateWebhookRequest(trigger, url),
+			);
+		}
 	}
 
 	private async runAction(id: string, action: CraftyAction): Promise<void> {
