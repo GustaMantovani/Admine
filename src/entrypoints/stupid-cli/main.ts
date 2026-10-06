@@ -18,7 +18,8 @@ import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/stati
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
 import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
 
-import { loadCliConfig } from "./config";
+import { loadCliConfig, withCraftyCreds } from "./config";
+import { DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, DEFAULT_MINECRAFT_SERVER_RCON_PORT } from "./defaults";
 const config = await loadCliConfig();
 
 let argCounter = 2;
@@ -59,14 +60,17 @@ switch (craftyConfig.deployType) {
 		break;
 	case 'managed':
 		await ensureCraftyInfra(craftyConfig);
-		authProvider = new ManagedCraftyAuthProvider(craftyConfig, tokenStorage);
+		authProvider = new ManagedCraftyAuthProvider(
+			await withCraftyCreds(craftyConfig),
+			tokenStorage,
+		);
 }
 
 const craftyApiClient = new CraftyApiClient(
 	craftyConfig.apiBaseUrl,
 	authProvider
 );
-const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost, craftyConfig.webhooks);
+const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost, craftyConfig.webhooks, {password: DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, port: DEFAULT_MINECRAFT_SERVER_RCON_PORT});
 const minecraftServerService = new MinecraftServerService(craftyProvider);
 
 function cliHelp() {

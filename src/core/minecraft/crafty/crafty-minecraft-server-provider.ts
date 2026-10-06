@@ -1,3 +1,4 @@
+import { PropertiesEditor } from "properties-file/editor";
 import { MinecraftServerActionError } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../../types/minecraft-server";
@@ -7,6 +8,7 @@ import type {
 	MinecraftServerWebhookUrls,
 } from "../../types/minecraft-server-webhook-trigger";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
+import type { RconConfig } from "../rcon-config";
 import type { CraftyApiClient } from "./crafty-api-client";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
@@ -24,6 +26,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
 		private readonly webhookUrls: MinecraftServerWebhookUrls = {},
+		private readonly rconConfig: RconConfig,
 	) {}
 
 	async create(
@@ -37,6 +40,36 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			craftyCreateServerRequest,
 		);
 		const serverId = result.data.new_server_id;
+
+		const serverPropertiesFile = await this.craftyApiClient.getServerFiles(
+			serverId,
+			"server.properties",
+		);
+
+		const propertiesEditor = new PropertiesEditor(
+			serverPropertiesFile.data.content,
+		);
+
+		propertiesEditor.insert("enable-rcon", "true");
+		propertiesEditor.insert("rcon.password", this.rconConfig.password);
+		propertiesEditor.insert("rcon.port", this.rconConfig.port);
+		propertiesEditor.insert("broadcast-rcon-to-ops", "false");
+
+		const newProperties = propertiesEditor.format({
+			removeComments: true, // Strip all comments
+			removeBlankLines: true, // Strip all blank lines
+			removeLeadingWhitespace: true, // Strip indentation
+			deduplicateKeys: true, // Keep only last occurrence
+			separatorChar: "=", // Standardize separator
+			separatorLeading: "", // Space before =
+			separatorTrailing: "", // Space after =
+		});
+
+		this.craftyApiClient.updateServerFile(serverId, {
+			contents: newProperties,
+			path: "server.properties",
+			modified_epoch: serverPropertiesFile.data.attributes.modified_epoch,
+		});
 
 		await this.createWebhooks(serverId);
 		return serverId;

@@ -6,6 +6,8 @@ import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateServerResponse } from "./dtos/crafty-create-server-response";
 import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
 import type { CraftyCreateWebhookResponse } from "./dtos/crafty-create-webhook-response";
+import type { CraftyFile } from "./dtos/crafty-file";
+import type { CraftyFilePatchRequest } from "./dtos/crafty-file-patch-request";
 import type { CraftyResponse } from "./dtos/crafty-response";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerDetail } from "./dtos/crafty-server-detail";
@@ -83,6 +85,22 @@ export class CraftyApiClient {
 
 	async stopAllServers(): Promise<CraftyResponse<CraftyStopAllResponse>> {
 		return this.request("POST", "/servers/stop_all");
+	}
+
+	async getServerFiles(
+		serverId: string,
+		filePath: string,
+	): Promise<CraftyFile> {
+		return this.request("POST", `/servers/${serverId}/files`, {
+			path: filePath,
+		});
+	}
+
+	async updateServerFile(
+		serverId: string,
+		filePatch: CraftyFilePatchRequest,
+	): Promise<void> {
+		return this.request("PATCH", `/servers/${serverId}/files`, filePatch);
 	}
 
 	private async request<T>(

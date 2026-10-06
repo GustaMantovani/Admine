@@ -1,4 +1,4 @@
-import type { RootDatabase } from "lmdb"; // or require
+import type { RootDatabase } from "lmdb";
 import type { TokenStorage } from "./token-storage";
 
 const LMDB_TOKEN_KEY = "admine-minecraft-server-provider-token";

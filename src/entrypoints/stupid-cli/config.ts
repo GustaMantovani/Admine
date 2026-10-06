@@ -1,6 +1,9 @@
 import { TOML } from "bun";
 import { z } from "zod";
-import type { CraftyConfig } from "../../core/minecraft/crafty/crafty-config";
+import type {
+	ManagedCraftyConfig,
+	SelfHostedCraftyConfig,
+} from "../../core/minecraft/crafty/crafty-config";
 import type { CraftyCredsFile } from "../../core/minecraft/crafty/dtos/crafty-creds-file";
 import { MinecraftServerType } from "../../core/types/minecraft-server-type";
 import { MinecraftServerWebhookTrigger } from "../../core/types/minecraft-server-webhook-trigger";
@@ -60,10 +63,16 @@ const CliConfigSchema = z.object({
 		.prefault({ deployType: "managed" }),
 });
 
+// Credentials are only known after the Crafty infra is up, see withCraftyCreds
+export type CliManagedCraftyConfig = Omit<
+	ManagedCraftyConfig,
+	"username" | "password"
+> & { username?: string; password?: string };
+
 export type CliConfig = {
 	serversHost: string;
 	minecraftServer: z.infer<typeof MinecraftServerDefaultsSchema>;
-	craftyConfig: CraftyConfig;
+	craftyConfig: SelfHostedCraftyConfig | CliManagedCraftyConfig;
 };
 
 export async function loadCliConfig(
@@ -73,27 +82,19 @@ export async function loadCliConfig(
 	// A missing file means the user wants every default
 	const raw = (await file.exists()) ? TOML.parse(await file.text()) : {};
 
-	const { craftyConfig, ...rest } = CliConfigSchema.parse(raw);
-
-	if (craftyConfig.deployType === "self-hosted") {
-		return { ...rest, craftyConfig };
-	}
-
-	const needsCreds = !craftyConfig.username || !craftyConfig.password;
-	const creds = needsCreds ? await loadCraftyDefaultCreds() : undefined;
-
-	return {
-		...rest,
-		craftyConfig: {
-			...craftyConfig,
-			username: craftyConfig.username ?? creds?.username ?? "",
-			password: craftyConfig.password ?? creds?.password ?? "",
-		},
-	};
+	return CliConfigSchema.parse(raw);
 }
 
-async function loadCraftyDefaultCreds(
+// Must run after the Crafty infra is up: the creds file is created by Crafty itself
+export async function withCraftyCreds(
+	craftyConfig: CliManagedCraftyConfig,
 	credsPath = DEFAULT_CRAFTY_CREDS_FILE_PATH,
-): Promise<CraftyCredsFile> {
-	return (await Bun.file(credsPath).json()) as CraftyCredsFile;
+): Promise<ManagedCraftyConfig> {
+	const file = Bun.file(credsPath);
+	const creds = (await file.json()) as CraftyCredsFile;
+	return {
+		...craftyConfig,
+		username: craftyConfig.username ?? creds.username,
+		password: craftyConfig.password ?? creds.password,
+	};
 }

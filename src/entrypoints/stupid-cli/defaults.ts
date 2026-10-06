@@ -12,6 +12,8 @@ export const DEFAULT_MINECRAFT_SERVER_TYPE = MinecraftServerType.Java;
 export const DEFAULT_MINECRAFT_SERVER_VERSION = "26.3";
 export const DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY = 2;
 export const DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY = 4;
+export const DEFAULT_MINECRAFT_SERVER_RCON_PORT = "25575";
+export const DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD = "admine";
 
 // Crafty
 export const DEFAULT_CRAFTY_WEBHOOK_URLS: MinecraftServerWebhookUrls = {};
