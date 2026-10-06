@@ -1,8 +1,10 @@
 import type { CreateMinecraftServerRequest } from "../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../types/minecraft-server";
 import type { MinecraftServerStats } from "../types/minecraft-server-stats";
+import type { ProviderName } from "../types/provider-name";
 
 export interface MinecraftServerProvider {
+	readonly name: ProviderName;
 	create(createServerRequest: CreateMinecraftServerRequest): Promise<string>;
 	list(): Promise<MinecraftServer[]>;
 	info(id: string): Promise<MinecraftServer>;

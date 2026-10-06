@@ -13,13 +13,13 @@ import { CraftyMinecraftServerProvider } from "../../core/minecraft/crafty/craft
 import { ensureCraftyInfra } from "../../core/minecraft/crafty/crafty-infra";
 import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
 import { open } from 'lmdb';
-import { LmdbTokenStorage } from "../../core/persistence/token-storage/lmdb-token-storage";
+import { LmdbAdmineStorage } from "../../core/persistence/lmdb-admine-storage";
 import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/static-crafty-auth-provider";
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
 import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
 
 import { loadCliConfig, withCraftyCreds } from "./config";
-import { DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, DEFAULT_MINECRAFT_SERVER_RCON_PORT } from "./defaults";
+import { DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, DEFAULT_MINECRAFT_SERVER_RCON_PORT, DEFAULT_MINECRAFT_SERVER_WHITE_LIST_ENABLE } from "./defaults";
 const config = await loadCliConfig();
 
 let argCounter = 2;
@@ -49,7 +49,7 @@ type CliCommand =
 const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
 
 let lmdbKv = open('.data/admine', {});
-const tokenStorage = new LmdbTokenStorage(lmdbKv);
+const storage = new LmdbAdmineStorage(lmdbKv);
 
 const craftyConfig = config.craftyConfig;
 
@@ -62,7 +62,7 @@ switch (craftyConfig.deployType) {
 		await ensureCraftyInfra(craftyConfig);
 		authProvider = new ManagedCraftyAuthProvider(
 			await withCraftyCreds(craftyConfig),
-			tokenStorage,
+			storage,
 		);
 }
 
@@ -120,6 +120,9 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			version: versionArg || config.minecraftServer.version,
 			minimumMemory: config.minecraftServer.minimumMemory,
 			maximumMemory: config.minecraftServer.maximumMemory,
+			properties: {
+				"white-list": DEFAULT_MINECRAFT_SERVER_WHITE_LIST_ENABLE
+			}
 		};
 
 		const id = await minecraftServerService.create(newMinecraftServerData);

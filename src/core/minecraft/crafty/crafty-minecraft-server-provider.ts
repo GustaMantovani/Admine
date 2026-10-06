@@ -7,6 +7,7 @@ import type {
 	MinecraftServerWebhookTrigger,
 	MinecraftServerWebhookUrls,
 } from "../../types/minecraft-server-webhook-trigger";
+import { CRAFTY_PROVIDER_NAME } from "../../types/provider-name";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { RconConfig } from "../rcon-config";
 import type { CraftyApiClient } from "./crafty-api-client";
@@ -22,6 +23,8 @@ import {
 } from "./mappers";
 
 export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
+	readonly name = CRAFTY_PROVIDER_NAME;
+
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
@@ -54,6 +57,14 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		propertiesEditor.insert("rcon.password", this.rconConfig.password);
 		propertiesEditor.insert("rcon.port", this.rconConfig.port);
 		propertiesEditor.insert("broadcast-rcon-to-ops", "false");
+
+		// User configurable properties
+		const createMSReqProps = createServerRequest.properties;
+		if (createMSReqProps) {
+			for (const [propertie, value] of Object.entries(createMSReqProps)) {
+				propertiesEditor.insert(propertie, String(value));
+			}
+		}
 
 		const newProperties = propertiesEditor.format({
 			removeComments: true, // Strip all comments

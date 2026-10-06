@@ -8,4 +8,7 @@ export type CreateMinecraftServerRequest = {
 	maximumMemory: number;
 	// Falls back to the protocol's default port for the server type
 	port?: number;
+	properties?: {
+		'white-list'?: boolean;
+	};
 };

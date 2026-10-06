@@ -1,4 +1,5 @@
-import type { TokenStorage } from "../../../persistence/token-storage/token-storage";
+import type { AdmineStorage } from "../../../persistence/admine-storage";
+import { CRAFTY_PROVIDER_NAME } from "../../../types/provider-name";
 import type { ManagedCraftyConfig } from "../crafty-config";
 import type { CraftyLoginResponse } from "../dtos/crafty-login-response";
 import type { CraftyAuthProvider } from "./crafty-auth-provider";
@@ -6,11 +7,12 @@ import type { CraftyAuthProvider } from "./crafty-auth-provider";
 export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 	constructor(
 		private readonly config: ManagedCraftyConfig,
-		private readonly tokenStorage: TokenStorage,
+		private readonly storage: AdmineStorage,
 	) {}
 
 	async getToken(): Promise<string> {
-		const storedToken = await this.tokenStorage.getToken();
+		const storedToken =
+			await this.storage.getProviderToken(CRAFTY_PROVIDER_NAME);
 
 		if (!storedToken) {
 			const response = await fetch(`${this.config.apiBaseUrl}/auth/login`, {
@@ -25,7 +27,7 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 			const body = (await response.json()) as CraftyLoginResponse;
 			const token = body.data.token;
 
-			await this.tokenStorage.setToken(token);
+			await this.storage.setProviderToken(CRAFTY_PROVIDER_NAME, token);
 			return token;
 		}
 
@@ -45,7 +47,7 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 		const body = (await response.json()) as CraftyLoginResponse;
 		const token = body.data.token;
 
-		await this.tokenStorage.setToken(token);
+		await this.storage.setProviderToken(CRAFTY_PROVIDER_NAME, token);
 		return token;
 	}
 }
