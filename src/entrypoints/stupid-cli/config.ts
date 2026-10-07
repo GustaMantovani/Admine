@@ -21,11 +21,17 @@ import {
 	DEFAULT_CRAFTY_WEBHOOK_URLS,
 	DEFAULT_MINECRAFT_SERVER_VERSION,
 	DEFAULT_SERVERS_HOST_FOR_ADMINE,
+	DEFAULT_CRAFTY_WEBHOOKS_ENABLED,
 } from "./defaults";
 
 const CraftyWebhooksSchema = z
-	.partialRecord(z.enum(MinecraftServerWebhookTrigger), z.url())
-	.default(DEFAULT_CRAFTY_WEBHOOK_URLS);
+	.object({
+		enabled: z.boolean().default(DEFAULT_CRAFTY_WEBHOOKS_ENABLED),
+		urls: z
+			.partialRecord(z.enum(MinecraftServerWebhookTrigger), z.url())
+			.default(DEFAULT_CRAFTY_WEBHOOK_URLS),
+	})
+	.prefault({});
 
 const ManagedCraftySchema = z.object({
 	deployType: z.literal("managed"),

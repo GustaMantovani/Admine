@@ -9,6 +9,6 @@ export type CreateMinecraftServerRequest = {
 	// Falls back to the protocol's default port for the server type
 	port?: number;
 	properties?: {
-		'white-list'?: boolean;
+		"white-list"?: boolean;
 	};
 };

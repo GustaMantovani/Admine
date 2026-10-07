@@ -17,9 +17,9 @@ import { LmdbAdmineStorage } from "../../core/persistence/lmdb-admine-storage";
 import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/static-crafty-auth-provider";
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
 import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
-
 import { loadCliConfig, withCraftyCreds } from "./config";
 import { DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, DEFAULT_MINECRAFT_SERVER_RCON_PORT, DEFAULT_MINECRAFT_SERVER_WHITE_LIST_ENABLE } from "./defaults";
+
 const config = await loadCliConfig();
 
 let argCounter = 2;
@@ -48,11 +48,10 @@ type CliCommand =
 	| "unknown";
 const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
 
+// Dependencies
 let lmdbKv = open('.data/admine', {});
 const storage = new LmdbAdmineStorage(lmdbKv);
-
 const craftyConfig = config.craftyConfig;
-
 let authProvider: CraftyAuthProvider;
 switch (craftyConfig.deployType) {
 	case 'self-hosted':
@@ -65,12 +64,11 @@ switch (craftyConfig.deployType) {
 			storage,
 		);
 }
-
 const craftyApiClient = new CraftyApiClient(
 	craftyConfig.apiBaseUrl,
 	authProvider
 );
-const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost, craftyConfig.webhooks, {password: DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, port: DEFAULT_MINECRAFT_SERVER_RCON_PORT});
+const craftyProvider = new CraftyMinecraftServerProvider(craftyApiClient, config.serversHost, craftyConfig.webhooks.enabled ? craftyConfig.webhooks.urls : {}, {password: DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD, port: DEFAULT_MINECRAFT_SERVER_RCON_PORT});
 const minecraftServerService = new MinecraftServerService(craftyProvider);
 
 function cliHelp() {
