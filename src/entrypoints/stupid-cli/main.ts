@@ -10,7 +10,7 @@ import {
 } from "../../core";
 import { CraftyApiClient } from "../../core/minecraft/crafty/crafty-api-client";
 import { CraftyMinecraftServerProvider } from "../../core/minecraft/crafty/crafty-minecraft-server-provider";
-import { ensureCraftyInfra } from "../../core/minecraft/crafty/crafty-infra";
+import { ensureCraftyInfra } from "./crafty-infra";
 import type { MinecraftServerType } from "../../core/types/minecraft-server-type";
 import { open } from 'lmdb';
 import { LmdbAdmineStorage } from "../../core/persistence/lmdb-admine-storage";

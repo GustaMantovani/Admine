@@ -1,5 +1,10 @@
 import { $ } from "bun";
-import type { CraftyInfraConfig } from "./crafty-config";
+
+export type CraftyInfraConfig = {
+	infraSetupCommand: string;
+	infraCheckDelay: number;
+	infraCheckCommand: string;
+};
 
 export async function ensureCraftyInfra(
 	config: CraftyInfraConfig,

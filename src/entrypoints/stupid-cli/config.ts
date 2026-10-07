@@ -7,6 +7,7 @@ import type {
 import type { CraftyCredsFile } from "../../core/minecraft/crafty/dtos/crafty-creds-file";
 import { MinecraftServerType } from "../../core/types/minecraft-server-type";
 import { MinecraftServerWebhookTrigger } from "../../core/types/minecraft-server-webhook-trigger";
+import type { CraftyInfraConfig } from "./crafty-infra";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
 	DEFAULT_CRAFTY_API_BASE_URL,
@@ -67,7 +68,8 @@ const CliConfigSchema = z.object({
 export type CliManagedCraftyConfig = Omit<
 	ManagedCraftyConfig,
 	"username" | "password"
-> & { username?: string; password?: string };
+> &
+	CraftyInfraConfig & { username?: string; password?: string };
 
 export type CliConfig = {
 	serversHost: string;
