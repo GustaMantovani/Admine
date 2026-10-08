@@ -10,8 +10,14 @@ export class MinecraftServerService {
 
 	async create(
 		createServerRequest: CreateMinecraftServerRequest,
+		acceptEula?: boolean,
 	): Promise<string> {
-		return this.minecraftServerProvider.create(createServerRequest);
+		const newServerId =
+			await this.minecraftServerProvider.create(createServerRequest);
+
+		if (acceptEula) await this.acceptEula(newServerId);
+
+		return newServerId;
 	}
 
 	async list(): Promise<MinecraftServer[]> {

@@ -123,7 +123,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			}
 		};
 
-		const id = await minecraftServerService.create(newMinecraftServerData);
+		const id = await minecraftServerService.create(newMinecraftServerData, config.minecraftServer.acceptEulaOnCreate);
 		console.log("Server created:", { ...newMinecraftServerData, id });
 	},
 

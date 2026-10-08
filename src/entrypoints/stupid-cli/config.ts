@@ -22,6 +22,7 @@ import {
 	DEFAULT_MINECRAFT_SERVER_VERSION,
 	DEFAULT_SERVERS_HOST_FOR_ADMINE,
 	DEFAULT_CRAFTY_WEBHOOKS_ENABLED,
+	DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE,
 } from "./defaults";
 
 const CraftyWebhooksSchema = z
@@ -53,6 +54,7 @@ const SelfHostedCraftySchema = z.object({
 });
 
 const MinecraftServerDefaultsSchema = z.object({
+	acceptEulaOnCreate: z.boolean().default(DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE),
 	type: z.enum(MinecraftServerType).default(DEFAULT_MINECRAFT_SERVER_TYPE),
 	version: z.string().default(DEFAULT_MINECRAFT_SERVER_VERSION),
 	minimumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY),

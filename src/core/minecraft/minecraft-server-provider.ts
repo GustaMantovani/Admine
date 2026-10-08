@@ -5,7 +5,10 @@ import type { ProviderName } from "../types/provider-name";
 
 export interface MinecraftServerProvider {
 	readonly name: ProviderName;
-	create(createServerRequest: CreateMinecraftServerRequest): Promise<string>;
+	create(
+		createServerRequest: CreateMinecraftServerRequest,
+		acceptEula?: boolean,
+	): Promise<string>;
 	list(): Promise<MinecraftServer[]>;
 	info(id: string): Promise<MinecraftServer>;
 	stats(id: string): Promise<MinecraftServerStats>;
