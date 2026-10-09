@@ -1,4 +1,4 @@
-import { TOML } from "bun";
+import { TOML, type BunFile } from "bun";
 import { properties, z } from "zod";
 import type {
 	ManagedCraftyConfig,
@@ -29,6 +29,7 @@ import {
 	DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD,
 	DEFAULT_MINECRAFT_SERVER_RCON_PORT,
 } from "./defaults";
+import { randomBytes } from "crypto";
 
 const CraftyWebhooksSchema = z
 	.object({
@@ -106,7 +107,9 @@ export async function loadCliConfig(
 ): Promise<CliConfig> {
 	const file = Bun.file(configFilePath);
 	// A missing file means the user wants every default
-	const raw = (await file.exists()) ? TOML.parse(await file.text()) : {};
+	const raw = TOML.parse(await file.text()) as CliConfig;
+
+	if(raw.minecraftServer?.rcon?.password == undefined) await writeSinglePropertieToTomlFile(raw, configFilePath, 'minecraftServer.rcon.password', randomBytes(32).toString("base64url"));
 
 	return CliConfigSchema.parse(raw);
 }
@@ -123,4 +126,24 @@ export async function withCraftyCreds(
 		username: craftyConfig.username ?? creds.username,
 		password: craftyConfig.password ?? creds.password,
 	};
+}
+
+export async function writeSinglePropertieToTomlFile(
+	configObjct: Record<string, any>,
+	configFilePath: string,
+	keyPath: string,
+	value: any,
+) {
+	const keys = keyPath.split(".");
+
+	let target = configObjct;
+	for (const key of keys.slice(0, -1)) {
+		if (typeof target[key] !== "object" || target[key] === null) {
+			target[key] = {};
+		}
+		target = target[key];
+	}
+	target[keys[keys.length - 1]!] = value;
+
+	await Bun.write(configFilePath, TOML.stringify(configObjct)!);
 }
