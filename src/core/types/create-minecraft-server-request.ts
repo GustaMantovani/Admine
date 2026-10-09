@@ -1,4 +1,5 @@
 import type { MinecraftServerType } from "../types/minecraft-server-type";
+import type { MinecraftServerUserDefinedProperties } from "./minecraft-server-user-defined-properties";
 
 export type CreateMinecraftServerRequest = {
 	name: string;
@@ -8,7 +9,5 @@ export type CreateMinecraftServerRequest = {
 	maximumMemory: number;
 	// Falls back to the protocol's default port for the server type
 	port?: number;
-	properties?: {
-		"white-list"?: boolean;
-	};
+	properties?: MinecraftServerUserDefinedProperties;
 };

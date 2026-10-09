@@ -118,9 +118,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			version: versionArg || config.minecraftServer.version,
 			minimumMemory: config.minecraftServer.minimumMemory,
 			maximumMemory: config.minecraftServer.maximumMemory,
-			properties: {
-				"white-list": DEFAULT_MINECRAFT_SERVER_WHITE_LIST_ENABLE
-			}
+			properties: config.minecraftServer.properties
 		};
 
 		const id = await minecraftServerService.create(newMinecraftServerData, config.minecraftServer.acceptEulaOnCreate);
