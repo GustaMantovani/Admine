@@ -11,6 +11,7 @@ import type { CraftyInfraConfig } from "./crafty-infra";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
 	DEFAULT_CRAFTY_API_BASE_URL,
+	DEFAULT_CRAFTY_DEPLOY_TYPE,
 	DEFAULT_CRAFTY_CREDS_FILE_PATH,
 	DEFAULT_CRAFTY_INFRA_CHECK_COMMAND,
 	DEFAULT_CRAFTY_INFRA_CHECK_DELAY_MS,
@@ -24,6 +25,9 @@ import {
 	DEFAULT_CRAFTY_WEBHOOKS_ENABLED,
 	DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE,
 	DEFAULT_MEINCRAFT_SERVER_PROPERTIES,
+	DEFAULT_MINECRAFT_SERVER_RCON_ENABLED,
+	DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD,
+	DEFAULT_MINECRAFT_SERVER_RCON_PORT,
 } from "./defaults";
 
 const CraftyWebhooksSchema = z
@@ -54,7 +58,16 @@ const SelfHostedCraftySchema = z.object({
 	apiToken: z.string(),
 });
 
+const RconSchema = z
+	.object({
+		enabled: z.boolean().default(DEFAULT_MINECRAFT_SERVER_RCON_ENABLED),
+		port: z.coerce.string().default(DEFAULT_MINECRAFT_SERVER_RCON_PORT),
+		password: z.string().default(DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD),
+	})
+	.prefault({});
+
 const MinecraftServerDefaultsSchema = z.object({
+	rcon: RconSchema,
 	type: z.enum(MinecraftServerType).default(DEFAULT_MINECRAFT_SERVER_TYPE),
 	version: z.string().default(DEFAULT_MINECRAFT_SERVER_VERSION),
 	minimumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY),
@@ -66,12 +79,13 @@ const MinecraftServerDefaultsSchema = z.object({
 const CliConfigSchema = z.object({
 	serversHost: z.string().default(DEFAULT_SERVERS_HOST_FOR_ADMINE),
 	minecraftServer: MinecraftServerDefaultsSchema.prefault({}),
-	craftyConfig: z
-		.discriminatedUnion("deployType", [
+	craftyConfig: z.preprocess(
+		(value) => ({ deployType: DEFAULT_CRAFTY_DEPLOY_TYPE, ...(value ?? {}) }),
+		z.discriminatedUnion("deployType", [
 			ManagedCraftySchema,
 			SelfHostedCraftySchema,
-		])
-		.prefault({ deployType: "managed" }),
+		]),
+	),
 });
 
 // Credentials are only known after the Crafty infra is up, see withCraftyCreds

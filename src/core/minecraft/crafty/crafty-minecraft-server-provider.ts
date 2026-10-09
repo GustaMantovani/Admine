@@ -3,14 +3,12 @@ import { MinecraftServerActionError } from "../../errors";
 import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../../types/minecraft-server";
 import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
-import type {
-	MinecraftServerWebhookTrigger,
-	MinecraftServerWebhookUrls,
-} from "../../types/minecraft-server-webhook-trigger";
+import type { MinecraftServerWebhookTrigger } from "../../types/minecraft-server-webhook-trigger";
 import { CRAFTY_PROVIDER_NAME } from "../../types/provider-name";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
 import type { RconConfig } from "../rcon-config";
 import type { CraftyApiClient } from "./crafty-api-client";
+import type { CraftyWebhooksConfig } from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import {
@@ -28,7 +26,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
-		private readonly webhookUrls: MinecraftServerWebhookUrls = {},
+		private readonly webhooksConfig: CraftyWebhooksConfig,
 		private readonly rconConfig: RconConfig,
 	) {}
 
@@ -53,11 +51,12 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			serverPropertiesFile.data.content,
 		);
 
-		propertiesEditor.insert("enable-rcon", "true");
-		propertiesEditor.insert("rcon.password", this.rconConfig.password);
-		propertiesEditor.insert("rcon.port", this.rconConfig.port);
-		propertiesEditor.insert("broadcast-rcon-to-ops", "false");
-
+		if (this.rconConfig.enabled) {
+			propertiesEditor.insert("enable-rcon", "true");
+			propertiesEditor.insert("rcon.password", this.rconConfig.password);
+			propertiesEditor.insert("rcon.port", this.rconConfig.port);
+			propertiesEditor.insert("broadcast-rcon-to-ops", "false");
+		}
 		// User configurable properties
 		const createMSReqProps = createServerRequest.properties;
 		if (createMSReqProps) {
@@ -82,7 +81,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 			modified_epoch: serverPropertiesFile.data.attributes.modified_epoch,
 		});
 
-		await this.createWebhooks(serverId);
+		if (this.webhooksConfig.enabled) await this.createWebhooks(serverId);
 		return serverId;
 	}
 
@@ -160,7 +159,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	}
 
 	private async createWebhooks(serverId: string): Promise<void> {
-		const webhooks = Object.entries(this.webhookUrls) as [
+		const webhooks = Object.entries(this.webhooksConfig.urls) as [
 			MinecraftServerWebhookTrigger,
 			string,
 		][];
