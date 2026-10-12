@@ -1,17 +1,17 @@
-import type { CreateMinecraftServerRequest } from "../domain/create-minecraft-server-request";
-import type { MinecraftServer } from "../domain/minecraft-server";
-import type { MinecraftServerStats } from "../domain/minecraft-server-stats";
+import type { CreateGameServerRequest } from "../domain/create-game-server-request";
+import type { GameServer } from "../domain/game-server";
+import type { GameServerStats } from "../domain/game-server-stats";
 import type { ProviderName } from "./provider-name";
 
-export interface MinecraftServerProvider {
+export interface GameServerProvider {
 	readonly name: ProviderName;
 	create(
-		createServerRequest: CreateMinecraftServerRequest,
+		createServerRequest: CreateGameServerRequest,
 		acceptEula?: boolean,
 	): Promise<string>;
-	list(): Promise<MinecraftServer[]>;
-	info(id: string): Promise<MinecraftServer>;
-	stats(id: string): Promise<MinecraftServerStats>;
+	list(): Promise<GameServer[]>;
+	info(id: string): Promise<GameServer>;
+	stats(id: string): Promise<GameServerStats>;
 	logs(id: string): Promise<string[]>;
 	start(id: string): Promise<void>;
 	stop(id: string): Promise<void>;

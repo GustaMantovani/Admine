@@ -1,9 +1,9 @@
-import type { MinecraftServerType } from "./minecraft-server-type";
+import type { GameServerType } from "./game-server-type";
 import type { MinecraftServerUserDefinedProperties } from "./minecraft-server-user-defined-properties";
 
-export type CreateMinecraftServerRequest = {
+export type CreateGameServerRequest = {
 	name: string;
-	type: MinecraftServerType;
+	type: GameServerType;
 	version: string;
 	minimumMemory: number;
 	maximumMemory: number;

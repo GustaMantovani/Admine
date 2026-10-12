@@ -1,4 +1,4 @@
-export class MinecraftServer {
+export class GameServer {
 	constructor(
 		public readonly id: string,
 		public readonly name: string,

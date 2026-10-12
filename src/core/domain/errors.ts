@@ -1,3 +1,3 @@
-export class UnknownMinecraftServerType extends Error {}
+export class UnknownGameServerType extends Error {}
 
-export class MinecraftServerActionError extends Error {}
+export class GameServerActionError extends Error {}

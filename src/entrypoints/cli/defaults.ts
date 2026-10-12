@@ -1,6 +1,6 @@
-import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
+import { GameServerType } from "../../core/domain/game-server-type";
 import type { MinecraftServerUserDefinedProperties } from "../../core/domain/minecraft-server-user-defined-properties";
-import type { MinecraftServerWebhookUrls } from "../../core/domain/minecraft-server-webhook-trigger";
+import type { GameServerWebhookUrls } from "../../core/domain/game-server-webhook-trigger";
 
 // Files
 export const DEFAULT_CLI_CONFIG_FILE_PATH = "./config/cli-config.toml";
@@ -8,7 +8,7 @@ export const DEFAULT_CRAFTY_CREDS_FILE_PATH = ".data/crafty/config/default-creds
 
 // Minecraft servers
 export const DEFAULT_SERVERS_HOST_FOR_ADMINE = "127.0.0.1";
-export const DEFAULT_MINECRAFT_SERVER_TYPE = MinecraftServerType.Java;
+export const DEFAULT_MINECRAFT_SERVER_TYPE = GameServerType.Java;
 export const DEFAULT_MINECRAFT_SERVER_VERSION = "26.3";
 export const DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY = 2;
 export const DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY = 4;
@@ -24,7 +24,7 @@ export const DEFAULT_MEINCRAFT_SERVER_PROPERTIES: MinecraftServerUserDefinedProp
 // Crafty
 export const DEFAULT_CRAFTY_DEPLOY_TYPE = "managed" as const;
 export const DEFAULT_CRAFTY_WEBHOOKS_ENABLED = true;
-export const DEFAULT_CRAFTY_WEBHOOK_URLS: MinecraftServerWebhookUrls = {};
+export const DEFAULT_CRAFTY_WEBHOOK_URLS: GameServerWebhookUrls = {};
 export const DEFAULT_CRAFTY_API_BASE_URL = "https://localhost:8443/api/v2";
 export const DEFAULT_CRAFTY_INFRA_SETUP_COMMAND = 'docker start crafty_container 2>/dev/null || docker run --name crafty_container --detach -p 8443:8443 -p 8123:8123 -p 19132:19132/udp -p 25500-25600:25500-25600 -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest';
 // This command must return a success exit code when the server is running, or any other exit code otherwise

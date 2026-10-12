@@ -1,8 +1,8 @@
-import type { MinecraftServerWebhookUrls } from "../../domain/minecraft-server-webhook-trigger";
+import type { GameServerWebhookUrls } from "../../domain/game-server-webhook-trigger";
 
 export type CraftyWebhooksConfig = {
 	enabled: boolean;
-	urls: MinecraftServerWebhookUrls;
+	urls: GameServerWebhookUrls;
 };
 
 export type SelfHostedCraftyConfig = {

@@ -5,8 +5,8 @@ import type {
 	SelfHostedCraftyConfig,
 } from "../../core/providers/crafty/crafty-config";
 import type { CraftyCredsFile } from "../../core/providers/crafty/dtos/crafty-creds-file";
-import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
-import { MinecraftServerWebhookTrigger } from "../../core/domain/minecraft-server-webhook-trigger";
+import { GameServerType } from "../../core/domain/game-server-type";
+import { GameServerWebhookTrigger } from "../../core/domain/game-server-webhook-trigger";
 import type { CraftyInfraConfig } from "../../infra/crafty-docker";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
@@ -35,7 +35,7 @@ const CraftyWebhooksSchema = z
 	.object({
 		enabled: z.boolean().default(DEFAULT_CRAFTY_WEBHOOKS_ENABLED),
 		urls: z
-			.partialRecord(z.enum(MinecraftServerWebhookTrigger), z.url())
+			.partialRecord(z.enum(GameServerWebhookTrigger), z.url())
 			.default(DEFAULT_CRAFTY_WEBHOOK_URLS),
 	})
 	.prefault({});
@@ -69,7 +69,7 @@ const RconSchema = z
 
 const MinecraftServerDefaultsSchema = z.object({
 	rcon: RconSchema,
-	type: z.enum(MinecraftServerType).default(DEFAULT_MINECRAFT_SERVER_TYPE),
+	type: z.enum(GameServerType).default(DEFAULT_MINECRAFT_SERVER_TYPE),
 	version: z.string().default(DEFAULT_MINECRAFT_SERVER_VERSION),
 	minimumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY),
 	maximumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY),

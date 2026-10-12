@@ -1,4 +1,4 @@
-export type { CreateMinecraftServerRequest } from "./domain/create-minecraft-server-request";
-export type { MinecraftServer } from "./domain/minecraft-server";
-export type { MinecraftServerProvider } from "./providers/minecraft-server-provider";
-export { MinecraftServerService } from "./services/minecraft-server-service";
+export type { CreateGameServerRequest } from "./domain/create-game-server-request";
+export type { GameServer } from "./domain/game-server";
+export type { GameServerProvider } from "./providers/game-server-provider";
+export { GameServerService } from "./services/game-server-service";

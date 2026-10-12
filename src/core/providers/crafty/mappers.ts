@@ -1,9 +1,9 @@
-import type { CreateMinecraftServerRequest } from "../../domain/create-minecraft-server-request";
-import { UnknownMinecraftServerType } from "../../domain/errors";
-import { MinecraftServer } from "../../domain/minecraft-server";
-import type { MinecraftServerStats } from "../../domain/minecraft-server-stats";
-import { MinecraftServerType } from "../../domain/minecraft-server-type";
-import { MinecraftServerWebhookTrigger } from "../../domain/minecraft-server-webhook-trigger";
+import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
+import { UnknownGameServerType } from "../../domain/errors";
+import { GameServer } from "../../domain/game-server";
+import type { GameServerStats } from "../../domain/game-server-stats";
+import { GameServerType } from "../../domain/game-server-type";
+import { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
 import { resolveServerPort } from "../../domain/server-ports";
 import type { CraftyCreateBedrockServer } from "./dtos/crafty-create-bedrock-server";
 import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-server";
@@ -15,7 +15,7 @@ import type { CraftyServerStats } from "./dtos/crafty-server-stats";
 import type { CraftyWebhookTrigger } from "./dtos/crafty-webhook-trigger";
 
 export function toCraftyCreateServerRequest(
-	request: CreateMinecraftServerRequest,
+	request: CreateGameServerRequest,
 	serversHost: string,
 ): CraftyCreateServer {
 	switch (request.type) {
@@ -31,7 +31,7 @@ export function toCraftyCreateServerRequest(
 }
 
 function toCraftyCreateJavaServer(
-	request: CreateMinecraftServerRequest,
+	request: CreateGameServerRequest,
 	serversHost: string,
 ): CraftyCreateJavaServer {
 	const port = resolveServerPort(request);
@@ -59,7 +59,7 @@ function toCraftyCreateJavaServer(
 }
 
 function toCraftyCreateBedrockServer(
-	request: CreateMinecraftServerRequest,
+	request: CreateGameServerRequest,
 	serversHost: string,
 ): CraftyCreateBedrockServer {
 	return {
@@ -80,7 +80,7 @@ function toCraftyCreateBedrockServer(
 }
 
 function toCraftyCreateHytaleServer(
-	request: CreateMinecraftServerRequest,
+	request: CreateGameServerRequest,
 	serversHost: string,
 ): CraftyCreateHytaleServer {
 	return {
@@ -103,41 +103,41 @@ function toCraftyCreateHytaleServer(
 }
 
 const CRAFTY_WEBHOOKS: Record<
-	MinecraftServerWebhookTrigger,
+	GameServerWebhookTrigger,
 	{ trigger: CraftyWebhookTrigger; name: string }
 > = {
-	[MinecraftServerWebhookTrigger.Started]: {
+	[GameServerWebhookTrigger.Started]: {
 		trigger: "start_server",
 		name: "Server Started",
 	},
-	[MinecraftServerWebhookTrigger.Stopped]: {
+	[GameServerWebhookTrigger.Stopped]: {
 		trigger: "stop_server",
 		name: "Server Stopped",
 	},
-	[MinecraftServerWebhookTrigger.Crashed]: {
+	[GameServerWebhookTrigger.Crashed]: {
 		trigger: "crash_detected",
 		name: "Server Crashed",
 	},
-	[MinecraftServerWebhookTrigger.BackupCompleted]: {
+	[GameServerWebhookTrigger.BackupCompleted]: {
 		trigger: "backup_server",
 		name: "Server Backup Completed",
 	},
-	[MinecraftServerWebhookTrigger.ExecutableUpdated]: {
+	[GameServerWebhookTrigger.ExecutableUpdated]: {
 		trigger: "jar_update",
 		name: "Server Executable Updated",
 	},
-	[MinecraftServerWebhookTrigger.CommandReceived]: {
+	[GameServerWebhookTrigger.CommandReceived]: {
 		trigger: "send_command",
 		name: "Server Command Received",
 	},
-	[MinecraftServerWebhookTrigger.Killed]: {
+	[GameServerWebhookTrigger.Killed]: {
 		trigger: "kill",
 		name: "Server Killed",
 	},
 };
 
 export function toCraftyCreateWebhookRequest(
-	trigger: MinecraftServerWebhookTrigger,
+	trigger: GameServerWebhookTrigger,
 	url: string,
 ): CraftyCreateWebhook {
 	const { trigger: craftyTrigger, name } = CRAFTY_WEBHOOKS[trigger];
@@ -156,44 +156,42 @@ export function toCraftyCreateWebhookRequest(
 }
 
 // Crafty also manages types Admine doesn't support yet, such as "steam_cmd"
-const CRAFTY_SERVER_TYPES: Record<string, MinecraftServerType> = {
-	"minecraft-java": MinecraftServerType.Java,
-	"minecraft-bedrock": MinecraftServerType.Bedrock,
-	hytale: MinecraftServerType.Hytale,
+const CRAFTY_SERVER_TYPES: Record<string, GameServerType> = {
+	"minecraft-java": GameServerType.Java,
+	"minecraft-bedrock": GameServerType.Bedrock,
+	hytale: GameServerType.Hytale,
 };
 
 export function isSupportedCraftyServerType(type: string): boolean {
 	return type in CRAFTY_SERVER_TYPES;
 }
 
-function fromCraftyServerType(dto: string): MinecraftServerType {
+function fromCraftyServerType(dto: string): GameServerType {
 	const mapped = CRAFTY_SERVER_TYPES[dto];
 
 	if (mapped === undefined)
-		throw new UnknownMinecraftServerType(
-			`Can't map server type from string ${dto}`,
-		);
+		throw new UnknownGameServerType(`Can't map server type from string ${dto}`);
 
 	return mapped;
 }
 
-export function toMinecraftServerStatus(
+export function toGameServerStatus(
 	running: boolean | undefined,
-): MinecraftServer["status"] {
+): GameServer["status"] {
 	if (running === undefined) return "unknown";
 	return running ? "on" : "off";
 }
 
-export function toMinecraftServer(
+export function toGameServer(
 	craftyServerDto: CraftyServer,
 	serversHost: string,
 	craftyServerStatsDto?: CraftyServerStats | undefined,
-): MinecraftServer {
-	return new MinecraftServer(
+): GameServer {
+	return new GameServer(
 		craftyServerDto.server_id,
 		craftyServerDto.server_name,
 		fromCraftyServerType(craftyServerDto.type),
-		toMinecraftServerStatus(craftyServerStatsDto?.running),
+		toGameServerStatus(craftyServerStatsDto?.running),
 		craftyServerStatsDto?.version ?? undefined,
 		serversHost,
 		[],
@@ -208,9 +206,7 @@ function fromCraftyText(value: string): string | undefined {
 	return value === "" || value === "False" ? undefined : value;
 }
 
-export function toMinecraftServerStats(
-	dto: CraftyServerStats,
-): MinecraftServerStats {
+export function toGameServerStats(dto: CraftyServerStats): GameServerStats {
 	return {
 		running: dto.running,
 		crashed: dto.crashed,

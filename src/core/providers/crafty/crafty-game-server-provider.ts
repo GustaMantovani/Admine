@@ -1,11 +1,11 @@
 import { PropertiesEditor } from "properties-file/editor";
-import type { CreateMinecraftServerRequest } from "../../domain/create-minecraft-server-request";
-import { MinecraftServerActionError } from "../../domain/errors";
-import type { MinecraftServer } from "../../domain/minecraft-server";
-import type { MinecraftServerStats } from "../../domain/minecraft-server-stats";
-import type { MinecraftServerWebhookTrigger } from "../../domain/minecraft-server-webhook-trigger";
+import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
+import { GameServerActionError } from "../../domain/errors";
+import type { GameServer } from "../../domain/game-server";
+import type { GameServerStats } from "../../domain/game-server-stats";
+import type { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
 import type { RconConfig } from "../../rcon/rcon-config";
-import type { MinecraftServerProvider } from "../minecraft-server-provider";
+import type { GameServerProvider } from "../game-server-provider";
 import { CRAFTY_PROVIDER_NAME } from "../provider-name";
 import type { CraftyApiClient } from "./crafty-api-client";
 import type { CraftyWebhooksConfig } from "./crafty-config";
@@ -16,11 +16,11 @@ import {
 	isSupportedCraftyServerType,
 	toCraftyCreateServerRequest,
 	toCraftyCreateWebhookRequest,
-	toMinecraftServer,
-	toMinecraftServerStats,
+	toGameServer,
+	toGameServerStats,
 } from "./mappers";
 
-export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
+export class CraftyGameServerProvider implements GameServerProvider {
 	readonly name = CRAFTY_PROVIDER_NAME;
 
 	constructor(
@@ -30,9 +30,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		private readonly rconConfig: RconConfig,
 	) {}
 
-	async create(
-		createServerRequest: CreateMinecraftServerRequest,
-	): Promise<string> {
+	async create(createServerRequest: CreateGameServerRequest): Promise<string> {
 		const craftyCreateServerRequest = toCraftyCreateServerRequest(
 			createServerRequest,
 			this.serversHost,
@@ -85,25 +83,25 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		return serverId;
 	}
 
-	async list(): Promise<MinecraftServer[]> {
+	async list(): Promise<GameServer[]> {
 		const servers = await this.craftyApiClient.listServers();
 
 		return servers.data
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
-			.map((dto) => toMinecraftServer(dto, this.serversHost));
+			.map((dto) => toGameServer(dto, this.serversHost));
 	}
 
-	async info(id: string): Promise<MinecraftServer> {
+	async info(id: string): Promise<GameServer> {
 		const [server, stats] = await Promise.all([
 			this.craftyApiClient.getServer(id),
 			this.craftyApiClient.getServerStats(id),
 		]);
-		return toMinecraftServer(server.data, this.serversHost, stats.data);
+		return toGameServer(server.data, this.serversHost, stats.data);
 	}
 
-	async stats(id: string): Promise<MinecraftServerStats> {
+	async stats(id: string): Promise<GameServerStats> {
 		const result = await this.craftyApiClient.getServerStats(id);
-		return toMinecraftServerStats(result.data);
+		return toGameServerStats(result.data);
 	}
 
 	async logs(id: string): Promise<string[]> {
@@ -160,7 +158,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 
 	private async createWebhooks(serverId: string): Promise<void> {
 		const webhooks = Object.entries(this.webhooksConfig.urls) as [
-			MinecraftServerWebhookTrigger,
+			GameServerWebhookTrigger,
 			string,
 		][];
 
@@ -184,7 +182,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 	): void {
 		if (result.status === "error") {
 			const details = result.error_data ? ` (${result.error_data})` : "";
-			throw new MinecraftServerActionError(
+			throw new GameServerActionError(
 				`Crafty failed to ${operation}: ${result.error ?? "unknown error"}${details}`,
 			);
 		}

@@ -1,4 +1,4 @@
-export type MinecraftServerStats = {
+export type GameServerStats = {
 	running: boolean;
 	crashed: boolean;
 	startedAt?: string;

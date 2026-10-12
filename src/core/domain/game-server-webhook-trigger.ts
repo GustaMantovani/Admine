@@ -1,4 +1,4 @@
-export enum MinecraftServerWebhookTrigger {
+export enum GameServerWebhookTrigger {
 	Started = "started",
 	Stopped = "stopped",
 	Crashed = "crashed",
@@ -9,6 +9,6 @@ export enum MinecraftServerWebhookTrigger {
 }
 
 // Where to send the webhook of each trigger. Triggers left out send nothing
-export type MinecraftServerWebhookUrls = Partial<
-	Record<MinecraftServerWebhookTrigger, string>
+export type GameServerWebhookUrls = Partial<
+	Record<GameServerWebhookTrigger, string>
 >;
