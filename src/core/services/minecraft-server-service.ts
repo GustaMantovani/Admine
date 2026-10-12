@@ -1,4 +1,5 @@
 import type { MinecraftServerProvider } from "../minecraft/minecraft-server-provider";
+import type { RconClient } from "../minecraft/rcon/rcon-client";
 import type { CreateMinecraftServerRequest } from "../types/create-minecraft-server-request";
 import type { MinecraftServer } from "../types/minecraft-server";
 import type { MinecraftServerStats } from "../types/minecraft-server-stats";
@@ -6,6 +7,7 @@ import type { MinecraftServerStats } from "../types/minecraft-server-stats";
 export class MinecraftServerService {
 	constructor(
 		private readonly minecraftServerProvider: MinecraftServerProvider,
+		private readonly rconClient: RconClient
 	) {}
 
 	async create(
@@ -69,8 +71,8 @@ export class MinecraftServerService {
 		return this.minecraftServerProvider.acceptEula(serverId);
 	}
 
-	async sendCommand(serverId: string, command: string): Promise<void> {
-		return this.minecraftServerProvider.sendCommand(serverId, command);
+	async sendCommand(serverId: string, command: string): Promise<string> {
+		return this.rconClient.sendCommand(command);
 	}
 
 	async delete(serverId: string, removeFiles: boolean): Promise<void> {

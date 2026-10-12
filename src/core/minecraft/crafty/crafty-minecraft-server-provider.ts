@@ -6,7 +6,7 @@ import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
 import type { MinecraftServerWebhookTrigger } from "../../types/minecraft-server-webhook-trigger";
 import { CRAFTY_PROVIDER_NAME } from "../../types/provider-name";
 import type { MinecraftServerProvider } from "../minecraft-server-provider";
-import type { RconConfig } from "../rcon-config";
+import type { RconConfig } from "../rcon/rcon-config";
 import type { CraftyApiClient } from "./crafty-api-client";
 import type { CraftyWebhooksConfig } from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
@@ -54,7 +54,7 @@ export class CraftyMinecraftServerProvider implements MinecraftServerProvider {
 		if (this.rconConfig.enabled) {
 			propertiesEditor.insert("enable-rcon", "true");
 			propertiesEditor.insert("rcon.password", this.rconConfig.password);
-			propertiesEditor.insert("rcon.port", this.rconConfig.port);
+			propertiesEditor.insert("rcon.port", String(this.rconConfig.port));
 			propertiesEditor.insert("broadcast-rcon-to-ops", "false");
 		}
 		// User configurable properties

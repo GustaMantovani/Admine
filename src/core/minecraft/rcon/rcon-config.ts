@@ -1,5 +1,5 @@
 export type RconConfig = {
 	password: string;
-	port: string;
+	port: number;
 	enabled?: boolean
 };

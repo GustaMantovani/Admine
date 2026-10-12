@@ -62,7 +62,7 @@ const SelfHostedCraftySchema = z.object({
 const RconSchema = z
 	.object({
 		enabled: z.boolean().default(DEFAULT_MINECRAFT_SERVER_RCON_ENABLED),
-		port: z.coerce.string().default(DEFAULT_MINECRAFT_SERVER_RCON_PORT),
+		port: z.coerce.number().default(DEFAULT_MINECRAFT_SERVER_RCON_PORT),
 		password: z.string().default(DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD),
 	})
 	.prefault({});

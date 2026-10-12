@@ -18,6 +18,7 @@ import { StaticCraftyAuthProvider } from "../../core/minecraft/crafty/auth/stati
 import { ManagedCraftyAuthProvider } from "../../core/minecraft/crafty/auth/managed-crafty-auth-provider";
 import type { CraftyAuthProvider } from "../../core/minecraft/crafty/auth/crafty-auth-provider";
 import { loadCliConfig, withCraftyCreds } from "./config";
+import { RconClient } from "../../core/minecraft/rcon/rcon-client";
 
 const config = await loadCliConfig();
 
@@ -73,7 +74,10 @@ const craftyProvider = new CraftyMinecraftServerProvider(
 	craftyConfig.webhooks,
 	config.minecraftServer.rcon
 );
-const minecraftServerService = new MinecraftServerService(craftyProvider);
+
+const rconClient = new RconClient(config.minecraftServer.rcon);
+
+const minecraftServerService = new MinecraftServerService(craftyProvider, rconClient);
 
 function cliHelp() {
     const HELP_STRING = `Usage: bun run cli <command> [args]
@@ -194,7 +198,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	cmd: async () => {
 		const serverIdArg = getNextStdinArg()!;
 		const consoleCommandArg = Bun.argv.slice(argCounter).join(" ");
-		await minecraftServerService.sendCommand(serverIdArg, consoleCommandArg);
+		console.log(await minecraftServerService.sendCommand(serverIdArg, consoleCommandArg));
 	},
 
 	delete: async () => {
