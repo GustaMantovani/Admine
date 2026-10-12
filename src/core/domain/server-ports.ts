@@ -1,5 +1,5 @@
-import type { CreateMinecraftServerRequest } from "../types/create-minecraft-server-request";
-import { MinecraftServerType } from "../types/minecraft-server-type";
+import type { CreateMinecraftServerRequest } from "./create-minecraft-server-request";
+import { MinecraftServerType } from "./minecraft-server-type";
 
 // Default ports are defined by each game's protocol
 const DEFAULT_PORTS: Record<MinecraftServerType, number> = {

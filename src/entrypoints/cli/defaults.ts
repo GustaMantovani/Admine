@@ -1,6 +1,6 @@
-import { MinecraftServerType } from "../../core/types/minecraft-server-type";
-import type { MinecraftServerUserDefinedProperties } from "../../core/types/minecraft-server-user-defined-properties";
-import type { MinecraftServerWebhookUrls } from "../../core/types/minecraft-server-webhook-trigger";
+import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
+import type { MinecraftServerUserDefinedProperties } from "../../core/domain/minecraft-server-user-defined-properties";
+import type { MinecraftServerWebhookUrls } from "../../core/domain/minecraft-server-webhook-trigger";
 
 // Files
 export const DEFAULT_CLI_CONFIG_FILE_PATH = "./config/cli-config.toml";

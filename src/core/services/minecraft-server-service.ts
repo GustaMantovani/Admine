@@ -1,13 +1,12 @@
-import type { MinecraftServerProvider } from "../minecraft/minecraft-server-provider";
-import type { RconClient } from "../minecraft/rcon/rcon-client";
-import type { CreateMinecraftServerRequest } from "../types/create-minecraft-server-request";
-import type { MinecraftServer } from "../types/minecraft-server";
-import type { MinecraftServerStats } from "../types/minecraft-server-stats";
+import type { CreateMinecraftServerRequest } from "../domain/create-minecraft-server-request";
+import type { MinecraftServer } from "../domain/minecraft-server";
+import type { MinecraftServerStats } from "../domain/minecraft-server-stats";
+import type { MinecraftServerProvider } from "../providers/minecraft-server-provider";
+import { sendCommand } from "../rcon/rcon-utils";
 
 export class MinecraftServerService {
 	constructor(
 		private readonly minecraftServerProvider: MinecraftServerProvider,
-		private readonly rconClient: RconClient
 	) {}
 
 	async create(
@@ -71,8 +70,14 @@ export class MinecraftServerService {
 		return this.minecraftServerProvider.acceptEula(serverId);
 	}
 
-	async sendCommand(serverId: string, command: string): Promise<string> {
-		return this.rconClient.sendCommand(command);
+	async sendCommand(_serverId: string, command: string): Promise<string> {
+		// Aqui eu me viro pra arrumar as credenciais baseado no id do servidor
+		return sendCommand(
+			"localhost",
+			25575,
+			"S5Yg4LTmjlZb-8DfwcejJA5fnID9t65cC6zpqiUB7XM",
+			command,
+		);
 	}
 
 	async delete(serverId: string, removeFiles: boolean): Promise<void> {

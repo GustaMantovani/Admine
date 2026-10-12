@@ -1,4 +1,4 @@
-import type { MinecraftServerType } from "../types/minecraft-server-type";
+import type { MinecraftServerType } from "./minecraft-server-type";
 import type { MinecraftServerUserDefinedProperties } from "./minecraft-server-user-defined-properties";
 
 export type CreateMinecraftServerRequest = {

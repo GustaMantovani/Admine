@@ -1,5 +1,5 @@
-import { CraftyApiError } from "../../errors";
 import type { CraftyAuthProvider } from "./auth/crafty-auth-provider";
+import { CraftyApiError } from "./crafty-api-error";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";

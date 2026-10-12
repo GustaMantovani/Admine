@@ -1,7 +1,3 @@
-export class UnknownMinecraftServerType extends Error {}
-
-export class MinecraftServerActionError extends Error {}
-
 export class CraftyApiError extends Error {
 	constructor(
 		public readonly status: number,

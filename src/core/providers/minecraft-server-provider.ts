@@ -1,7 +1,7 @@
-import type { CreateMinecraftServerRequest } from "../types/create-minecraft-server-request";
-import type { MinecraftServer } from "../types/minecraft-server";
-import type { MinecraftServerStats } from "../types/minecraft-server-stats";
-import type { ProviderName } from "../types/provider-name";
+import type { CreateMinecraftServerRequest } from "../domain/create-minecraft-server-request";
+import type { MinecraftServer } from "../domain/minecraft-server";
+import type { MinecraftServerStats } from "../domain/minecraft-server-stats";
+import type { ProviderName } from "./provider-name";
 
 export interface MinecraftServerProvider {
 	readonly name: ProviderName;

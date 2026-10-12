@@ -3,11 +3,11 @@ import { properties, z } from "zod";
 import type {
 	ManagedCraftyConfig,
 	SelfHostedCraftyConfig,
-} from "../../core/minecraft/crafty/crafty-config";
-import type { CraftyCredsFile } from "../../core/minecraft/crafty/dtos/crafty-creds-file";
-import { MinecraftServerType } from "../../core/types/minecraft-server-type";
-import { MinecraftServerWebhookTrigger } from "../../core/types/minecraft-server-webhook-trigger";
-import type { CraftyInfraConfig } from "./crafty-infra";
+} from "../../core/providers/crafty/crafty-config";
+import type { CraftyCredsFile } from "../../core/providers/crafty/dtos/crafty-creds-file";
+import { MinecraftServerType } from "../../core/domain/minecraft-server-type";
+import { MinecraftServerWebhookTrigger } from "../../core/domain/minecraft-server-webhook-trigger";
+import type { CraftyInfraConfig } from "../../infra/crafty-docker";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
 	DEFAULT_CRAFTY_API_BASE_URL,

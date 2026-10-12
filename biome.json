@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**", "!src/entrypoints/stupid-cli"]
+		"includes": ["**", "!src/entrypoints/cli"]
 	},
 	"formatter": {
 		"enabled": true,

@@ -1,10 +1,10 @@
-import { UnknownMinecraftServerType } from "../../errors";
-import type { CreateMinecraftServerRequest } from "../../types/create-minecraft-server-request";
-import { MinecraftServer } from "../../types/minecraft-server";
-import type { MinecraftServerStats } from "../../types/minecraft-server-stats";
-import { MinecraftServerType } from "../../types/minecraft-server-type";
-import { MinecraftServerWebhookTrigger } from "../../types/minecraft-server-webhook-trigger";
-import { resolveServerPort } from "../server-ports";
+import type { CreateMinecraftServerRequest } from "../../domain/create-minecraft-server-request";
+import { UnknownMinecraftServerType } from "../../domain/errors";
+import { MinecraftServer } from "../../domain/minecraft-server";
+import type { MinecraftServerStats } from "../../domain/minecraft-server-stats";
+import { MinecraftServerType } from "../../domain/minecraft-server-type";
+import { MinecraftServerWebhookTrigger } from "../../domain/minecraft-server-webhook-trigger";
+import { resolveServerPort } from "../../domain/server-ports";
 import type { CraftyCreateBedrockServer } from "./dtos/crafty-create-bedrock-server";
 import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-server";
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";

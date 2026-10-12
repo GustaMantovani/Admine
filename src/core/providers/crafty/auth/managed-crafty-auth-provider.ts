@@ -1,5 +1,5 @@
-import type { AdmineStorage } from "../../../persistence/admine-storage";
-import { CRAFTY_PROVIDER_NAME } from "../../../types/provider-name";
+import type { AdmineStorage } from "../../../repositories/admine-storage";
+import { CRAFTY_PROVIDER_NAME } from "../../provider-name";
 import type { ManagedCraftyConfig } from "../crafty-config";
 import type { CraftyLoginResponse } from "../dtos/crafty-login-response";
 import type { CraftyAuthProvider } from "./crafty-auth-provider";

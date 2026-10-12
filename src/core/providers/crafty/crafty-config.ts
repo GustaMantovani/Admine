@@ -1,4 +1,4 @@
-import type { MinecraftServerWebhookUrls } from "../../types/minecraft-server-webhook-trigger";
+import type { MinecraftServerWebhookUrls } from "../../domain/minecraft-server-webhook-trigger";
 
 export type CraftyWebhooksConfig = {
 	enabled: boolean;

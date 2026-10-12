@@ -1,6 +1,6 @@
 {
 	"name": "admine",
-	"module": "src/entrypoints/stupid-cli/main.ts",
+	"module": "src/entrypoints/cli/main.ts",
 	"type": "module",
 	"private": true,
 	"devDependencies": {
@@ -11,7 +11,7 @@
 		"typescript": "^7"
 	},
 	"scripts": {
-		"cli": "bun run src/entrypoints/stupid-cli/main.ts",
+		"cli": "bun run src/entrypoints/cli/main.ts",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write --unsafe .",
 		"format": "biome format --write ."
