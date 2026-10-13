@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**", "!src/entrypoints/cli"]
+		"includes": ["**"]
 	},
 	"formatter": {
 		"enabled": true,

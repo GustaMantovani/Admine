@@ -1,35 +1,35 @@
-import { TOML, type BunFile } from "bun";
-import { properties, z } from "zod";
+import { randomBytes } from "node:crypto";
+import { TOML } from "bun";
+import { z } from "zod";
+import { GameServerType } from "../../core/domain/game-server-type";
+import { GameServerWebhookTrigger } from "../../core/domain/game-server-webhook-trigger";
 import type {
 	ManagedCraftyConfig,
 	SelfHostedCraftyConfig,
 } from "../../core/providers/crafty/crafty-config";
 import type { CraftyCredsFile } from "../../core/providers/crafty/dtos/crafty-creds-file";
-import { GameServerType } from "../../core/domain/game-server-type";
-import { GameServerWebhookTrigger } from "../../core/domain/game-server-webhook-trigger";
 import type { CraftyInfraConfig } from "../../infra/crafty-docker";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
 	DEFAULT_CRAFTY_API_BASE_URL,
-	DEFAULT_CRAFTY_DEPLOY_TYPE,
 	DEFAULT_CRAFTY_CREDS_FILE_PATH,
+	DEFAULT_CRAFTY_DEPLOY_TYPE,
 	DEFAULT_CRAFTY_INFRA_CHECK_COMMAND,
 	DEFAULT_CRAFTY_INFRA_CHECK_DELAY_MS,
 	DEFAULT_CRAFTY_INFRA_SETUP_COMMAND,
+	DEFAULT_CRAFTY_WEBHOOK_URLS,
+	DEFAULT_CRAFTY_WEBHOOKS_ENABLED,
+	DEFAULT_MEINCRAFT_SERVER_PROPERTIES,
+	DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE,
 	DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY,
 	DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY,
-	DEFAULT_MINECRAFT_SERVER_TYPE,
-	DEFAULT_CRAFTY_WEBHOOK_URLS,
-	DEFAULT_MINECRAFT_SERVER_VERSION,
-	DEFAULT_SERVERS_HOST_FOR_ADMINE,
-	DEFAULT_CRAFTY_WEBHOOKS_ENABLED,
-	DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE,
-	DEFAULT_MEINCRAFT_SERVER_PROPERTIES,
 	DEFAULT_MINECRAFT_SERVER_RCON_ENABLED,
 	DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD,
 	DEFAULT_MINECRAFT_SERVER_RCON_PORT,
+	DEFAULT_MINECRAFT_SERVER_TYPE,
+	DEFAULT_MINECRAFT_SERVER_VERSION,
+	DEFAULT_SERVERS_HOST_FOR_ADMINE,
 } from "./defaults";
-import { randomBytes } from "crypto";
 
 const CraftyWebhooksSchema = z
 	.object({
@@ -73,8 +73,12 @@ const MinecraftServerDefaultsSchema = z.object({
 	version: z.string().default(DEFAULT_MINECRAFT_SERVER_VERSION),
 	minimumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY),
 	maximumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY),
-	properties: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default(DEFAULT_MEINCRAFT_SERVER_PROPERTIES),
-	acceptEulaOnCreate: z.boolean().default(DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE),
+	properties: z
+		.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+		.default(DEFAULT_MEINCRAFT_SERVER_PROPERTIES),
+	acceptEulaOnCreate: z
+		.boolean()
+		.default(DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE),
 });
 
 const CliConfigSchema = z.object({
@@ -109,7 +113,13 @@ export async function loadCliConfig(
 	// A missing file means the user wants every default
 	const raw = TOML.parse(await file.text()) as CliConfig;
 
-	if(raw.minecraftServer?.rcon?.password == undefined) await writeSinglePropertieToTomlFile(raw, configFilePath, 'minecraftServer.rcon.password', randomBytes(32).toString("base64url"));
+	if (raw.minecraftServer?.rcon?.password === undefined)
+		await writeSinglePropertieToTomlFile(
+			raw,
+			configFilePath,
+			"minecraftServer.rcon.password",
+			randomBytes(32).toString("base64url"),
+		);
 
 	return CliConfigSchema.parse(raw);
 }
@@ -128,22 +138,31 @@ export async function withCraftyCreds(
 	};
 }
 
-export async function writeSinglePropertieToTomlFile(
-	configObjct: Record<string, any>,
+async function writeSinglePropertieToTomlFile(
+	configObjct: Record<string, unknown>,
 	configFilePath: string,
 	keyPath: string,
-	value: any,
+	value: unknown,
 ) {
 	const keys = keyPath.split(".");
+	const lastKey = keys.pop();
+	if (lastKey === undefined) {
+		throw new Error(`Invalid config key path: "${keyPath}"`);
+	}
 
 	let target = configObjct;
-	for (const key of keys.slice(0, -1)) {
+	for (const key of keys) {
 		if (typeof target[key] !== "object" || target[key] === null) {
 			target[key] = {};
 		}
-		target = target[key];
+		target = target[key] as Record<string, unknown>;
 	}
-	target[keys[keys.length - 1]!] = value;
+	target[lastKey] = value;
 
-	await Bun.write(configFilePath, TOML.stringify(configObjct)!);
+	const toml = TOML.stringify(configObjct);
+	if (toml === undefined) {
+		throw new Error("Could not serialize the config to TOML");
+	}
+
+	await Bun.write(configFilePath, toml);
 }

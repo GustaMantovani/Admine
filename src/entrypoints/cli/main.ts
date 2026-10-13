@@ -1,29 +1,36 @@
+import { open } from "lmdb";
 import {
 	adjectives,
 	animals,
 	colors,
 	uniqueNamesGenerator,
 } from "unique-names-generator";
-import {
-	type CreateGameServerRequest,
-	GameServerService,
-} from "../../core";
+import { type CreateGameServerRequest, GameServerService } from "../../core";
 import type { GameServerType } from "../../core/domain/game-server-type";
+import type { CraftyAuthProvider } from "../../core/providers/crafty/auth/crafty-auth-provider";
+import { ManagedCraftyAuthProvider } from "../../core/providers/crafty/auth/managed-crafty-auth-provider";
+import { StaticCraftyAuthProvider } from "../../core/providers/crafty/auth/static-crafty-auth-provider";
 import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
 import { CraftyGameServerProvider } from "../../core/providers/crafty/crafty-game-server-provider";
-import { ensureCraftyInfra } from "../../infra/crafty-docker";
-import { open } from 'lmdb';
 import { LmdbAdmineStorage } from "../../core/repositories/lmdb-admine-storage";
-import { StaticCraftyAuthProvider } from "../../core/providers/crafty/auth/static-crafty-auth-provider";
-import { ManagedCraftyAuthProvider } from "../../core/providers/crafty/auth/managed-crafty-auth-provider";
-import type { CraftyAuthProvider } from "../../core/providers/crafty/auth/crafty-auth-provider";
+import { ensureCraftyInfra } from "../../infra/crafty-docker";
 import { loadCliConfig, withCraftyCreds } from "./config";
 
 const config = await loadCliConfig();
 
 let argCounter = 2;
-export function getNextStdinArg(): string | undefined {
+function getNextStdinArg(): string | undefined {
 	return Bun.argv[argCounter++];
+}
+
+function getRequiredStdinArg(argName: string): string {
+	const arg = getNextStdinArg();
+	if (arg === undefined) {
+		console.log(`Missing argument: <${argName}>`);
+		cliHelp();
+		process.exit(1);
+	}
+	return arg;
 }
 
 type CliCommand =
@@ -48,15 +55,15 @@ type CliCommand =
 const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
 
 // Dependencies
-let lmdbKv = open('.data/admine', {});
+const lmdbKv = open(".data/admine", {});
 const storage = new LmdbAdmineStorage(lmdbKv);
 const craftyConfig = config.craftyConfig;
 let authProvider: CraftyAuthProvider;
 switch (craftyConfig.deployType) {
-	case 'self-hosted':
+	case "self-hosted":
 		authProvider = new StaticCraftyAuthProvider(craftyConfig);
 		break;
-	case 'managed':
+	case "managed":
 		await ensureCraftyInfra(craftyConfig);
 		authProvider = new ManagedCraftyAuthProvider(
 			await withCraftyCreds(craftyConfig),
@@ -65,19 +72,19 @@ switch (craftyConfig.deployType) {
 }
 const craftyApiClient = new CraftyApiClient(
 	craftyConfig.apiBaseUrl,
-	authProvider
+	authProvider,
 );
 const craftyProvider = new CraftyGameServerProvider(
 	craftyApiClient,
 	config.serversHost,
 	craftyConfig.webhooks,
-	config.minecraftServer.rcon
+	config.minecraftServer.rcon,
 );
 
 const gameServerService = new GameServerService(craftyProvider);
 
 function cliHelp() {
-    const HELP_STRING = `Usage: bun run cli <command> [args]
+	const HELP_STRING = `Usage: bun run cli <command> [args]
 
     Servers:
       create [name] [type] [version]   Create a server (type: java | bedrock | hytale, default: java)
@@ -100,7 +107,7 @@ function cliHelp() {
       clone <id>                       Clone a stopped server
       cmd <id> <command...>            Send a command to the server console
       delete <id> [--files]            Delete the server (--files also deletes its files)`;
-    console.log(HELP_STRING);
+	console.log(HELP_STRING);
 }
 
 const commands: Record<CliCommand, () => Promise<void>> = {
@@ -137,17 +144,17 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	ls: async () => console.table(await gameServerService.list()),
 
 	info: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		console.table(await gameServerService.get(serverIdArg));
 	},
 
 	stats: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		console.table(await gameServerService.stats(serverIdArg));
 	},
 
 	logs: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		const linesArg = getNextStdinArg();
 		const lines = await gameServerService.logs(
 			serverIdArg,
@@ -158,27 +165,27 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 	// Control
 	start: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.start(serverIdArg);
 	},
 
 	stop: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.stop(serverIdArg);
 	},
 
 	restart: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.restart(serverIdArg);
 	},
 
 	kill: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.kill(serverIdArg);
 	},
 
 	eula: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.acceptEula(serverIdArg);
 	},
 
@@ -188,22 +195,22 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 	// Maintenance
 	backup: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.backup(serverIdArg);
 	},
 
 	update: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.update(serverIdArg);
 	},
 
 	clone: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		await gameServerService.clone(serverIdArg);
 	},
 
 	cmd: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		const consoleCommandArg = Bun.argv.slice(argCounter).join(" ");
 		console.log(
 			await gameServerService.sendCommand(serverIdArg, consoleCommandArg),
@@ -211,7 +218,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	},
 
 	delete: async () => {
-		const serverIdArg = getNextStdinArg()!;
+		const serverIdArg = getRequiredStdinArg("id");
 		const removeFilesArg = getNextStdinArg() === "--files";
 		await gameServerService.delete(serverIdArg, removeFilesArg);
 	},
@@ -230,8 +237,8 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 const handler = commands[command];
 
 if (handler === undefined) {
-  cliHelp();
-  process.exit(1);
-};
+	cliHelp();
+	process.exit(1);
+}
 
 await handler();

@@ -175,7 +175,7 @@ function fromCraftyServerType(dto: string): GameServerType {
 	return mapped;
 }
 
-export function toGameServerStatus(
+function toGameServerStatus(
 	running: boolean | undefined,
 ): GameServer["status"] {
 	if (running === undefined) return "unknown";

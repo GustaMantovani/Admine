@@ -17,7 +17,6 @@
 		"format": "biome format --write ."
 	},
 	"dependencies": {
-		"crypto": "^1.0.1",
 		"lmdb": "^3.5.7",
 		"properties-file": "^5.0.7",
 		"rcon-client": "^4.2.5",
