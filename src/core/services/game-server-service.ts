@@ -7,6 +7,10 @@ import { sendCommand } from "../rcon/rcon-utils";
 export class GameServerService {
 	constructor(private readonly gameServerProvider: GameServerProvider) {}
 
+	// async getUnusedGameServerPort(serverType: GameServerType): Promise<number> {
+
+	// }
+
 	async create(
 		createServerRequest: CreateGameServerRequest,
 		acceptEula?: boolean,

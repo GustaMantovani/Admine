@@ -1,8 +1,6 @@
-import { open } from "lmdb";
 import {
 	adjectives,
 	animals,
-	colors,
 	uniqueNamesGenerator,
 } from "unique-names-generator";
 import { type CreateGameServerRequest, GameServerService } from "../../core";
@@ -12,7 +10,9 @@ import { ManagedCraftyAuthProvider } from "../../core/providers/crafty/auth/mana
 import { StaticCraftyAuthProvider } from "../../core/providers/crafty/auth/static-crafty-auth-provider";
 import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
 import { CraftyGameServerProvider } from "../../core/providers/crafty/crafty-game-server-provider";
-import { LmdbAdmineStorage } from "../../core/repositories/lmdb-admine-storage";
+import { CRAFTY_PROVIDER_NAME } from "../../core/providers/provider-name";
+import { getDatabase } from "../../core/repositories/database";
+import { SqliteProviderTokenRepository } from "../../core/repositories/provider-token-repository";
 import { ensureCraftyInfra } from "../../infra/crafty-docker";
 import { loadCliConfig, withCraftyCreds } from "./config";
 
@@ -55,8 +55,12 @@ type CliCommand =
 const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
 
 // Dependencies
-const lmdbKv = open(".data/admine", {});
-const storage = new LmdbAdmineStorage(lmdbKv);
+const db = getDatabase(".data/admine.sqlite");
+const craftyProviderTokenRepository = new SqliteProviderTokenRepository(
+	db,
+	CRAFTY_PROVIDER_NAME,
+);
+
 const craftyConfig = config.craftyConfig;
 let authProvider: CraftyAuthProvider;
 switch (craftyConfig.deployType) {
@@ -67,7 +71,7 @@ switch (craftyConfig.deployType) {
 		await ensureCraftyInfra(craftyConfig);
 		authProvider = new ManagedCraftyAuthProvider(
 			await withCraftyCreds(craftyConfig),
-			storage,
+			craftyProviderTokenRepository,
 		);
 }
 const craftyApiClient = new CraftyApiClient(
@@ -118,12 +122,14 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			(getNextStdinArg()?.toLocaleLowerCase() as GameServerType) ||
 			config.minecraftServer.type;
 		const versionArg = getNextStdinArg();
+		const portArg = getNextStdinArg();
+		const rconPortArg = getNextStdinArg();
 
 		const newGameServerData: CreateGameServerRequest = {
 			name:
 				nameArg ||
 				uniqueNamesGenerator({
-					dictionaries: [adjectives, animals, colors],
+					dictionaries: [adjectives, animals],
 					separator: " ",
 					length: 2,
 				}),
@@ -132,6 +138,8 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			minimumMemory: config.minecraftServer.minimumMemory,
 			maximumMemory: config.minecraftServer.maximumMemory,
 			properties: config.minecraftServer.properties,
+			port: portArg !== undefined ? parseInt(portArg, 10) : 25565, // Aqui chamar o serviço que gera a porta evitando colisão
+			rconPort: rconPortArg !== undefined ? parseInt(rconPortArg, 10) : 25575,
 		};
 
 		const id = await gameServerService.create(

@@ -41,7 +41,7 @@ function toCraftyCreateJavaServer(
 		monitoring_type: "minecraft_java",
 		minecraft_java_monitoring_data: {
 			host: serversHost,
-			port,
+			port: request.port,
 		},
 		create_type: "minecraft_java",
 		minecraft_java_create_data: {

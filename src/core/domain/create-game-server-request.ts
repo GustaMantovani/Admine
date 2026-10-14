@@ -8,6 +8,7 @@ export type CreateGameServerRequest = {
 	minimumMemory: number;
 	maximumMemory: number;
 	// Falls back to the protocol's default port for the server type
-	port?: number;
+	port: number;
+	rconPort?: number;
 	properties?: MinecraftServerUserDefinedProperties;
 };
