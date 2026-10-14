@@ -1,15 +1,53 @@
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
 import type { GameServer } from "../domain/game-server";
 import type { GameServerStats } from "../domain/game-server-stats";
+import type { GameServerType } from "../domain/game-server-type";
+import {
+	DEFAULT_GAME_PORTS,
+	DEFAULT_RCON_PORTS,
+	GAME_PORT_RANGES,
+	RCON_PORT_RANGES,
+} from "../domain/server-ports";
 import type { GameServerProvider } from "../providers/game-server-provider";
 import { sendCommand } from "../rcon/rcon-utils";
+import type { GameServerPortsRepository } from "../repositories/game-server-ports-repository";
+import { randomOutside } from "../utils";
 
 export class GameServerService {
-	constructor(private readonly gameServerProvider: GameServerProvider) {}
+	constructor(
+		private readonly gameServerProvider: GameServerProvider,
+		private readonly gameServerPortsRepository: GameServerPortsRepository,
+	) {}
 
-	// async getUnusedGameServerPort(serverType: GameServerType): Promise<number> {
+	async getRandomUnusedGameServerPort(
+		serverType: GameServerType,
+	): Promise<number> {
+		const usedPorts = await this.gameServerPortsRepository.getUsedGamePorts();
+		let randomPort = randomOutside(
+			GAME_PORT_RANGES[serverType].min,
+			GAME_PORT_RANGES[serverType].max,
+			usedPorts,
+		);
+		if (randomPort === null) randomPort = DEFAULT_GAME_PORTS[serverType];
 
-	// }
+		return randomPort;
+	}
+
+	async getRandomUnusedRconPort(
+		serverType: GameServerType,
+	): Promise<number | undefined> {
+		if (serverType !== "java") return undefined;
+
+		const usedPorts = await this.gameServerPortsRepository.getUsedRconPorts();
+		let randomPort = randomOutside(
+			RCON_PORT_RANGES[serverType].min,
+			RCON_PORT_RANGES[serverType].max,
+			usedPorts,
+		);
+		if (randomPort === null) randomPort = DEFAULT_RCON_PORTS[serverType];
+
+		return randomPort;
+	}
 
 	async create(
 		createServerRequest: CreateGameServerRequest,
@@ -19,6 +57,12 @@ export class GameServerService {
 			await this.gameServerProvider.create(createServerRequest);
 
 		if (acceptEula) await this.acceptEula(newServerId);
+
+		await this.gameServerPortsRepository.create({
+			id: newServerId,
+			port: createServerRequest.port,
+			rconPort: createServerRequest.rconPort,
+		});
 
 		return newServerId;
 	}
@@ -83,7 +127,8 @@ export class GameServerService {
 	}
 
 	async delete(serverId: string, removeFiles: boolean): Promise<void> {
-		return this.gameServerProvider.delete(serverId, removeFiles);
+		await this.gameServerProvider.delete(serverId, removeFiles);
+		await this.gameServerPortsRepository.delete(serverId);
 	}
 
 	async stopAll(): Promise<number> {

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS GameServer (
+CREATE TABLE IF NOT EXISTS GameServerPorts (
 	id VARCHAR(36) PRIMARY KEY,
 	gamePort INTEGER NOT NULL UNIQUE CHECK (gamePort BETWEEN 1 AND 65535),
 	-- Null for server types without RCON, such as Bedrock and Hytale

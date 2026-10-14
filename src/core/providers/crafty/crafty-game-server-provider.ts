@@ -49,10 +49,14 @@ export class CraftyGameServerProvider implements GameServerProvider {
 			serverPropertiesFile.data.content,
 		);
 
-		if (this.rconConfig.enabled) {
+		if (this.rconConfig.enabled && createServerRequest.type === "java") {
 			propertiesEditor.insert("enable-rcon", "true");
 			propertiesEditor.insert("rcon.password", this.rconConfig.password);
-			propertiesEditor.insert("rcon.port", "25575");
+			if (createServerRequest.rconPort !== undefined)
+				propertiesEditor.insert(
+					"rcon.port",
+					String(createServerRequest.rconPort),
+				);
 			propertiesEditor.insert("broadcast-rcon-to-ops", "false");
 		}
 		// User configurable properties

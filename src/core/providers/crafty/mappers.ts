@@ -4,7 +4,6 @@ import { GameServer } from "../../domain/game-server";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import { GameServerType } from "../../domain/game-server-type";
 import { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
-import { resolveServerPort } from "../../domain/server-ports";
 import type { CraftyCreateBedrockServer } from "./dtos/crafty-create-bedrock-server";
 import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-server";
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
@@ -34,8 +33,6 @@ function toCraftyCreateJavaServer(
 	request: CreateGameServerRequest,
 	serversHost: string,
 ): CraftyCreateJavaServer {
-	const port = resolveServerPort(request);
-
 	return {
 		name: request.name,
 		monitoring_type: "minecraft_java",
@@ -52,7 +49,7 @@ function toCraftyCreateJavaServer(
 				version: request.version,
 				mem_min: request.minimumMemory,
 				mem_max: request.maximumMemory,
-				server_properties_port: port,
+				server_properties_port: request.port,
 			},
 		},
 	};
@@ -67,7 +64,7 @@ function toCraftyCreateBedrockServer(
 		monitoring_type: "minecraft_bedrock",
 		minecraft_bedrock_monitoring_data: {
 			host: serversHost,
-			port: resolveServerPort(request),
+			port: request.port,
 		},
 		create_type: "minecraft_bedrock",
 		minecraft_bedrock_create_data: {
@@ -88,7 +85,7 @@ function toCraftyCreateHytaleServer(
 		monitoring_type: "hytale",
 		hytale_monitoring_data: {
 			host: serversHost,
-			port: resolveServerPort(request),
+			port: request.port,
 		},
 		create_type: "hytale",
 		hytale_create_data: {

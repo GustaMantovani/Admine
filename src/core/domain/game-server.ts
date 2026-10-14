@@ -8,6 +8,7 @@ export class GameServer {
 		public readonly admineIpAddress?: string,
 		public readonly networkIpAddresses?: string[],
 		public readonly port?: number,
+		public readonly rconPort?: number,
 		public readonly minimumMemory?: number,
 		public readonly maximumMemory?: number,
 	) {}

@@ -13,7 +13,9 @@ export class SqliteProviderTokenRepository implements ProviderTokenRepository {
 	) {}
 
 	async getToken(): Promise<string | undefined> {
-		const row = this.db.query("SELECT token FROM ProviderToken WHERE name = ?").get(this.providerName) as { token: string } | null;
+		const row = this.db
+			.query("SELECT token FROM ProviderToken WHERE name = ?")
+			.get(this.providerName) as { token: string } | null;
 		return row?.token;
 	}
 	async setToken(token: string): Promise<void> {

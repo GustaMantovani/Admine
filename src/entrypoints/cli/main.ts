@@ -12,6 +12,7 @@ import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
 import { CraftyGameServerProvider } from "../../core/providers/crafty/crafty-game-server-provider";
 import { CRAFTY_PROVIDER_NAME } from "../../core/providers/provider-name";
 import { getDatabase } from "../../core/repositories/database";
+import { SqliteGameServerPortsRepository } from "../../core/repositories/game-server-ports-repository";
 import { SqliteProviderTokenRepository } from "../../core/repositories/provider-token-repository";
 import { ensureCraftyInfra } from "../../infra/crafty-docker";
 import { loadCliConfig, withCraftyCreds } from "./config";
@@ -21,16 +22,6 @@ const config = await loadCliConfig();
 let argCounter = 2;
 function getNextStdinArg(): string | undefined {
 	return Bun.argv[argCounter++];
-}
-
-function getRequiredStdinArg(argName: string): string {
-	const arg = getNextStdinArg();
-	if (arg === undefined) {
-		console.log(`Missing argument: <${argName}>`);
-		cliHelp();
-		process.exit(1);
-	}
-	return arg;
 }
 
 type CliCommand =
@@ -84,8 +75,12 @@ const craftyProvider = new CraftyGameServerProvider(
 	craftyConfig.webhooks,
 	config.minecraftServer.rcon,
 );
+const gameServerPortsRepository = new SqliteGameServerPortsRepository(db);
 
-const gameServerService = new GameServerService(craftyProvider);
+const gameServerService = new GameServerService(
+	craftyProvider,
+	gameServerPortsRepository,
+);
 
 function cliHelp() {
 	const HELP_STRING = `Usage: bun run cli <command> [args]
@@ -138,8 +133,14 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			minimumMemory: config.minecraftServer.minimumMemory,
 			maximumMemory: config.minecraftServer.maximumMemory,
 			properties: config.minecraftServer.properties,
-			port: portArg !== undefined ? parseInt(portArg, 10) : 25565, // Aqui chamar o serviço que gera a porta evitando colisão
-			rconPort: rconPortArg !== undefined ? parseInt(rconPortArg, 10) : 25575,
+			port:
+				portArg !== undefined
+					? parseInt(portArg, 10)
+					: await gameServerService.getRandomUnusedGameServerPort(typeArg), // Aqui chamar o serviço que gera a porta evitando colisão
+			rconPort:
+				rconPortArg !== undefined
+					? parseInt(rconPortArg, 10)
+					: await gameServerService.getRandomUnusedRconPort(typeArg),
 		};
 
 		const id = await gameServerService.create(
@@ -152,17 +153,17 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	ls: async () => console.table(await gameServerService.list()),
 
 	info: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		console.table(await gameServerService.get(serverIdArg));
 	},
 
 	stats: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		console.table(await gameServerService.stats(serverIdArg));
 	},
 
 	logs: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		const linesArg = getNextStdinArg();
 		const lines = await gameServerService.logs(
 			serverIdArg,
@@ -173,27 +174,27 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 	// Control
 	start: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.start(serverIdArg);
 	},
 
 	stop: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.stop(serverIdArg);
 	},
 
 	restart: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.restart(serverIdArg);
 	},
 
 	kill: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.kill(serverIdArg);
 	},
 
 	eula: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.acceptEula(serverIdArg);
 	},
 
@@ -203,22 +204,22 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 	// Maintenance
 	backup: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.backup(serverIdArg);
 	},
 
 	update: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.update(serverIdArg);
 	},
 
 	clone: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		await gameServerService.clone(serverIdArg);
 	},
 
 	cmd: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		const consoleCommandArg = Bun.argv.slice(argCounter).join(" ");
 		console.log(
 			await gameServerService.sendCommand(serverIdArg, consoleCommandArg),
@@ -226,7 +227,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	},
 
 	delete: async () => {
-		const serverIdArg = getRequiredStdinArg("id");
+		const serverIdArg = getNextStdinArg()!;
 		const removeFilesArg = getNextStdinArg() === "--files";
 		await gameServerService.delete(serverIdArg, removeFilesArg);
 	},
