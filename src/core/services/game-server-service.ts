@@ -1,3 +1,4 @@
+import { PropertiesEditor } from "properties-file/editor";
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
 import type { GameServer } from "../domain/game-server";
 import type { GameServerStats } from "../domain/game-server-stats";
@@ -9,6 +10,7 @@ import {
 	RCON_PORT_RANGES,
 } from "../domain/server-ports";
 import type { GameServerProvider } from "../providers/game-server-provider";
+import type { RconConfig } from "../rcon/rcon-config";
 import { sendCommand } from "../rcon/rcon-utils";
 import type { GameServerPortsRepository } from "../repositories/game-server-ports-repository";
 import { randomOutside } from "../utils";
@@ -17,7 +19,56 @@ export class GameServerService {
 	constructor(
 		private readonly gameServerProvider: GameServerProvider,
 		private readonly gameServerPortsRepository: GameServerPortsRepository,
+		private readonly rconConfig: RconConfig,
 	) {}
+
+	private buildServerProperties(
+		request: CreateGameServerRequest,
+	): Record<string, string> {
+		const properties: Record<string, string> = {};
+
+		if (this.rconConfig.enabled && request.type === "java") {
+			properties["enable-rcon"] = "true";
+			properties["rcon.password"] = this.rconConfig.password;
+			if (request.rconPort !== undefined)
+				properties["rcon.port"] = String(request.rconPort);
+			properties["broadcast-rcon-to-ops"] = "false";
+		}
+
+		// User configurable properties
+		for (const [key, value] of Object.entries(request.properties ?? {})) {
+			properties[key] = String(value);
+		}
+
+		return properties;
+	}
+
+	private async writeServerProperties(
+		serverId: string,
+		properties: Record<string, string>,
+	): Promise<void> {
+		const file = await this.gameServerProvider.getFile(
+			serverId,
+			"server.properties",
+		);
+
+		const propertiesEditor = new PropertiesEditor(file.content);
+		for (const [property, value] of Object.entries(properties)) {
+			propertiesEditor.insert(property, value);
+		}
+
+		const content = propertiesEditor.format({
+			removeComments: true, // Strip all comments
+			removeBlankLines: true, // Strip all blank lines
+			removeLeadingWhitespace: true, // Strip indentation
+			deduplicateKeys: true, // Keep only last occurrence
+			separatorChar: "=", // Standardize separator
+			separatorLeading: "", // Space before =
+			separatorTrailing: "", // Space after =
+		});
+
+		await this.gameServerProvider.writeFile(serverId, { ...file, content });
+	}
 
 	async getRandomUnusedGameServerPort(
 		serverType: GameServerType,
@@ -55,6 +106,11 @@ export class GameServerService {
 	): Promise<string> {
 		const newServerId =
 			await this.gameServerProvider.create(createServerRequest);
+
+		await this.writeServerProperties(
+			newServerId,
+			this.buildServerProperties(createServerRequest),
+		);
 
 		if (acceptEula) await this.acceptEula(newServerId);
 

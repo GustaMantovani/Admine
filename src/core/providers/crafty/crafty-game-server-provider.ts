@@ -1,10 +1,9 @@
-import { PropertiesEditor } from "properties-file/editor";
 import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
 import { GameServerActionError } from "../../domain/errors";
 import type { GameServer } from "../../domain/game-server";
+import type { GameServerFile } from "../../domain/game-server-file";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import type { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
-import type { RconConfig } from "../../rcon/rcon-config";
 import type { GameServerProvider } from "../game-server-provider";
 import { CRAFTY_PROVIDER_NAME } from "../provider-name";
 import type { CraftyApiClient } from "./crafty-api-client";
@@ -16,7 +15,9 @@ import {
 	isSupportedCraftyServerType,
 	toCraftyCreateServerRequest,
 	toCraftyCreateWebhookRequest,
+	toCraftyFilePatchRequest,
 	toGameServer,
+	toGameServerFile,
 	toGameServerStats,
 } from "./mappers";
 
@@ -27,7 +28,6 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
 		private readonly webhooksConfig: CraftyWebhooksConfig,
-		private readonly rconConfig: RconConfig,
 	) {}
 
 	async create(createServerRequest: CreateGameServerRequest): Promise<string> {
@@ -39,49 +39,6 @@ export class CraftyGameServerProvider implements GameServerProvider {
 			craftyCreateServerRequest,
 		);
 		const serverId = result.data.new_server_id;
-
-		const serverPropertiesFile = await this.craftyApiClient.getServerFiles(
-			serverId,
-			"server.properties",
-		);
-
-		const propertiesEditor = new PropertiesEditor(
-			serverPropertiesFile.data.content,
-		);
-
-		if (this.rconConfig.enabled && createServerRequest.type === "java") {
-			propertiesEditor.insert("enable-rcon", "true");
-			propertiesEditor.insert("rcon.password", this.rconConfig.password);
-			if (createServerRequest.rconPort !== undefined)
-				propertiesEditor.insert(
-					"rcon.port",
-					String(createServerRequest.rconPort),
-				);
-			propertiesEditor.insert("broadcast-rcon-to-ops", "false");
-		}
-		// User configurable properties
-		const createMSReqProps = createServerRequest.properties;
-		if (createMSReqProps) {
-			for (const [propertie, value] of Object.entries(createMSReqProps)) {
-				propertiesEditor.insert(propertie, String(value));
-			}
-		}
-
-		const newProperties = propertiesEditor.format({
-			removeComments: true, // Strip all comments
-			removeBlankLines: true, // Strip all blank lines
-			removeLeadingWhitespace: true, // Strip indentation
-			deduplicateKeys: true, // Keep only last occurrence
-			separatorChar: "=", // Standardize separator
-			separatorLeading: "", // Space before =
-			separatorTrailing: "", // Space after =
-		});
-
-		this.craftyApiClient.updateServerFile(serverId, {
-			contents: newProperties,
-			path: "server.properties",
-			modified_epoch: serverPropertiesFile.data.attributes.modified_epoch,
-		});
 
 		if (this.webhooksConfig.enabled) await this.createWebhooks(serverId);
 		return serverId;
@@ -148,6 +105,18 @@ export class CraftyGameServerProvider implements GameServerProvider {
 	async sendCommand(id: string, command: string): Promise<void> {
 		const result = await this.craftyApiClient.sendCommand(id, command);
 		this.throwIfFailed(result, `send command to server ${id}`);
+	}
+
+	async getFile(id: string, path: string): Promise<GameServerFile> {
+		const result = await this.craftyApiClient.getServerFiles(id, path);
+		return toGameServerFile(path, result);
+	}
+
+	async writeFile(id: string, file: GameServerFile): Promise<void> {
+		return this.craftyApiClient.updateServerFile(
+			id,
+			toCraftyFilePatchRequest(file),
+		);
 	}
 
 	async delete(id: string, removeFiles: boolean): Promise<void> {

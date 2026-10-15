@@ -73,13 +73,13 @@ const craftyProvider = new CraftyGameServerProvider(
 	craftyApiClient,
 	config.serversHost,
 	craftyConfig.webhooks,
-	config.minecraftServer.rcon,
 );
 const gameServerPortsRepository = new SqliteGameServerPortsRepository(db);
 
 const gameServerService = new GameServerService(
 	craftyProvider,
 	gameServerPortsRepository,
+	config.minecraftServer.rcon,
 );
 
 function cliHelp() {

@@ -1,6 +1,7 @@
 import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
 import { UnknownGameServerType } from "../../domain/errors";
 import { GameServer } from "../../domain/game-server";
+import type { GameServerFile } from "../../domain/game-server-file";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import { GameServerType } from "../../domain/game-server-type";
 import { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
@@ -9,6 +10,8 @@ import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-serve
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
+import type { CraftyFile } from "./dtos/crafty-file";
+import type { CraftyFilePatchRequest } from "./dtos/crafty-file-patch-request";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerStats } from "./dtos/crafty-server-stats";
 import type { CraftyWebhookTrigger } from "./dtos/crafty-webhook-trigger";
@@ -216,6 +219,27 @@ export function toGameServerStats(dto: CraftyServerStats): GameServerStats {
 		version: fromCraftyText(dto.version),
 		worldName: dto.world_name,
 		worldSize: dto.world_size,
+	};
+}
+
+export function toGameServerFile(
+	path: string,
+	dto: CraftyFile,
+): GameServerFile {
+	return {
+		path,
+		content: dto.data.content,
+		modifiedEpoch: dto.data.attributes.modified_epoch,
+	};
+}
+
+export function toCraftyFilePatchRequest(
+	file: GameServerFile,
+): CraftyFilePatchRequest {
+	return {
+		path: file.path,
+		contents: file.content,
+		modified_epoch: file.modifiedEpoch,
 	};
 }
 
