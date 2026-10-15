@@ -20,6 +20,7 @@ import {
 	toGameServerFile,
 	toGameServerStats,
 } from "./mappers";
+import type { CraftyRconPortRepository } from "./persistence/crafty-rcon-port-repository";
 
 export class CraftyGameServerProvider implements GameServerProvider {
 	readonly name = CRAFTY_PROVIDER_NAME;
@@ -28,6 +29,7 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
 		private readonly webhooksConfig: CraftyWebhooksConfig,
+		private readonly rconPortRepository: CraftyRconPortRepository,
 	) {}
 
 	async create(createServerRequest: CreateGameServerRequest): Promise<string> {
@@ -40,24 +42,37 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		);
 		const serverId = result.data.new_server_id;
 
+		if (createServerRequest.rconPort !== undefined)
+			await this.rconPortRepository.set(serverId, createServerRequest.rconPort);
 		if (this.webhooksConfig.enabled) await this.createWebhooks(serverId);
 		return serverId;
 	}
 
 	async list(): Promise<GameServer[]> {
-		const servers = await this.craftyApiClient.listServers();
+		const [servers, rconPorts] = await Promise.all([
+			this.craftyApiClient.listServers(),
+			this.rconPortRepository.getAll(),
+		]);
 
 		return servers.data
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
-			.map((dto) => toGameServer(dto, this.serversHost));
+			.map((dto) =>
+				toGameServer(
+					dto,
+					this.serversHost,
+					undefined,
+					rconPorts.get(dto.server_id),
+				),
+			);
 	}
 
 	async info(id: string): Promise<GameServer> {
-		const [server, stats] = await Promise.all([
+		const [server, stats, rconPort] = await Promise.all([
 			this.craftyApiClient.getServer(id),
 			this.craftyApiClient.getServerStats(id),
+			this.rconPortRepository.get(id),
 		]);
-		return toGameServer(server.data, this.serversHost, stats.data);
+		return toGameServer(server.data, this.serversHost, stats.data, rconPort);
 	}
 
 	async stats(id: string): Promise<GameServerStats> {
@@ -122,6 +137,7 @@ export class CraftyGameServerProvider implements GameServerProvider {
 	async delete(id: string, removeFiles: boolean): Promise<void> {
 		const result = await this.craftyApiClient.deleteServer(id, removeFiles);
 		this.throwIfFailed(result, `delete server ${id}`);
+		await this.rconPortRepository.delete(id);
 	}
 
 	async stopAll(): Promise<number> {

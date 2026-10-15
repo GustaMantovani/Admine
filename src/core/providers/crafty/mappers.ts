@@ -186,6 +186,7 @@ export function toGameServer(
 	craftyServerDto: CraftyServer,
 	serversHost: string,
 	craftyServerStatsDto?: CraftyServerStats | undefined,
+	rconPort?: number,
 ): GameServer {
 	return new GameServer(
 		craftyServerDto.server_id,
@@ -196,7 +197,7 @@ export function toGameServer(
 		serversHost,
 		[],
 		craftyServerDto.server_port,
-		undefined,
+		rconPort,
 		undefined,
 	);
 }

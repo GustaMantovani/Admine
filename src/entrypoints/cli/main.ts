@@ -10,11 +10,10 @@ import { ManagedCraftyAuthProvider } from "../../core/providers/crafty/auth/mana
 import { StaticCraftyAuthProvider } from "../../core/providers/crafty/auth/static-crafty-auth-provider";
 import { CraftyApiClient } from "../../core/providers/crafty/crafty-api-client";
 import { CraftyGameServerProvider } from "../../core/providers/crafty/crafty-game-server-provider";
-import { CRAFTY_PROVIDER_NAME } from "../../core/providers/provider-name";
-import { getDatabase } from "../../core/repositories/database";
-import { SqliteGameServerPortsRepository } from "../../core/repositories/game-server-ports-repository";
-import { SqliteProviderTokenRepository } from "../../core/repositories/provider-token-repository";
+import { SqliteCraftyAuthTokenRepository } from "../../core/providers/crafty/persistence/crafty-auth-token-repository";
+import { SqliteCraftyRconPortRepository } from "../../core/providers/crafty/persistence/crafty-rcon-port-repository";
 import { ensureCraftyInfra } from "../../infra/crafty-docker";
+import { getDatabase } from "../../infra/database";
 import { loadCliConfig, withCraftyCreds } from "./config";
 
 const config = await loadCliConfig();
@@ -48,10 +47,6 @@ const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
 
 // Dependencies
 const db = getDatabase(".data/admine.sqlite");
-const craftyProviderTokenRepository = new SqliteProviderTokenRepository(
-	db,
-	CRAFTY_PROVIDER_NAME,
-);
 
 const craftyConfig = config.craftyConfig;
 let authProvider: CraftyAuthProvider;
@@ -63,7 +58,7 @@ switch (craftyConfig.deployType) {
 		await ensureCraftyInfra(craftyConfig);
 		authProvider = new ManagedCraftyAuthProvider(
 			await withCraftyCreds(craftyConfig),
-			craftyProviderTokenRepository,
+			new SqliteCraftyAuthTokenRepository(db),
 		);
 }
 const craftyApiClient = new CraftyApiClient(
@@ -74,12 +69,11 @@ const craftyProvider = new CraftyGameServerProvider(
 	craftyApiClient,
 	config.serversHost,
 	craftyConfig.webhooks,
+	new SqliteCraftyRconPortRepository(db),
 );
-const gameServerPortsRepository = new SqliteGameServerPortsRepository(db);
 
 const gameServerService = new GameServerService(
 	craftyProvider,
-	gameServerPortsRepository,
 	config.minecraftServer.rcon,
 );
 

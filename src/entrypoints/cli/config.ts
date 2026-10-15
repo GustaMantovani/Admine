@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { TOML } from "bun";
+import { get, has, set } from "lodash";
 import { z } from "zod";
 import { GameServerType } from "../../core/domain/game-server-type";
 import { GameServerWebhookTrigger } from "../../core/domain/game-server-webhook-trigger";
@@ -60,7 +61,7 @@ const SelfHostedCraftySchema = z.object({
 const RconSchema = z
 	.object({
 		enabled: z.boolean().default(DEFAULT_MINECRAFT_SERVER_RCON_ENABLED),
-		password: z.optional(z.string()),
+		password: z.string().default(randomBytes(32).toString("base64url")),
 	})
 	.prefault({});
 
@@ -108,17 +109,20 @@ export async function loadCliConfig(
 ): Promise<CliConfig> {
 	const file = Bun.file(configFilePath);
 	// A missing file means the user wants every default
-	const raw = (await file.exists()) ? TOML.parse(await file.text()) as CliConfig : {} as CliConfig;
+	const raw = (await file.exists()) ? TOML.parse(await file.text()) : {};
+	const parsedConfig = CliConfigSchema.parse(raw);
 
-	if (raw.minecraftServer?.rcon?.password === undefined)
-		await writeSinglePropertieToTomlFile(
-			raw,
+	// The generated password must survive restarts, so persist it once
+	const rconPasswordPath = "minecraftServer.rcon.password";
+	if (!has(raw, rconPasswordPath)) {
+		await writeSinglePropertyToTomlFile(
+			parsedConfig,
 			configFilePath,
-			"minecraftServer.rcon.password",
-			randomBytes(32).toString("base64url"),
+			rconPasswordPath,
 		);
+	}
 
-	return CliConfigSchema.parse(raw);
+	return parsedConfig;
 }
 
 // Must run after the Crafty infra is up: the creds file is created by Crafty itself
@@ -135,31 +139,26 @@ export async function withCraftyCreds(
 	};
 }
 
-async function writeSinglePropertieToTomlFile(
-	configObjct: Record<string, unknown>,
-	configFilePath: string,
+// Copies one property into the TOML file, keeping whatever else it already holds
+async function writeSinglePropertyToTomlFile(
+	inputObj: Record<string, unknown>,
+	filePath: string,
 	keyPath: string,
-	value: unknown,
-) {
-	const keys = keyPath.split(".");
-	const lastKey = keys.pop();
-	if (lastKey === undefined) {
-		throw new Error(`Invalid config key path: "${keyPath}"`);
+): Promise<void> {
+	if (!has(inputObj, keyPath)) {
+		throw new Error(`Property "${keyPath}" was not found`);
 	}
 
-	let target = configObjct;
-	for (const key of keys) {
-		if (typeof target[key] !== "object" || target[key] === null) {
-			target[key] = {};
-		}
-		target = target[key] as Record<string, unknown>;
-	}
-	target[lastKey] = value;
+	const file = Bun.file(filePath);
+	const outputObj: Record<string, unknown> = (await file.exists())
+		? (TOML.parse(await file.text()) as Record<string, unknown>)
+		: {};
+	set(outputObj, keyPath, get(inputObj, keyPath));
 
-	const toml = TOML.stringify(configObjct);
+	const toml = TOML.stringify(outputObj);
 	if (toml === undefined) {
 		throw new Error("Could not serialize the config to TOML");
 	}
 
-	await Bun.write(configFilePath, toml);
+	await Bun.write(filePath, toml);
 }

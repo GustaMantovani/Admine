@@ -1,5 +1,6 @@
 import { PropertiesEditor } from "properties-file/editor";
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
+import { GameServerActionError } from "../domain/errors";
 import type { GameServer } from "../domain/game-server";
 import type { GameServerStats } from "../domain/game-server-stats";
 import type { GameServerType } from "../domain/game-server-type";
@@ -12,13 +13,11 @@ import {
 import type { GameServerProvider } from "../providers/game-server-provider";
 import type { RconConfig } from "../rcon/rcon-config";
 import { sendCommand } from "../rcon/rcon-utils";
-import type { GameServerPortsRepository } from "../repositories/game-server-ports-repository";
 import { randomOutside } from "../utils";
 
 export class GameServerService {
 	constructor(
 		private readonly gameServerProvider: GameServerProvider,
-		private readonly gameServerPortsRepository: GameServerPortsRepository,
 		private readonly rconConfig: RconConfig,
 	) {}
 
@@ -73,7 +72,10 @@ export class GameServerService {
 	async getRandomUnusedGameServerPort(
 		serverType: GameServerType,
 	): Promise<number> {
-		const usedPorts = await this.gameServerPortsRepository.getUsedGamePorts();
+		const servers = await this.gameServerProvider.list();
+		const usedPorts = servers.flatMap((s) =>
+			s.port !== undefined ? [s.port] : [],
+		);
 		let randomPort = randomOutside(
 			GAME_PORT_RANGES[serverType].min,
 			GAME_PORT_RANGES[serverType].max,
@@ -89,7 +91,10 @@ export class GameServerService {
 	): Promise<number | undefined> {
 		if (serverType !== "java") return undefined;
 
-		const usedPorts = await this.gameServerPortsRepository.getUsedRconPorts();
+		const servers = await this.gameServerProvider.list();
+		const usedPorts = servers.flatMap((s) =>
+			s.rconPort !== undefined ? [s.rconPort] : [],
+		);
 		let randomPort = randomOutside(
 			RCON_PORT_RANGES[serverType].min,
 			RCON_PORT_RANGES[serverType].max,
@@ -113,12 +118,6 @@ export class GameServerService {
 		);
 
 		if (acceptEula) await this.acceptEula(newServerId);
-
-		await this.gameServerPortsRepository.create({
-			id: newServerId,
-			port: createServerRequest.port,
-			rconPort: createServerRequest.rconPort,
-		});
 
 		return newServerId;
 	}
@@ -172,19 +171,24 @@ export class GameServerService {
 		return this.gameServerProvider.acceptEula(serverId);
 	}
 
-	async sendCommand(_serverId: string, command: string): Promise<string> {
-		// Aqui eu me viro pra arrumar as credenciais baseado no id do servidor
+	async sendCommand(serverId: string, command: string): Promise<string> {
+		const server = await this.gameServerProvider.info(serverId);
+		if (!this.rconConfig.enabled || server.rconPort === undefined) {
+			throw new GameServerActionError(
+				`RCON is not available for server ${serverId}`,
+			);
+		}
+
 		return sendCommand(
-			"localhost",
-			25575,
-			"S5Yg4LTmjlZb-8DfwcejJA5fnID9t65cC6zpqiUB7XM",
+			server.admineIpAddress,
+			server.rconPort,
+			this.rconConfig.password,
 			command,
 		);
 	}
 
 	async delete(serverId: string, removeFiles: boolean): Promise<void> {
-		await this.gameServerProvider.delete(serverId, removeFiles);
-		await this.gameServerPortsRepository.delete(serverId);
+		return this.gameServerProvider.delete(serverId, removeFiles);
 	}
 
 	async stopAll(): Promise<number> {
