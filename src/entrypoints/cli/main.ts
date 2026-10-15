@@ -40,6 +40,7 @@ type CliCommand =
 	| "eula"
 	| "cmd"
 	| "delete"
+	| "delete-all"
 	| "stop-all"
 	| "help"
 	| "unknown";
@@ -105,7 +106,8 @@ function cliHelp() {
       update <id>                      Update the server executable
       clone <id>                       Clone a stopped server
       cmd <id> <command...>            Send a command to the server console
-      delete <id> [--files]            Delete the server (--files also deletes its files)`;
+      delete <id> [--files]            Delete the server (--files also deletes its files)
+      delete-all [--files]             Delete every server (--files also deletes their files)`;
 	console.log(HELP_STRING);
 }
 
@@ -230,6 +232,16 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 		const serverIdArg = getNextStdinArg()!;
 		const removeFilesArg = getNextStdinArg() === "--files";
 		await gameServerService.delete(serverIdArg, removeFilesArg);
+	},
+
+	"delete-all": async () => {
+		const removeFilesArg = getNextStdinArg() === "--files";
+		const servers = await gameServerService.list();
+		for (const server of servers) {
+			await gameServerService.delete(server.id, removeFilesArg);
+			console.log("Server deleted:", server.id, server.name);
+		}
+		console.log(`Deleted ${servers.length} server(s)`);
 	},
 
 	help: async () => {
