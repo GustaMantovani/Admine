@@ -24,7 +24,6 @@ import {
 	DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY,
 	DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY,
 	DEFAULT_MINECRAFT_SERVER_RCON_ENABLED,
-	DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD,
 	DEFAULT_MINECRAFT_SERVER_TYPE,
 	DEFAULT_MINECRAFT_SERVER_VERSION,
 	DEFAULT_SERVERS_HOST_FOR_ADMINE,
@@ -61,7 +60,7 @@ const SelfHostedCraftySchema = z.object({
 const RconSchema = z
 	.object({
 		enabled: z.boolean().default(DEFAULT_MINECRAFT_SERVER_RCON_ENABLED),
-		password: z.string().default(DEFAULT_MINECRAFT_SERVER_RCON_PASSWORD),
+		password: z.optional(z.string()),
 	})
 	.prefault({});
 
@@ -109,7 +108,7 @@ export async function loadCliConfig(
 ): Promise<CliConfig> {
 	const file = Bun.file(configFilePath);
 	// A missing file means the user wants every default
-	const raw = TOML.parse(await file.text()) as CliConfig;
+	const raw = (await file.exists()) ? TOML.parse(await file.text()) as CliConfig : {} as CliConfig;
 
 	if (raw.minecraftServer?.rcon?.password === undefined)
 		await writeSinglePropertieToTomlFile(
