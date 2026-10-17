@@ -193,7 +193,7 @@ export function toGameServer(
 		craftyServerDto.server_name,
 		fromCraftyServerType(craftyServerDto.type),
 		toGameServerStatus(craftyServerStatsDto?.running),
-		craftyServerStatsDto?.version ?? undefined,
+		craftyServerStatsDto && fromCraftyText(craftyServerStatsDto.version),
 		serversHost,
 		[],
 		craftyServerDto.server_port,

@@ -76,14 +76,13 @@ export class GameServerService {
 		const usedPorts = servers.flatMap((s) =>
 			s.port !== undefined ? [s.port] : [],
 		);
-		let randomPort = randomOutside(
-			GAME_PORT_RANGES[serverType].min,
-			GAME_PORT_RANGES[serverType].max,
-			usedPorts,
+		return (
+			randomOutside(
+				GAME_PORT_RANGES[serverType].min,
+				GAME_PORT_RANGES[serverType].max,
+				usedPorts,
+			) ?? DEFAULT_GAME_PORTS[serverType]
 		);
-		if (randomPort === null) randomPort = DEFAULT_GAME_PORTS[serverType];
-
-		return randomPort;
 	}
 
 	async getRandomUnusedRconPort(
@@ -95,14 +94,13 @@ export class GameServerService {
 		const usedPorts = servers.flatMap((s) =>
 			s.rconPort !== undefined ? [s.rconPort] : [],
 		);
-		let randomPort = randomOutside(
-			RCON_PORT_RANGES[serverType].min,
-			RCON_PORT_RANGES[serverType].max,
-			usedPorts,
+		return (
+			randomOutside(
+				RCON_PORT_RANGES[serverType].min,
+				RCON_PORT_RANGES[serverType].max,
+				usedPorts,
+			) ?? DEFAULT_RCON_PORTS[serverType]
 		);
-		if (randomPort === null) randomPort = DEFAULT_RCON_PORTS[serverType];
-
-		return randomPort;
 	}
 
 	async create(
