@@ -2,6 +2,8 @@ import { PropertiesEditor } from "properties-file/editor";
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
 import { GameServerActionError } from "../domain/errors";
 import type { GameServer } from "../domain/game-server";
+import type { GameServerFile } from "../domain/game-server-file";
+import type { GameServerFileEntry } from "../domain/game-server-file-entry";
 import type { GameServerStats } from "../domain/game-server-stats";
 import type { GameServerType } from "../domain/game-server-type";
 import {
@@ -191,5 +193,65 @@ export class GameServerService {
 
 	async stopAll(): Promise<number> {
 		return this.gameServerProvider.stopAll();
+	}
+
+	async listFiles(
+		serverId: string,
+		path: string,
+	): Promise<GameServerFileEntry[]> {
+		return this.gameServerProvider.listFiles(serverId, path);
+	}
+
+	async readFile(serverId: string, path: string): Promise<GameServerFile> {
+		return this.gameServerProvider.getFile(serverId, path);
+	}
+
+	// Pass the file as read: the provider rejects the write if it changed since
+	async writeFile(serverId: string, file: GameServerFile): Promise<void> {
+		return this.gameServerProvider.writeFile(serverId, file);
+	}
+
+	async createFile(serverId: string, path: string): Promise<void> {
+		return this.gameServerProvider.createFile(serverId, path);
+	}
+
+	async createDirectory(serverId: string, path: string): Promise<void> {
+		return this.gameServerProvider.createDirectory(serverId, path);
+	}
+
+	async renameFile(
+		serverId: string,
+		path: string,
+		newName: string,
+	): Promise<void> {
+		return this.gameServerProvider.renameFile(serverId, path, newName);
+	}
+
+	async moveFiles(
+		serverId: string,
+		sourcePaths: string[],
+		targetDirectory: string,
+	): Promise<void> {
+		return this.gameServerProvider.moveFiles(
+			serverId,
+			sourcePaths,
+			targetDirectory,
+		);
+	}
+
+	async copyFiles(
+		serverId: string,
+		sourcePaths: string[],
+		targetDirectory: string,
+	): Promise<void> {
+		return this.gameServerProvider.copyFiles(
+			serverId,
+			sourcePaths,
+			targetDirectory,
+		);
+	}
+
+	async deleteFiles(serverId: string, paths: string[]): Promise<void> {
+		return this.gameServerProvider.deleteFiles(serverId, paths);
 	}
 }

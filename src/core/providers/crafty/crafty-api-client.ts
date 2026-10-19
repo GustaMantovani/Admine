@@ -6,8 +6,14 @@ import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateServerResponse } from "./dtos/crafty-create-server-response";
 import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
 import type { CraftyCreateWebhookResponse } from "./dtos/crafty-create-webhook-response";
+import type { CraftyDirectory } from "./dtos/crafty-directory";
 import type { CraftyFile } from "./dtos/crafty-file";
+import type { CraftyFileCreateRequest } from "./dtos/crafty-file-create-request";
+import type { CraftyFileDeleteRequest } from "./dtos/crafty-file-delete-request";
+import type { CraftyFileOperation } from "./dtos/crafty-file-operation";
+import type { CraftyFileOperationRequest } from "./dtos/crafty-file-operation-request";
 import type { CraftyFilePatchRequest } from "./dtos/crafty-file-patch-request";
+import type { CraftyFileRenameRequest } from "./dtos/crafty-file-rename-request";
 import type { CraftyResponse } from "./dtos/crafty-response";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerDetail } from "./dtos/crafty-server-detail";
@@ -87,10 +93,11 @@ export class CraftyApiClient {
 		return this.request("POST", "/servers/stop_all");
 	}
 
+	// Crafty answers with the file's content or, for a directory, its listing
 	async getServerFiles(
 		serverId: string,
 		filePath: string,
-	): Promise<CraftyFile> {
+	): Promise<CraftyResponse<CraftyFile | CraftyDirectory>> {
 		return this.request("POST", `/servers/${serverId}/files`, {
 			path: filePath,
 		});
@@ -101,6 +108,39 @@ export class CraftyApiClient {
 		filePatch: CraftyFilePatchRequest,
 	): Promise<void> {
 		return this.request("PATCH", `/servers/${serverId}/files`, filePatch);
+	}
+
+	async createServerFile(
+		serverId: string,
+		body: CraftyFileCreateRequest,
+	): Promise<CraftyActionExecutionResponse> {
+		return this.request("PUT", `/servers/${serverId}/files/create`, body);
+	}
+
+	async renameServerFile(
+		serverId: string,
+		body: CraftyFileRenameRequest,
+	): Promise<CraftyActionExecutionResponse> {
+		return this.request("PATCH", `/servers/${serverId}/files/create`, body);
+	}
+
+	async runServerFileOperation(
+		serverId: string,
+		operation: CraftyFileOperation,
+		body: CraftyFileOperationRequest,
+	): Promise<CraftyActionExecutionResponse> {
+		return this.request(
+			"POST",
+			`/servers/${serverId}/files/${operation}`,
+			body,
+		);
+	}
+
+	async deleteServerFiles(
+		serverId: string,
+		body: CraftyFileDeleteRequest,
+	): Promise<CraftyActionExecutionResponse> {
+		return this.request("DELETE", `/servers/${serverId}/files`, body);
 	}
 
 	private async request<T>(

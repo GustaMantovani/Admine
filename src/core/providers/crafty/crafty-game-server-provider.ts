@@ -2,6 +2,7 @@ import type { CreateGameServerRequest } from "../../domain/create-game-server-re
 import { GameServerActionError } from "../../domain/errors";
 import type { GameServer } from "../../domain/game-server";
 import type { GameServerFile } from "../../domain/game-server-file";
+import type { GameServerFileEntry } from "../../domain/game-server-file-entry";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import type { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
 import type { GameServerProvider } from "../game-server-provider";
@@ -12,12 +13,18 @@ import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import {
 	fromCraftyLogLine,
+	isCraftyDirectory,
 	isSupportedCraftyServerType,
 	toCraftyCreateServerRequest,
 	toCraftyCreateWebhookRequest,
+	toCraftyFileCreateRequest,
+	toCraftyFileDeleteRequest,
+	toCraftyFileOperationRequest,
 	toCraftyFilePatchRequest,
+	toCraftyFileRenameRequest,
 	toGameServer,
 	toGameServerFile,
+	toGameServerFileEntries,
 	toGameServerStats,
 } from "./mappers";
 import type { CraftyRconPortRepository } from "./persistence/crafty-rcon-port-repository";
@@ -122,9 +129,18 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		this.throwIfFailed(result, `send command to server ${id}`);
 	}
 
+	async listFiles(id: string, path: string): Promise<GameServerFileEntry[]> {
+		const result = await this.craftyApiClient.getServerFiles(id, path);
+		if (!isCraftyDirectory(result.data))
+			throw new GameServerActionError(`${path} is not a directory`);
+		return toGameServerFileEntries(result.data);
+	}
+
 	async getFile(id: string, path: string): Promise<GameServerFile> {
 		const result = await this.craftyApiClient.getServerFiles(id, path);
-		return toGameServerFile(path, result);
+		if (isCraftyDirectory(result.data))
+			throw new GameServerActionError(`${path} is a directory, not a file`);
+		return toGameServerFile(path, result.data);
 	}
 
 	async writeFile(id: string, file: GameServerFile): Promise<void> {
@@ -132,6 +148,64 @@ export class CraftyGameServerProvider implements GameServerProvider {
 			id,
 			toCraftyFilePatchRequest(file),
 		);
+	}
+
+	async createFile(id: string, path: string): Promise<void> {
+		const result = await this.craftyApiClient.createServerFile(
+			id,
+			toCraftyFileCreateRequest(path, false),
+		);
+		this.throwIfFailed(result, `create file ${path} on server ${id}`);
+	}
+
+	async createDirectory(id: string, path: string): Promise<void> {
+		const result = await this.craftyApiClient.createServerFile(
+			id,
+			toCraftyFileCreateRequest(path, true),
+		);
+		this.throwIfFailed(result, `create directory ${path} on server ${id}`);
+	}
+
+	async renameFile(id: string, path: string, newName: string): Promise<void> {
+		const result = await this.craftyApiClient.renameServerFile(
+			id,
+			toCraftyFileRenameRequest(path, newName),
+		);
+		this.throwIfFailed(result, `rename ${path} on server ${id}`);
+	}
+
+	async moveFiles(
+		id: string,
+		sourcePaths: string[],
+		targetDirectory: string,
+	): Promise<void> {
+		const result = await this.craftyApiClient.runServerFileOperation(
+			id,
+			"move",
+			toCraftyFileOperationRequest(sourcePaths, targetDirectory),
+		);
+		this.throwIfFailed(result, `move files on server ${id}`);
+	}
+
+	async copyFiles(
+		id: string,
+		sourcePaths: string[],
+		targetDirectory: string,
+	): Promise<void> {
+		const result = await this.craftyApiClient.runServerFileOperation(
+			id,
+			"copy",
+			toCraftyFileOperationRequest(sourcePaths, targetDirectory),
+		);
+		this.throwIfFailed(result, `copy files on server ${id}`);
+	}
+
+	async deleteFiles(id: string, paths: string[]): Promise<void> {
+		const result = await this.craftyApiClient.deleteServerFiles(
+			id,
+			toCraftyFileDeleteRequest(paths),
+		);
+		this.throwIfFailed(result, `delete files on server ${id}`);
 	}
 
 	async delete(id: string, removeFiles: boolean): Promise<void> {

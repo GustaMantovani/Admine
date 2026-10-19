@@ -41,9 +41,21 @@ type CliCommand =
 	| "delete"
 	| "delete-all"
 	| "stop-all"
+	| "files"
 	| "help"
 	| "unknown";
 const command: CliCommand = getNextStdinArg() as CliCommand | "unknown";
+
+type FilesSubcommand =
+	| "ls"
+	| "cat"
+	| "write"
+	| "touch"
+	| "mkdir"
+	| "rename"
+	| "mv"
+	| "cp"
+	| "rm";
 
 // Dependencies
 const db = getDatabase(".data/admine.sqlite");
@@ -101,7 +113,18 @@ function cliHelp() {
       clone <id>                       Clone a stopped server
       cmd <id> <command...>            Send a command to the server console
       delete <id> [--files]            Delete the server (--files also deletes its files)
-      delete-all [--files]             Delete every server (--files also deletes their files)`;
+      delete-all [--files]             Delete every server (--files also deletes their files)
+
+    Files (paths are relative to the server's root directory):
+      files ls <id> [path]             List a directory (default: the server's root)
+      files cat <id> <path>            Print a file
+      files write <id> <path>          Replace an existing file's content with stdin
+      files touch <id> <path>          Create an empty file
+      files mkdir <id> <path>          Create a directory
+      files rename <id> <path> <name>  Rename a file or directory
+      files mv <id> <dir> <paths...>   Move files or directories into a directory
+      files cp <id> <dir> <paths...>   Copy files or directories into a directory
+      files rm <id> <paths...>         Delete files or directories`;
 	console.log(HELP_STRING);
 }
 
@@ -236,6 +259,82 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			console.log("Server deleted:", server.id, server.name);
 		}
 		console.log(`Deleted ${servers.length} server(s)`);
+	},
+
+	// Files
+	files: async () => {
+		const subcommandArg = getNextStdinArg() as FilesSubcommand;
+		const serverIdArg = getNextStdinArg()!;
+
+		const subcommands: Record<FilesSubcommand, () => Promise<void>> = {
+			ls: async () => {
+				const pathArg = getNextStdinArg() ?? ".";
+				console.table(await gameServerService.listFiles(serverIdArg, pathArg));
+			},
+
+			cat: async () => {
+				const pathArg = getNextStdinArg()!;
+				const file = await gameServerService.readFile(serverIdArg, pathArg);
+				process.stdout.write(file.content);
+			},
+
+			write: async () => {
+				const pathArg = getNextStdinArg()!;
+				const file = await gameServerService.readFile(serverIdArg, pathArg);
+				const content = await Bun.stdin.text();
+				await gameServerService.writeFile(serverIdArg, { ...file, content });
+			},
+
+			touch: async () => {
+				const pathArg = getNextStdinArg()!;
+				await gameServerService.createFile(serverIdArg, pathArg);
+			},
+
+			mkdir: async () => {
+				const pathArg = getNextStdinArg()!;
+				await gameServerService.createDirectory(serverIdArg, pathArg);
+			},
+
+			rename: async () => {
+				const pathArg = getNextStdinArg()!;
+				const newNameArg = getNextStdinArg()!;
+				await gameServerService.renameFile(serverIdArg, pathArg, newNameArg);
+			},
+
+			mv: async () => {
+				const targetDirectoryArg = getNextStdinArg()!;
+				const pathsArg = Bun.argv.slice(argCounter);
+				await gameServerService.moveFiles(
+					serverIdArg,
+					pathsArg,
+					targetDirectoryArg,
+				);
+			},
+
+			cp: async () => {
+				const targetDirectoryArg = getNextStdinArg()!;
+				const pathsArg = Bun.argv.slice(argCounter);
+				await gameServerService.copyFiles(
+					serverIdArg,
+					pathsArg,
+					targetDirectoryArg,
+				);
+			},
+
+			rm: async () => {
+				const pathsArg = Bun.argv.slice(argCounter);
+				await gameServerService.deleteFiles(serverIdArg, pathsArg);
+			},
+		};
+
+		const subcommand = subcommands[subcommandArg];
+		if (subcommand === undefined) {
+			console.log(`Unknown files command: ${subcommandArg}`);
+			cliHelp();
+			process.exit(1);
+		}
+
+		await subcommand();
 	},
 
 	help: async () => {

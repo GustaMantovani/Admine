@@ -1,7 +1,9 @@
+import { posix } from "node:path";
 import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
 import { UnknownGameServerType } from "../../domain/errors";
 import { GameServer } from "../../domain/game-server";
 import type { GameServerFile } from "../../domain/game-server-file";
+import type { GameServerFileEntry } from "../../domain/game-server-file-entry";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import { GameServerType } from "../../domain/game-server-type";
 import { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
@@ -10,8 +12,13 @@ import type { CraftyCreateHytaleServer } from "./dtos/crafty-create-hytale-serve
 import type { CraftyCreateJavaServer } from "./dtos/crafty-create-java-server";
 import type { CraftyCreateServer } from "./dtos/crafty-create-server";
 import type { CraftyCreateWebhook } from "./dtos/crafty-create-webhook";
+import type { CraftyDirectory } from "./dtos/crafty-directory";
 import type { CraftyFile } from "./dtos/crafty-file";
+import type { CraftyFileCreateRequest } from "./dtos/crafty-file-create-request";
+import type { CraftyFileDeleteRequest } from "./dtos/crafty-file-delete-request";
+import type { CraftyFileOperationRequest } from "./dtos/crafty-file-operation-request";
 import type { CraftyFilePatchRequest } from "./dtos/crafty-file-patch-request";
+import type { CraftyFileRenameRequest } from "./dtos/crafty-file-rename-request";
 import type { CraftyServer } from "./dtos/crafty-server";
 import type { CraftyServerStats } from "./dtos/crafty-server-stats";
 import type { CraftyWebhookTrigger } from "./dtos/crafty-webhook-trigger";
@@ -223,15 +230,32 @@ export function toGameServerStats(dto: CraftyServerStats): GameServerStats {
 	};
 }
 
+export function isCraftyDirectory(
+	dto: CraftyFile | CraftyDirectory,
+): dto is CraftyDirectory {
+	return "root_path" in dto;
+}
+
 export function toGameServerFile(
 	path: string,
 	dto: CraftyFile,
 ): GameServerFile {
 	return {
 		path,
-		content: dto.data.content,
-		modifiedEpoch: dto.data.attributes.modified_epoch,
+		content: dto.content,
+		modifiedEpoch: dto.attributes.modified_epoch,
 	};
+}
+
+export function toGameServerFileEntries(
+	dto: CraftyDirectory,
+): GameServerFileEntry[] {
+	// root_path is the only value without "dir"
+	return Object.entries(dto).flatMap(([name, entry]) =>
+		"dir" in entry
+			? [{ name, path: entry.path, type: entry.dir ? "directory" : "file" }]
+			: [],
+	);
 }
 
 export function toCraftyFilePatchRequest(
@@ -241,6 +265,44 @@ export function toCraftyFilePatchRequest(
 		path: file.path,
 		contents: file.content,
 		modified_epoch: file.modifiedEpoch,
+	};
+}
+
+export function toCraftyFileCreateRequest(
+	path: string,
+	directory: boolean,
+): CraftyFileCreateRequest {
+	return {
+		parent: posix.dirname(path),
+		name: posix.basename(path),
+		directory,
+	};
+}
+
+export function toCraftyFileRenameRequest(
+	path: string,
+	newName: string,
+): CraftyFileRenameRequest {
+	return { path, new_name: newName };
+}
+
+export function toCraftyFileOperationRequest(
+	sourcePaths: string[],
+	targetDirectory: string,
+): CraftyFileOperationRequest {
+	return {
+		file_system_objects: sourcePaths.map((sourcePath) => ({
+			source_path: sourcePath,
+			target_path: targetDirectory,
+		})),
+	};
+}
+
+export function toCraftyFileDeleteRequest(
+	paths: string[],
+): CraftyFileDeleteRequest {
+	return {
+		file_system_objects: paths.map((path) => ({ filename: path })),
 	};
 }
 
