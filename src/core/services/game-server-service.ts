@@ -3,6 +3,7 @@ import type { CreateGameServerRequest } from "../domain/create-game-server-reque
 import { GameServerActionError } from "../domain/errors";
 import type { GameServer } from "../domain/game-server";
 import type { GameServerFile } from "../domain/game-server-file";
+import type { GameServerFileDownload } from "../domain/game-server-file-download";
 import type { GameServerFileEntry } from "../domain/game-server-file-entry";
 import type { GameServerStats } from "../domain/game-server-stats";
 import type { GameServerType } from "../domain/game-server-type";
@@ -255,7 +256,10 @@ export class GameServerService {
 		return this.gameServerProvider.deleteFiles(serverId, paths);
 	}
 
-	async downloadFile(serverId: string, path: string): Promise<ReadableStream<Uint8Array>> {
+	async downloadFile(
+		serverId: string,
+		path: string,
+	): Promise<GameServerFileDownload> {
 		return this.gameServerProvider.downloadFile(serverId, path);
 	}
 }

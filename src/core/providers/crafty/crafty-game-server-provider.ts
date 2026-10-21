@@ -2,6 +2,7 @@ import type { CreateGameServerRequest } from "../../domain/create-game-server-re
 import { GameServerActionError } from "../../domain/errors";
 import type { GameServer } from "../../domain/game-server";
 import type { GameServerFile } from "../../domain/game-server-file";
+import type { GameServerFileDownload } from "../../domain/game-server-file-download";
 import type { GameServerFileEntry } from "../../domain/game-server-file-entry";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import type { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
@@ -211,7 +212,7 @@ export class CraftyGameServerProvider implements GameServerProvider {
 	async downloadFile(
 		id: string,
 		path: string,
-	): Promise<ReadableStream<Uint8Array>> {
+	): Promise<GameServerFileDownload> {
 		return this.craftyApiClient.downloadServerFile(id, path);
 	}
 

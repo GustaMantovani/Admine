@@ -1,3 +1,4 @@
+import path from "node:path";
 import {
 	adjectives,
 	animals,
@@ -332,10 +333,13 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 				const serverPathArg = getNextStdinArg()!;
 				const downloadPathArg = getNextStdinArg();
 
-				const fileStream = await gameServerService.downloadFile(serverIdArg, serverPathArg);
-				const writer = Bun.file(downloadPathArg || 'fodase').writer();
+				const { contentStream, fileNameOnServer } =
+					await gameServerService.downloadFile(serverIdArg, serverPathArg);
+				const writer = Bun.file(
+					downloadPathArg || fileNameOnServer || path.parse(serverPathArg).base,
+				).writer();
 
-				for await (const chunk of fileStream) writer.write(chunk);
+				for await (const chunk of contentStream) writer.write(chunk);
 
 				await writer.end();
 			},

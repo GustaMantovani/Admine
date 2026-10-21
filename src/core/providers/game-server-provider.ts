@@ -1,6 +1,7 @@
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
 import type { GameServer } from "../domain/game-server";
 import type { GameServerFile } from "../domain/game-server-file";
+import type { GameServerFileDownload } from "../domain/game-server-file-download";
 import type { GameServerFileEntry } from "../domain/game-server-file-entry";
 import type { GameServerStats } from "../domain/game-server-stats";
 import type { ProviderName } from "./provider-name";
@@ -40,7 +41,7 @@ export interface GameServerProvider {
 		targetDirectory: string,
 	): Promise<void>;
 	deleteFiles(id: string, paths: string[]): Promise<void>;
-	downloadFile(id: string, path: string): Promise<ReadableStream<Uint8Array>>;
+	downloadFile(id: string, path: string): Promise<GameServerFileDownload>;
 	delete(id: string, removeFiles: boolean): Promise<void>;
 	stopAll(): Promise<number>;
 }

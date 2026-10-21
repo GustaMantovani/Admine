@@ -146,14 +146,25 @@ export class CraftyApiClient {
 	async downloadServerFile(
 		serverId: string,
 		pathOnServer: string,
-	): Promise<ReadableStream<Uint8Array>> {
+	): Promise<{
+		contentStream: ReadableStream<Uint8Array>;
+		fileNameOnServer?: string;
+	}> {
 		const response = await this.request(
 			"GET",
 			`/servers/${serverId}/files/${pathOnServer}/download`,
 			undefined,
 			{ raw: true },
 		);
-		return response.body!;
+
+		const fileNameOnServer = response.headers
+			.get("content-disposition")
+			?.match(/filename="([^"]+)"/)?.[1];
+
+		return {
+			contentStream: response.body!,
+			fileNameOnServer: fileNameOnServer,
+		};
 	}
 
 	// With raw: true, returns the Response untouched instead of parsing its JSON
