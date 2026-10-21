@@ -40,6 +40,7 @@ export interface GameServerProvider {
 		targetDirectory: string,
 	): Promise<void>;
 	deleteFiles(id: string, paths: string[]): Promise<void>;
+	downloadFile(id: string, path: string): Promise<ReadableStream<Uint8Array>>;
 	delete(id: string, removeFiles: boolean): Promise<void>;
 	stopAll(): Promise<number>;
 }

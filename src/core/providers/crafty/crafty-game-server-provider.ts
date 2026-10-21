@@ -208,6 +208,13 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		this.throwIfFailed(result, `delete files on server ${id}`);
 	}
 
+	async downloadFile(
+		id: string,
+		path: string,
+	): Promise<ReadableStream<Uint8Array>> {
+		return this.craftyApiClient.downloadServerFile(id, path);
+	}
+
 	async delete(id: string, removeFiles: boolean): Promise<void> {
 		const result = await this.craftyApiClient.deleteServer(id, removeFiles);
 		this.throwIfFailed(result, `delete server ${id}`);

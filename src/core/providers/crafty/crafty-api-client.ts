@@ -143,11 +143,37 @@ export class CraftyApiClient {
 		return this.request("DELETE", `/servers/${serverId}/files`, body);
 	}
 
+	async downloadServerFile(
+		serverId: string,
+		pathOnServer: string,
+	): Promise<ReadableStream<Uint8Array>> {
+		const response = await this.request(
+			"GET",
+			`/servers/${serverId}/files/${pathOnServer}/download`,
+			undefined,
+			{ raw: true },
+		);
+		return response.body!;
+	}
+
+	// With raw: true, returns the Response untouched instead of parsing its JSON
+	private async request(
+		method: string,
+		path: string,
+		body: unknown,
+		options: { raw: true },
+	): Promise<Response>;
 	private async request<T>(
 		method: string,
 		path: string,
 		body?: unknown,
-	): Promise<T> {
+	): Promise<T>;
+	private async request(
+		method: string,
+		path: string,
+		body?: unknown,
+		options?: { raw: true },
+	): Promise<unknown> {
 		const isText = typeof body === "string";
 
 		const url = `${this.baseUrl}${path}`;
@@ -173,6 +199,16 @@ export class CraftyApiClient {
 			throw new CraftyApiError(response.status, await response.text());
 		}
 
-		return (await response.json()) as T;
+		if (options?.raw) {
+			return response;
+		}
+
+		let parsedResponse: unknown;
+		try {
+			// Try to parse response
+			parsedResponse = await response.json();
+		} catch {}
+
+		return parsedResponse;
 	}
 }

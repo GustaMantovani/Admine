@@ -254,4 +254,8 @@ export class GameServerService {
 	async deleteFiles(serverId: string, paths: string[]): Promise<void> {
 		return this.gameServerProvider.deleteFiles(serverId, paths);
 	}
+
+	async downloadFile(serverId: string, path: string): Promise<ReadableStream<Uint8Array>> {
+		return this.gameServerProvider.downloadFile(serverId, path);
+	}
 }

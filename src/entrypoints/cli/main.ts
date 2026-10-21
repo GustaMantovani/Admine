@@ -55,7 +55,8 @@ type FilesSubcommand =
 	| "rename"
 	| "mv"
 	| "cp"
-	| "rm";
+	| "rm"
+	| "download";
 
 // Dependencies
 const db = getDatabase(".data/admine.sqlite");
@@ -124,7 +125,8 @@ function cliHelp() {
       files rename <id> <path> <name>  Rename a file or directory
       files mv <id> <dir> <paths...>   Move files or directories into a directory
       files cp <id> <dir> <paths...>   Copy files or directories into a directory
-      files rm <id> <paths...>         Delete files or directories`;
+      files rm <id> <paths...>         Delete files or directories
+      files download <id> <path> [dest] Download a file to a local path`;
 	console.log(HELP_STRING);
 }
 
@@ -324,6 +326,18 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 			rm: async () => {
 				const pathsArg = Bun.argv.slice(argCounter);
 				await gameServerService.deleteFiles(serverIdArg, pathsArg);
+			},
+
+			download: async () => {
+				const serverPathArg = getNextStdinArg()!;
+				const downloadPathArg = getNextStdinArg();
+
+				const fileStream = await gameServerService.downloadFile(serverIdArg, serverPathArg);
+				const writer = Bun.file(downloadPathArg || 'fodase').writer();
+
+				for await (const chunk of fileStream) writer.write(chunk);
+
+				await writer.end();
 			},
 		};
 
