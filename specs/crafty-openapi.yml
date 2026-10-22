@@ -1148,7 +1148,7 @@ paths:
       summary: Upload a login background
       operationId: uploadLoginBackground
       description: |-
-        Superuser only. Images only (bmp, gif, jpeg, tiff, ico, png, webp), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
+        Superuser only. Images only (bmp, gif, jpeg, tiff, png, webp; `.ico` only where the OS maps it to `image/x-icon`), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
 
         **Crafty 4.11 bug:** the free-space check runs before the destination folder is created, so every upload answers 500 (`FileNotFoundError`) until that folder exists in Crafty's install directory.
 
@@ -1157,49 +1157,51 @@ paths:
         **Single request:** send the whole file as the body without the `chunked` header.
 
         **Chunked** (what the web panel does, 10 MiB chunks):
-        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
-        2. One request per chunk with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and the chunk as body → `partial`, and `completed` once every chunk arrived. Chunks may arrive in any order.
+        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, `location` (where the operation defines it), no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
+        2. One request per chunk with the chunk as body. **The endpoint is stateless: every request is parsed on its own and nothing from the handshake is remembered.** Each chunk request must therefore repeat all required headers of this operation (`chunked`, `fileId`, `fileName`, and `location` where defined) together with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and `totalChunks`; send `fileSize` as well to keep the free-space check (and, on admin uploads, the image-size cap) active. Omitting `chunked` makes the server treat the chunk as a complete non-chunked upload and overwrite the destination. The response body reports `status: "partial"` while chunks are still missing and `status: "completed"` once every chunk arrived. These are values returned by the server in the response JSON, not headers the client sends. Chunks may arrive in any order.
       parameters:
       - name: fileId
         in: header
         required: true
         schema:
           type: string
-        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment.
+        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment. Required on every request, including each chunk request.
       - name: fileName
         in: header
         required: true
         schema:
           type: string
+        description: Name of the file to write. Required on every request, including each chunk request.
       - name: chunked
         in: header
         required: false
         schema:
           type: string
-        description: Any non-empty value turns on the chunked protocol (even `false`). Omit for a single-request upload.
+        description: Any non-empty value turns on the chunked protocol (even `false`). Send it on every request of a chunked upload; omitting it makes that request a single-request upload.
       - name: fileSize
         in: header
         required: false
         schema:
           type: integer
-        description: Total file size in bytes, used for the free-space check.
+        description: Total file size in bytes. Used for the free-space check and, on admin image uploads, for the `max_image_upload_size_mb` cap. Send it on every request of a chunked upload; omitting it skips the free-space check (and, on admin uploads, the size cap).
       - name: totalChunks
         in: header
         required: false
         schema:
           type: integer
+        description: Number of chunks in the upload. Required on every request of a chunked upload; the server compares the number of chunks received so far against it to decide between `partial` and `completed`. Ignored for single-request uploads.
       - name: chunkId
         in: header
         required: false
         schema:
           type: integer
-        description: 0-based chunk index. Omit on the handshake request.
+        description: 0-based chunk index. Omit only on the handshake request; required on every chunk request.
       - name: chunkHash
         in: header
         required: false
         schema:
           type: string
-        description: Lowercase hex SHA-256 of this chunk's body.
+        description: Lowercase hex SHA-256 of this chunk's body. Required on every chunk request.
       requestBody:
         required: false
         content:
@@ -1229,15 +1231,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '422':
-          description: File type not accepted.
+          description: File type not accepted, or (for chunked uploads) the assembled file is not a decodable image.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '500':
-          description: Destination folder does not exist yet (see description).
+          description: Destination folder does not exist yet (see description). Tornado's default error page is HTML.
           content:
-            text/plain:
+            text/html:
               schema:
                 type: string
         '507':
@@ -1253,7 +1255,7 @@ paths:
       summary: Upload a embed (Open Graph) image
       operationId: uploadEmbed
       description: |-
-        Superuser only. Images only (bmp, gif, jpeg, tiff, ico, png, webp), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
+        Superuser only. Images only (bmp, gif, jpeg, tiff, png, webp; `.ico` only where the OS maps it to `image/x-icon`), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
 
         **Crafty 4.11 bug:** the free-space check runs before the destination folder is created, so every upload answers 500 (`FileNotFoundError`) until that folder exists in Crafty's install directory.
 
@@ -1262,49 +1264,51 @@ paths:
         **Single request:** send the whole file as the body without the `chunked` header.
 
         **Chunked** (what the web panel does, 10 MiB chunks):
-        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
-        2. One request per chunk with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and the chunk as body → `partial`, and `completed` once every chunk arrived. Chunks may arrive in any order.
+        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, `location` (where the operation defines it), no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
+        2. One request per chunk with the chunk as body. **The endpoint is stateless: every request is parsed on its own and nothing from the handshake is remembered.** Each chunk request must therefore repeat all required headers of this operation (`chunked`, `fileId`, `fileName`, and `location` where defined) together with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and `totalChunks`; send `fileSize` as well to keep the free-space check (and, on admin uploads, the image-size cap) active. Omitting `chunked` makes the server treat the chunk as a complete non-chunked upload and overwrite the destination. The response body reports `status: "partial"` while chunks are still missing and `status: "completed"` once every chunk arrived. These are values returned by the server in the response JSON, not headers the client sends. Chunks may arrive in any order.
       parameters:
       - name: fileId
         in: header
         required: true
         schema:
           type: string
-        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment.
+        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment. Required on every request, including each chunk request.
       - name: fileName
         in: header
         required: true
         schema:
           type: string
+        description: Name of the file to write. Required on every request, including each chunk request.
       - name: chunked
         in: header
         required: false
         schema:
           type: string
-        description: Any non-empty value turns on the chunked protocol (even `false`). Omit for a single-request upload.
+        description: Any non-empty value turns on the chunked protocol (even `false`). Send it on every request of a chunked upload; omitting it makes that request a single-request upload.
       - name: fileSize
         in: header
         required: false
         schema:
           type: integer
-        description: Total file size in bytes, used for the free-space check.
+        description: Total file size in bytes. Used for the free-space check and, on admin image uploads, for the `max_image_upload_size_mb` cap. Send it on every request of a chunked upload; omitting it skips the free-space check (and, on admin uploads, the size cap).
       - name: totalChunks
         in: header
         required: false
         schema:
           type: integer
+        description: Number of chunks in the upload. Required on every request of a chunked upload; the server compares the number of chunks received so far against it to decide between `partial` and `completed`. Ignored for single-request uploads.
       - name: chunkId
         in: header
         required: false
         schema:
           type: integer
-        description: 0-based chunk index. Omit on the handshake request.
+        description: 0-based chunk index. Omit only on the handshake request; required on every chunk request.
       - name: chunkHash
         in: header
         required: false
         schema:
           type: string
-        description: Lowercase hex SHA-256 of this chunk's body.
+        description: Lowercase hex SHA-256 of this chunk's body. Required on every chunk request.
       requestBody:
         required: false
         content:
@@ -1334,15 +1338,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '422':
-          description: File type not accepted.
+          description: File type not accepted, or (for chunked uploads) the assembled file is not a decodable image.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '500':
-          description: Destination folder does not exist yet (see description).
+          description: Destination folder does not exist yet (see description). Tornado's default error page is HTML.
           content:
-            text/plain:
+            text/html:
               schema:
                 type: string
         '507':
@@ -1358,7 +1362,7 @@ paths:
       summary: Upload a full logo
       operationId: uploadLogoFull
       description: |-
-        Superuser only. Images only (bmp, gif, jpeg, tiff, ico, png, webp), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
+        Superuser only. Images only (bmp, gif, jpeg, tiff, png, webp; `.ico` only where the OS maps it to `image/x-icon`), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
 
         **Crafty 4.11 bug:** the free-space check runs before the destination folder is created, so every upload answers 500 (`FileNotFoundError`) until that folder exists in Crafty's install directory.
 
@@ -1367,49 +1371,51 @@ paths:
         **Single request:** send the whole file as the body without the `chunked` header.
 
         **Chunked** (what the web panel does, 10 MiB chunks):
-        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
-        2. One request per chunk with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and the chunk as body → `partial`, and `completed` once every chunk arrived. Chunks may arrive in any order.
+        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, `location` (where the operation defines it), no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
+        2. One request per chunk with the chunk as body. **The endpoint is stateless: every request is parsed on its own and nothing from the handshake is remembered.** Each chunk request must therefore repeat all required headers of this operation (`chunked`, `fileId`, `fileName`, and `location` where defined) together with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and `totalChunks`; send `fileSize` as well to keep the free-space check (and, on admin uploads, the image-size cap) active. Omitting `chunked` makes the server treat the chunk as a complete non-chunked upload and overwrite the destination. The response body reports `status: "partial"` while chunks are still missing and `status: "completed"` once every chunk arrived. These are values returned by the server in the response JSON, not headers the client sends. Chunks may arrive in any order.
       parameters:
       - name: fileId
         in: header
         required: true
         schema:
           type: string
-        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment.
+        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment. Required on every request, including each chunk request.
       - name: fileName
         in: header
         required: true
         schema:
           type: string
+        description: Name of the file to write. Required on every request, including each chunk request.
       - name: chunked
         in: header
         required: false
         schema:
           type: string
-        description: Any non-empty value turns on the chunked protocol (even `false`). Omit for a single-request upload.
+        description: Any non-empty value turns on the chunked protocol (even `false`). Send it on every request of a chunked upload; omitting it makes that request a single-request upload.
       - name: fileSize
         in: header
         required: false
         schema:
           type: integer
-        description: Total file size in bytes, used for the free-space check.
+        description: Total file size in bytes. Used for the free-space check and, on admin image uploads, for the `max_image_upload_size_mb` cap. Send it on every request of a chunked upload; omitting it skips the free-space check (and, on admin uploads, the size cap).
       - name: totalChunks
         in: header
         required: false
         schema:
           type: integer
+        description: Number of chunks in the upload. Required on every request of a chunked upload; the server compares the number of chunks received so far against it to decide between `partial` and `completed`. Ignored for single-request uploads.
       - name: chunkId
         in: header
         required: false
         schema:
           type: integer
-        description: 0-based chunk index. Omit on the handshake request.
+        description: 0-based chunk index. Omit only on the handshake request; required on every chunk request.
       - name: chunkHash
         in: header
         required: false
         schema:
           type: string
-        description: Lowercase hex SHA-256 of this chunk's body.
+        description: Lowercase hex SHA-256 of this chunk's body. Required on every chunk request.
       requestBody:
         required: false
         content:
@@ -1439,15 +1445,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '422':
-          description: File type not accepted.
+          description: File type not accepted, or (for chunked uploads) the assembled file is not a decodable image.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '500':
-          description: Destination folder does not exist yet (see description).
+          description: Destination folder does not exist yet (see description). Tornado's default error page is HTML.
           content:
-            text/plain:
+            text/html:
               schema:
                 type: string
         '507':
@@ -1463,7 +1469,7 @@ paths:
       summary: Upload a square logo
       operationId: uploadLogoSquare
       description: |-
-        Superuser only. Images only (bmp, gif, jpeg, tiff, ico, png, webp), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
+        Superuser only. Images only (bmp, gif, jpeg, tiff, png, webp; `.ico` only where the OS maps it to `image/x-icon`), up to `max_image_upload_size_mb` (default 5). Chunked uploads have their EXIF data stripped and are rejected if they are not a decodable image.
 
         **Crafty 4.11 bug:** the free-space check runs before the destination folder is created, so every upload answers 500 (`FileNotFoundError`) until that folder exists in Crafty's install directory.
 
@@ -1472,49 +1478,51 @@ paths:
         **Single request:** send the whole file as the body without the `chunked` header.
 
         **Chunked** (what the web panel does, 10 MiB chunks):
-        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
-        2. One request per chunk with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and the chunk as body → `partial`, and `completed` once every chunk arrived. Chunks may arrive in any order.
+        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, `location` (where the operation defines it), no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
+        2. One request per chunk with the chunk as body. **The endpoint is stateless: every request is parsed on its own and nothing from the handshake is remembered.** Each chunk request must therefore repeat all required headers of this operation (`chunked`, `fileId`, `fileName`, and `location` where defined) together with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and `totalChunks`; send `fileSize` as well to keep the free-space check (and, on admin uploads, the image-size cap) active. Omitting `chunked` makes the server treat the chunk as a complete non-chunked upload and overwrite the destination. The response body reports `status: "partial"` while chunks are still missing and `status: "completed"` once every chunk arrived. These are values returned by the server in the response JSON, not headers the client sends. Chunks may arrive in any order.
       parameters:
       - name: fileId
         in: header
         required: true
         schema:
           type: string
-        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment.
+        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment. Required on every request, including each chunk request.
       - name: fileName
         in: header
         required: true
         schema:
           type: string
+        description: Name of the file to write. Required on every request, including each chunk request.
       - name: chunked
         in: header
         required: false
         schema:
           type: string
-        description: Any non-empty value turns on the chunked protocol (even `false`). Omit for a single-request upload.
+        description: Any non-empty value turns on the chunked protocol (even `false`). Send it on every request of a chunked upload; omitting it makes that request a single-request upload.
       - name: fileSize
         in: header
         required: false
         schema:
           type: integer
-        description: Total file size in bytes, used for the free-space check.
+        description: Total file size in bytes. Used for the free-space check and, on admin image uploads, for the `max_image_upload_size_mb` cap. Send it on every request of a chunked upload; omitting it skips the free-space check (and, on admin uploads, the size cap).
       - name: totalChunks
         in: header
         required: false
         schema:
           type: integer
+        description: Number of chunks in the upload. Required on every request of a chunked upload; the server compares the number of chunks received so far against it to decide between `partial` and `completed`. Ignored for single-request uploads.
       - name: chunkId
         in: header
         required: false
         schema:
           type: integer
-        description: 0-based chunk index. Omit on the handshake request.
+        description: 0-based chunk index. Omit only on the handshake request; required on every chunk request.
       - name: chunkHash
         in: header
         required: false
         schema:
           type: string
-        description: Lowercase hex SHA-256 of this chunk's body.
+        description: Lowercase hex SHA-256 of this chunk's body. Required on every chunk request.
       requestBody:
         required: false
         content:
@@ -1544,15 +1552,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '422':
-          description: File type not accepted.
+          description: File type not accepted, or (for chunked uploads) the assembled file is not a decodable image.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadError'
         '500':
-          description: Destination folder does not exist yet (see description).
+          description: Destination folder does not exist yet (see description). Tornado's default error page is HTML.
           content:
-            text/plain:
+            text/html:
               schema:
                 type: string
         '507':
@@ -1568,56 +1576,60 @@ paths:
       summary: Upload a server archive to import
       operationId: uploadImportArchive
       description: |-
-        Requires server creation permission. Accepts zip files. The archive lands in Crafty's `import/upload` folder; browse it with `POST /api/v2/import/archive/select` and import it with `POST /api/v2/servers`.
+        Requires server creation permission. Accepts zip archives (`application/zip`, `application/x-zip-compressed`) and files the OS maps to `application/octet-stream` (e.g. `.bin`); `.jar` is rejected because its MIME type is not in that list. The archive lands in Crafty's `import/upload` folder; browse it with `POST /api/v2/import/archive/select` and import it with `POST /api/v2/servers`.
+
+        **Crafty 4.11 bug:** the free-space check runs before the destination folder is created, so the first upload answers 500 (`FileNotFoundError`) until `import/upload` exists.
 
         Uploads use custom headers, not multipart.
 
         **Single request:** send the whole file as the body without the `chunked` header.
 
         **Chunked** (what the web panel does, 10 MiB chunks):
-        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
-        2. One request per chunk with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and the chunk as body → `partial`, and `completed` once every chunk arrived. Chunks may arrive in any order.
+        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, `location` (where the operation defines it), no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
+        2. One request per chunk with the chunk as body. **The endpoint is stateless: every request is parsed on its own and nothing from the handshake is remembered.** Each chunk request must therefore repeat all required headers of this operation (`chunked`, `fileId`, `fileName`, and `location` where defined) together with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and `totalChunks`; send `fileSize` as well to keep the free-space check (and, on admin uploads, the image-size cap) active. Omitting `chunked` makes the server treat the chunk as a complete non-chunked upload and overwrite the destination. The response body reports `status: "partial"` while chunks are still missing and `status: "completed"` once every chunk arrived. These are values returned by the server in the response JSON, not headers the client sends. Chunks may arrive in any order.
       parameters:
       - name: fileId
         in: header
         required: true
         schema:
           type: string
-        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment.
+        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment. Required on every request, including each chunk request.
       - name: fileName
         in: header
         required: true
         schema:
           type: string
+        description: Name of the file to write. Required on every request, including each chunk request.
       - name: chunked
         in: header
         required: false
         schema:
           type: string
-        description: Any non-empty value turns on the chunked protocol (even `false`). Omit for a single-request upload.
+        description: Any non-empty value turns on the chunked protocol (even `false`). Send it on every request of a chunked upload; omitting it makes that request a single-request upload.
       - name: fileSize
         in: header
         required: false
         schema:
           type: integer
-        description: Total file size in bytes, used for the free-space check.
+        description: Total file size in bytes. Used for the free-space check and, on admin image uploads, for the `max_image_upload_size_mb` cap. Send it on every request of a chunked upload; omitting it skips the free-space check (and, on admin uploads, the size cap).
       - name: totalChunks
         in: header
         required: false
         schema:
           type: integer
+        description: Number of chunks in the upload. Required on every request of a chunked upload; the server compares the number of chunks received so far against it to decide between `partial` and `completed`. Ignored for single-request uploads.
       - name: chunkId
         in: header
         required: false
         schema:
           type: integer
-        description: 0-based chunk index. Omit on the handshake request.
+        description: 0-based chunk index. Omit only on the handshake request; required on every chunk request.
       - name: chunkHash
         in: header
         required: false
         schema:
           type: string
-        description: Lowercase hex SHA-256 of this chunk's body.
+        description: Lowercase hex SHA-256 of this chunk's body. Required on every chunk request.
       requestBody:
         required: false
         content:
@@ -1646,6 +1658,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadError'
+        '500':
+          description: Crafty's `import/upload` folder does not exist yet (see description). Tornado's default error page is HTML.
+          content:
+            text/html:
+              schema:
+                type: string
         '507':
           description: Not enough disk space.
           content:
@@ -4613,13 +4631,15 @@ paths:
       description: |-
         Requires FILES. Any file type. Extra header `location`: destination folder relative to the server root (`.` or empty for the root). A failed validation answers 400 `NOT_AUTHORIZED`.
 
+        **Crafty 4.11 bug:** the free-space check runs before the destination folder is created, so uploading into a folder that does not exist yet answers 500 (`FileNotFoundError`) until that folder is created.
+
         Uploads use custom headers, not multipart.
 
         **Single request:** send the whole file as the body without the `chunked` header.
 
         **Chunked** (what the web panel does, 10 MiB chunks):
-        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
-        2. One request per chunk with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and the chunk as body → `partial`, and `completed` once every chunk arrived. Chunks may arrive in any order.
+        1. Handshake: `chunked: true`, `fileId`, `fileName`, `fileSize`, `totalChunks`, `location` (where the operation defines it), no `chunkId`, empty body → `{"status":"ok","data":{"file-id":...}}`.
+        2. One request per chunk with the chunk as body. **The endpoint is stateless: every request is parsed on its own and nothing from the handshake is remembered.** Each chunk request must therefore repeat all required headers of this operation (`chunked`, `fileId`, `fileName`, and `location` where defined) together with `chunkId` (0-based), `chunkHash` (SHA-256 hex of the chunk) and `totalChunks`; send `fileSize` as well to keep the free-space check (and, on admin uploads, the image-size cap) active. Omitting `chunked` makes the server treat the chunk as a complete non-chunked upload and overwrite the destination. The response body reports `status: "partial"` while chunks are still missing and `status: "completed"` once every chunk arrived. These are values returned by the server in the response JSON, not headers the client sends. Chunks may arrive in any order.
       parameters:
       - $ref: '#/components/parameters/ServerId'
       - name: fileId
@@ -4627,47 +4647,49 @@ paths:
         required: true
         schema:
           type: string
-        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment.
+        description: Client-chosen ID for this upload (a UUID). Names the temp folder, so it must be safe as a path segment. Required on every request, including each chunk request.
       - name: fileName
         in: header
         required: true
         schema:
           type: string
+        description: Name of the file to write. Required on every request, including each chunk request.
       - name: chunked
         in: header
         required: false
         schema:
           type: string
-        description: Any non-empty value turns on the chunked protocol (even `false`). Omit for a single-request upload.
+        description: Any non-empty value turns on the chunked protocol (even `false`). Send it on every request of a chunked upload; omitting it makes that request a single-request upload.
       - name: fileSize
         in: header
         required: false
         schema:
           type: integer
-        description: Total file size in bytes, used for the free-space check.
+        description: Total file size in bytes. Used for the free-space check and, on admin image uploads, for the `max_image_upload_size_mb` cap. Send it on every request of a chunked upload; omitting it skips the free-space check (and, on admin uploads, the size cap).
       - name: totalChunks
         in: header
         required: false
         schema:
           type: integer
+        description: Number of chunks in the upload. Required on every request of a chunked upload; the server compares the number of chunks received so far against it to decide between `partial` and `completed`. Ignored for single-request uploads.
       - name: chunkId
         in: header
         required: false
         schema:
           type: integer
-        description: 0-based chunk index. Omit on the handshake request.
+        description: 0-based chunk index. Omit only on the handshake request; required on every chunk request.
       - name: chunkHash
         in: header
         required: false
         schema:
           type: string
-        description: Lowercase hex SHA-256 of this chunk's body.
+        description: Lowercase hex SHA-256 of this chunk's body. Required on every chunk request.
       - name: location
         in: header
         required: true
         schema:
           type: string
-        description: Destination folder, relative to the server root.
+        description: Destination folder, relative to the server root. Required on every request, including each chunk request; the file name comes from `fileName`.
       requestBody:
         required: false
         content:
@@ -4690,6 +4712,12 @@ paths:
                 $ref: '#/components/schemas/UploadError'
         '403':
           $ref: '#/components/responses/Unauthenticated'
+        '500':
+          description: Destination folder does not exist yet (see description). Tornado's default error page is HTML.
+          content:
+            text/html:
+              schema:
+                type: string
         '507':
           description: Not enough disk space.
           content:
@@ -4983,6 +5011,19 @@ paths:
                       - RUN_TASK_FAILED
         '403':
           $ref: '#/components/responses/Unauthenticated'
+  /api/v2/servers/{server_id}/tasks/{task_id}/children:
+    get:
+      tags:
+      - Schedules
+      summary: List child tasks
+      operationId: getTaskChildren
+      description: 'Stub. Always answers 200 with an empty body; Crafty 4.11 does not implement child-task listing.'
+      parameters:
+      - $ref: '#/components/parameters/ServerId'
+      - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Empty body.
   /api/v2/servers/{server_id}/webhook:
     get:
       tags:
@@ -7250,6 +7291,8 @@ components:
           $ref: '#/components/schemas/FileAttributes'
     UploadResult:
       type: object
+      description: |-
+        Response body of the upload endpoints. `status` is a field **inside the response JSON**, not a request header: the client never sends `ok`, `partial` or `completed`, it only reads them back. Every successful response (handshake, stored chunk or finished upload) uses HTTP 200, so callers must inspect this field to know what happened.
       required:
       - status
       properties:
@@ -7259,8 +7302,11 @@ components:
           - ok
           - partial
           - completed
-          description: '`ok` answers the handshake, `partial` a stored chunk, `completed` the last chunk or a non-chunked
-            upload.'
+          description: |-
+            Outcome reported by the server in the response body (never sent by the client).
+            - `ok`: the handshake was accepted and the upload session was created; no file bytes were received yet.
+            - `partial`: one chunk was stored, but other chunks are still missing; keep sending.
+            - `completed`: every chunk arrived (or the upload was non-chunked) and the file was written to `location`/`fileName`.
         data:
           type: object
           properties:
