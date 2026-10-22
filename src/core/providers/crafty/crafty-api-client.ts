@@ -157,6 +157,7 @@ export class CraftyApiClient {
 			"GET",
 			`/servers/${serverId}/files/${pathOnServer}/download`,
 			undefined,
+			undefined,
 			{ raw: true },
 		);
 
@@ -181,11 +182,29 @@ export class CraftyApiClient {
 		let chunkIndex = 0;
 		const fileId = Bun.randomUUIDv7();
 		const fileName = nodePath.basename(path);
+		const location = nodePath.dirname(path) || "."
 
 		const chunks = splitFile(10 * 1024 * 1024, file);
 
+		// handshake
+		await this.request(
+			"POST",
+			apiPath,
+			undefined,
+			{
+				"Content-Type": "application/octet-stream",
+				chunked: true,
+				fileId: fileId,
+				fileName: fileName,
+				fileSize: file.size,
+				totalChunks: chunks.length,
+				location: location,
+			},
+			{ raw: true },
+		);
+
 		for await (const chunk of chunks) {
-			const response = await this.request("POST", apiPath, chunk, {
+			await this.request("POST", apiPath, chunk, {
 				"Content-Type": "application/octet-stream",
 				chunked: true,
 				fileId: fileId,
@@ -194,19 +213,18 @@ export class CraftyApiClient {
 				totalChunks: chunks.length,
 				chunkId: chunkIndex,
 				chunkHash: await hashChunk(chunk),
-				location: path,
+				location: location,
 			});
 
-			console.log(response);
 			chunkIndex++;
 		}
 	}
 
-	// With raw: true, returns the Response untouched instead of parsing its JSON
 	private async request(
 		method: string,
 		path: string,
 		body: unknown,
+		extraHeaders: Record<string, string | boolean | number> | undefined,
 		options: { raw: true },
 	): Promise<Response>;
 	private async request<T>(
@@ -215,6 +233,7 @@ export class CraftyApiClient {
 		body?: unknown,
 		extraHeaders?: Record<string, string | boolean | number>,
 	): Promise<T>;
+
 	private async request(
 		method: string,
 		path: string,
@@ -223,6 +242,13 @@ export class CraftyApiClient {
 		options?: { raw: true },
 	): Promise<unknown> {
 		const isText = typeof body === "string";
+		const isBinary =
+			body instanceof Blob ||
+			body instanceof ArrayBuffer ||
+			ArrayBuffer.isView(body) ||
+			body instanceof FormData ||
+			body instanceof URLSearchParams ||
+			body instanceof ReadableStream;
 
 		const url = `${this.baseUrl}${path}`;
 		const request = {
@@ -233,10 +259,10 @@ export class CraftyApiClient {
 				...extraHeaders,
 			},
 			body:
-				body === undefined ? undefined : isText ? body : JSON.stringify(body),
+				body === undefined || isText || isBinary
+					? (body as Bun.BodyInit | undefined)
+					: JSON.stringify(body),
 		};
-
-		console.log(request)
 
 		let response = await fetch(url, request);
 

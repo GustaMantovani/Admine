@@ -348,7 +348,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 			upload: async () => {
 				const localFilePathArg = getNextStdinArg()!;
-				const pathOnServerArg = getNextStdinArg()!;
+				const pathOnServerArg = getNextStdinArg() || path.basename(localFilePathArg);
 
 				const localFilePointer = Bun.file(localFilePathArg);
 
