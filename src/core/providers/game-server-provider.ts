@@ -1,3 +1,4 @@
+import type { BunFile } from "bun";
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
 import type { GameServer } from "../domain/game-server";
 import type { GameServerFile } from "../domain/game-server-file";
@@ -41,7 +42,8 @@ export interface GameServerProvider {
 		targetDirectory: string,
 	): Promise<void>;
 	deleteFiles(id: string, paths: string[]): Promise<void>;
-	downloadFile(id: string, path: string): Promise<GameServerFileDownload>;
 	delete(id: string, removeFiles: boolean): Promise<void>;
 	stopAll(): Promise<number>;
+	downloadFile(id: string, path: string): Promise<GameServerFileDownload>;
+	uploadFile(id: string, path: string, file: BunFile): Promise<void>;
 }

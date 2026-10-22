@@ -1,3 +1,4 @@
+import type { BunFile } from "bun";
 import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
 import { GameServerActionError } from "../../domain/errors";
 import type { GameServer } from "../../domain/game-server";
@@ -214,6 +215,10 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		path: string,
 	): Promise<GameServerFileDownload> {
 		return this.craftyApiClient.downloadServerFile(id, path);
+	}
+
+	async uploadFile(id: string, path: string, file: BunFile): Promise<void> {
+		return this.craftyApiClient.uploadServerFile(id, path, file);
 	}
 
 	async delete(id: string, removeFiles: boolean): Promise<void> {

@@ -1,3 +1,6 @@
+import * as nodePath from "node:path";
+import type { BunFile } from "bun";
+import { hashChunk, splitFile } from "../../utils";
 import type { CraftyAuthProvider } from "./auth/crafty-auth-provider";
 import { CraftyApiError } from "./crafty-api-error";
 import type { CraftyAction } from "./dtos/crafty-action";
@@ -161,10 +164,42 @@ export class CraftyApiClient {
 			.get("content-disposition")
 			?.match(/filename="([^"]+)"/)?.[1];
 
+		if (response.body === null) throw new Error("No response body");
+
 		return {
-			contentStream: response.body!,
+			contentStream: response.body,
 			fileNameOnServer: fileNameOnServer,
 		};
+	}
+
+	async uploadServerFile(
+		serverId: string,
+		path: string,
+		file: BunFile,
+	): Promise<void> {
+		const apiPath = `/servers/${serverId}/files/upload`;
+		let chunkIndex = 0;
+		const fileId = Bun.randomUUIDv7();
+		const fileName = nodePath.basename(path);
+
+		const chunks = splitFile(10 * 1024 * 1024, file);
+
+		for await (const chunk of chunks) {
+			const response = await this.request("POST", apiPath, chunk, {
+				"Content-Type": "application/octet-stream",
+				chunked: true,
+				fileId: fileId,
+				fileName: fileName,
+				fileSize: file.size,
+				totalChunks: chunks.length,
+				chunkId: chunkIndex,
+				chunkHash: await hashChunk(chunk),
+				location: path,
+			});
+
+			console.log(response);
+			chunkIndex++;
+		}
 	}
 
 	// With raw: true, returns the Response untouched instead of parsing its JSON
@@ -178,11 +213,13 @@ export class CraftyApiClient {
 		method: string,
 		path: string,
 		body?: unknown,
+		extraHeaders?: Record<string, string | boolean | number>,
 	): Promise<T>;
 	private async request(
 		method: string,
 		path: string,
 		body?: unknown,
+		extraHeaders?: Record<string, string | boolean | number>,
 		options?: { raw: true },
 	): Promise<unknown> {
 		const isText = typeof body === "string";
@@ -193,10 +230,13 @@ export class CraftyApiClient {
 			headers: {
 				Authorization: `Bearer ${await this.auth.getToken()}`,
 				"Content-Type": isText ? "text/plain" : "application/json",
+				...extraHeaders,
 			},
 			body:
 				body === undefined ? undefined : isText ? body : JSON.stringify(body),
 		};
+
+		console.log(request)
 
 		let response = await fetch(url, request);
 

@@ -1,3 +1,4 @@
+import type { BunFile } from "bun";
 import { PropertiesEditor } from "properties-file/editor";
 import type { CreateGameServerRequest } from "../domain/create-game-server-request";
 import { GameServerActionError } from "../domain/errors";
@@ -261,5 +262,13 @@ export class GameServerService {
 		path: string,
 	): Promise<GameServerFileDownload> {
 		return this.gameServerProvider.downloadFile(serverId, path);
+	}
+
+	async uploadFile(
+		serverId: string,
+		path: string,
+		file: BunFile,
+	): Promise<void> {
+		return this.gameServerProvider.uploadFile(serverId, path, file);
 	}
 }
