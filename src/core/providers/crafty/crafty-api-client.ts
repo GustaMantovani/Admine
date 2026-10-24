@@ -182,7 +182,7 @@ export class CraftyApiClient {
 		let chunkIndex = 0;
 		const fileId = Bun.randomUUIDv7();
 		const fileName = nodePath.basename(path);
-		const location = nodePath.dirname(path) || "."
+		const location = nodePath.dirname(path) || ".";
 
 		const chunks = splitFile(10 * 1024 * 1024, file);
 

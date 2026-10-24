@@ -337,9 +337,17 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 				const { contentStream, fileNameOnServer } =
 					await gameServerService.downloadFile(serverIdArg, serverPathArg);
-				const writer = Bun.file(
+
+				const destFile = Bun.file(
 					downloadPathArg || fileNameOnServer || path.basename(serverPathArg),
-				).writer();
+				);
+
+				if (await destFile.exists()) {
+					console.error(`File ${destFile.name} already exists`);
+					process.exit(1);
+				}
+
+				const writer = destFile.writer();
 
 				for await (const chunk of contentStream) writer.write(chunk);
 
@@ -348,11 +356,12 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 			upload: async () => {
 				const localFilePathArg = getNextStdinArg()!;
-				const pathOnServerArg = getNextStdinArg() || path.basename(localFilePathArg);
+				const pathOnServerArg =
+					getNextStdinArg() || path.basename(localFilePathArg);
 
 				const localFilePointer = Bun.file(localFilePathArg);
 
-				gameServerService.uploadFile(
+				await gameServerService.uploadFile(
 					serverIdArg,
 					pathOnServerArg,
 					localFilePointer,
