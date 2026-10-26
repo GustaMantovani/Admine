@@ -155,7 +155,7 @@ export class CraftyApiClient {
 	}> {
 		const response = await this.request(
 			"GET",
-			`/servers/${serverId}/files/${pathOnServer}/download`,
+			`/servers/${serverId}/files/${encodeURIComponent(pathOnServer)}/download`,
 			undefined,
 			undefined,
 			{ raw: true },
