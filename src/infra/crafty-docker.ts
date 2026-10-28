@@ -16,7 +16,7 @@ export async function ensureCraftyInfra(
 
 	await $`${{ raw: config.infraSetupCommand }}`;
 
-	Bun.sleepSync(config.infraCheckDelay);
+	await Bun.sleep(config.infraCheckDelay);
 
 	await $`${{ raw: config.infraCheckCommand }}`;
 }
