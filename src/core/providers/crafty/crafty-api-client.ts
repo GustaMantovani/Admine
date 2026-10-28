@@ -179,7 +179,6 @@ export class CraftyApiClient {
 		file: BunFile,
 	): Promise<void> {
 		const apiPath = `/servers/${serverId}/files/upload`;
-		let chunkIndex = 0;
 		const fileId = Bun.randomUUIDv7();
 		const fileName = nodePath.basename(path);
 		const location = nodePath.dirname(path) || ".";
@@ -203,20 +202,24 @@ export class CraftyApiClient {
 			{ raw: true },
 		);
 
-		for await (const chunk of chunks) {
-			await this.request("POST", apiPath, chunk, {
+		for await (const [index, chunk] of chunks.entries()) {
+			const response = await this.request<{status: string}>("POST", apiPath, chunk, {
 				"Content-Type": "application/octet-stream",
 				chunked: true,
 				fileId: fileId,
 				fileName: fileName,
 				fileSize: file.size,
 				totalChunks: chunks.length,
-				chunkId: chunkIndex,
+				chunkId: index,
 				chunkHash: await hashChunk(chunk),
 				location: location,
 			});
 
-			chunkIndex++;
+			if (index === chunks.length - 1) {
+				if (response.status !== 'completed') {
+					throw new Error('All chunks was sended, but the server not confirm that all are recieved');
+				}
+			}
 		}
 	}
 

@@ -269,6 +269,10 @@ export class GameServerService {
 		path: string,
 		file: BunFile,
 	): Promise<void> {
+		if (!file.exists()) throw new Error(`File ${file.name} not exists`);
+
+		if (file.size === 0) throw new Error(`File ${file.name} has no content`);
+		
 		return this.gameServerProvider.uploadFile(serverId, path, file);
 	}
 }
