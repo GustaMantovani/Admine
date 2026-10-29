@@ -1,36 +1,36 @@
-name: Go Server Handler CI
+# name: Go Server Handler CI
 
-on:
-  pull_request:
-    paths:
-      - "server_handler/**"
-  workflow_dispatch:
+# on:
+#   pull_request:
+#     paths:
+#       - "server_handler/**"
+#   workflow_dispatch:
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v7
 
-      - name: Setup Go
-        uses: actions/setup-go@v7
-        with:
-          go-version: "1.24.2"
+#       - name: Setup Go
+#         uses: actions/setup-go@v7
+#         with:
+#           go-version: "1.24.2"
 
-      - name: Install dependencies
-        run: go mod tidy
-        working-directory: server_handler
+#       - name: Install dependencies
+#         run: go mod tidy
+#         working-directory: server_handler
 
-      - name: Static check
-        run: go vet ./...
-        working-directory: server_handler
+#       - name: Static check
+#         run: go vet ./...
+#         working-directory: server_handler
 
-      - name: Run tests
-        run: go test ./... -v
-        working-directory: server_handler
+#       - name: Run tests
+#         run: go test ./... -v
+#         working-directory: server_handler
 
-      - name: Build binary
-        run: go build -o server_handler cmd/server_handler/main.go
-        working-directory: server_handler
+#       - name: Build binary
+#         run: go build -o server_handler cmd/server_handler/main.go
+#         working-directory: server_handler

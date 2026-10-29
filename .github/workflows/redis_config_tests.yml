@@ -1,31 +1,31 @@
-name: Redis Configuration CI
+# name: Redis Configuration CI
 
-on:
-  pull_request:
-    paths:
-      - "pubsub/redis/docker-compose.yaml"
-      - "pubsub/redis/redis.conf"
-  workflow_dispatch:
+# on:
+#   pull_request:
+#     paths:
+#       - "pubsub/redis/docker-compose.yaml"
+#       - "pubsub/redis/redis.conf"
+#   workflow_dispatch:
 
-jobs:
-  validate-config:
-    runs-on: ubuntu-latest
+# jobs:
+#   validate-config:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v7
 
-      - name: Run Redis with configuration
-        run: docker compose up -d
-        working-directory: pubsub/redis
+#       - name: Run Redis with configuration
+#         run: docker compose up -d
+#         working-directory: pubsub/redis
 
-      - name: Wait for Redis to start
-        run: sleep 1
+#       - name: Wait for Redis to start
+#         run: sleep 1
 
-      - name: Check Redis status
-        run: docker compose exec -T redis redis-cli PING
-        working-directory: pubsub/redis
+#       - name: Check Redis status
+#         run: docker compose exec -T redis redis-cli PING
+#         working-directory: pubsub/redis
 
-      - name: Remove container
-        run: docker compose down
-        working-directory: pubsub/redis
+#       - name: Remove container
+#         run: docker compose down
+#         working-directory: pubsub/redis

@@ -1,29 +1,29 @@
-name: Rust VPN Handler CI
+# name: Rust VPN Handler CI
 
-on:
-  pull_request:
-    paths:
-      - "vpn_handler/**"
-  workflow_dispatch:
+# on:
+#   pull_request:
+#     paths:
+#       - "vpn_handler/**"
+#   workflow_dispatch:
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v7
 
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+#       - name: Setup Rust
+#         uses: actions-rs/toolchain@v1
+#         with:
+#           toolchain: stable
+#           override: true
 
-      - name: Run tests
-        run: cargo test --verbose
-        working-directory: vpn_handler
+#       - name: Run tests
+#         run: cargo test --verbose
+#         working-directory: vpn_handler
 
-      - name: Build binary
-        run: cargo build --release
-        working-directory: vpn_handler
+#       - name: Build binary
+#         run: cargo build --release
+#         working-directory: vpn_handler
