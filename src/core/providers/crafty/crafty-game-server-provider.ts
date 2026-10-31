@@ -63,18 +63,17 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		]);
 
 		const limit = pLimit(this.maxConcurrentRequests ?? DEFAULT_CONCURRENCY_REQUESTS);
-
 		const serversWithStats = await Promise.all(
 			servers.data.map((server) =>
 				limit(async () => {
 					const stats = await this.craftyApiClient.getServerStats(
 						server.server_id,
 					);
-					return { ...server, stats: stats };
+					return { ...server, stats };
 				}),
 			),
 		);
-
+		
 		return serversWithStats
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
 			.map((dto) =>
