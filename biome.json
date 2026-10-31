@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**"]
+		"includes": ["**", "!specs/crafty-openapi.html"]
 	},
 	"formatter": {
 		"enabled": true,
