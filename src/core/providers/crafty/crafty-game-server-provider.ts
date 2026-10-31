@@ -10,7 +10,10 @@ import type { GameServerStats } from "../../domain/game-server-stats";
 import type { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
 import type { GameServerProvider } from "../game-server-provider";
 import type { CraftyApiClient } from "./crafty-api-client";
-import { DEFAULT_CONCURRENCY_REQUESTS, type CraftyWebhooksConfig } from "./crafty-config";
+import {
+	type CraftyWebhooksConfig,
+	DEFAULT_CONCURRENCY_REQUESTS,
+} from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import {
@@ -62,7 +65,9 @@ export class CraftyGameServerProvider implements GameServerProvider {
 			this.rconPortRepository.getAll(),
 		]);
 
-		const limit = pLimit(this.maxConcurrentRequests ?? DEFAULT_CONCURRENCY_REQUESTS);
+		const limit = pLimit(
+			this.maxConcurrentRequests ?? DEFAULT_CONCURRENCY_REQUESTS,
+		);
 		const serversWithStats = await Promise.all(
 			servers.data.map((server) =>
 				limit(async () => {
@@ -73,7 +78,7 @@ export class CraftyGameServerProvider implements GameServerProvider {
 				}),
 			),
 		);
-		
+
 		return serversWithStats
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
 			.map((dto) =>

@@ -204,7 +204,7 @@ export function toGameServer(
 		serversHost,
 		[],
 		craftyServerDto.server_port,
-		rconPort
+		rconPort,
 	);
 }
 
