@@ -272,7 +272,7 @@ export class GameServerService {
 		if (!file.exists()) throw new Error(`File ${file.name} not exists`);
 
 		if (file.size === 0) throw new Error(`File ${file.name} has no content`);
-		
+
 		return this.gameServerProvider.uploadFile(serverId, path, file);
 	}
 }

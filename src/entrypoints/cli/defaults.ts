@@ -32,4 +32,4 @@ export const DEFAULT_CRAFTY_INFRA_SETUP_COMMAND =
 // This command must return a success exit code when the server is running, or any other exit code otherwise
 export const DEFAULT_CRAFTY_INFRA_CHECK_COMMAND =
 	"docker inspect -f '{{.State.Running}}' crafty_container | grep -q true";
-export const DEFAULT_CRAFTY_INFRA_CHECK_DELAY_MS = 10000;
+export const DEFAULT_CRAFTY_INFRA_CHECK_DELAY_MS = 30000;

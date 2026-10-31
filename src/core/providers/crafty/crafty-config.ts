@@ -20,4 +20,6 @@ export type ManagedCraftyConfig = {
 	webhooks: CraftyWebhooksConfig;
 };
 
+export const DEFAULT_CONCURRENCY_REQUESTS = 4;
+
 export type CraftyConfig = SelfHostedCraftyConfig | ManagedCraftyConfig;

@@ -5,10 +5,8 @@ import type { GameServerFile } from "../domain/game-server-file";
 import type { GameServerFileDownload } from "../domain/game-server-file-download";
 import type { GameServerFileEntry } from "../domain/game-server-file-entry";
 import type { GameServerStats } from "../domain/game-server-stats";
-import type { ProviderName } from "./provider-name";
 
 export interface GameServerProvider {
-	readonly name: ProviderName;
 	create(createServerRequest: CreateGameServerRequest): Promise<string>;
 	list(): Promise<GameServer[]>;
 	info(id: string): Promise<GameServer>;

@@ -203,21 +203,28 @@ export class CraftyApiClient {
 		);
 
 		for await (const [index, chunk] of chunks.entries()) {
-			const response = await this.request<{status: string}>("POST", apiPath, chunk, {
-				"Content-Type": "application/octet-stream",
-				chunked: true,
-				fileId: fileId,
-				fileName: fileName,
-				fileSize: file.size,
-				totalChunks: chunks.length,
-				chunkId: index,
-				chunkHash: await hashChunk(chunk),
-				location: location,
-			});
+			const response = await this.request<{ status: string }>(
+				"POST",
+				apiPath,
+				chunk,
+				{
+					"Content-Type": "application/octet-stream",
+					chunked: true,
+					fileId: fileId,
+					fileName: fileName,
+					fileSize: file.size,
+					totalChunks: chunks.length,
+					chunkId: index,
+					chunkHash: await hashChunk(chunk),
+					location: location,
+				},
+			);
 
 			if (index === chunks.length - 1) {
-				if (response.status !== 'completed') {
-					throw new Error('All chunks was sended, but the server not confirm that all are recieved');
+				if (response.status !== "completed") {
+					throw new Error(
+						"All chunks was sended, but the server not confirm that all are recieved",
+					);
 				}
 			}
 		}

@@ -1,4 +1,5 @@
 import type { BunFile } from "bun";
+import pLimit from "p-limit";
 import type { CreateGameServerRequest } from "../../domain/create-game-server-request";
 import { GameServerActionError } from "../../domain/errors";
 import type { GameServer } from "../../domain/game-server";
@@ -8,9 +9,8 @@ import type { GameServerFileEntry } from "../../domain/game-server-file-entry";
 import type { GameServerStats } from "../../domain/game-server-stats";
 import type { GameServerWebhookTrigger } from "../../domain/game-server-webhook-trigger";
 import type { GameServerProvider } from "../game-server-provider";
-import { CRAFTY_PROVIDER_NAME } from "../provider-name";
 import type { CraftyApiClient } from "./crafty-api-client";
-import type { CraftyWebhooksConfig } from "./crafty-config";
+import { DEFAULT_CONCURRENCY_REQUESTS, type CraftyWebhooksConfig } from "./crafty-config";
 import type { CraftyAction } from "./dtos/crafty-action";
 import type { CraftyActionExecutionResponse } from "./dtos/crafty-action-execution-response";
 import {
@@ -32,13 +32,12 @@ import {
 import type { CraftyRconPortRepository } from "./persistence/crafty-rcon-port-repository";
 
 export class CraftyGameServerProvider implements GameServerProvider {
-	readonly name = CRAFTY_PROVIDER_NAME;
-
 	constructor(
 		private readonly craftyApiClient: CraftyApiClient,
 		private readonly serversHost: string,
 		private readonly webhooksConfig: CraftyWebhooksConfig,
 		private readonly rconPortRepository: CraftyRconPortRepository,
+		private readonly maxConcurrentRequests?: number,
 	) {}
 
 	async create(createServerRequest: CreateGameServerRequest): Promise<string> {
@@ -63,13 +62,26 @@ export class CraftyGameServerProvider implements GameServerProvider {
 			this.rconPortRepository.getAll(),
 		]);
 
-		return servers.data
+		const limit = pLimit(this.maxConcurrentRequests ?? DEFAULT_CONCURRENCY_REQUESTS);
+
+		const serversWithStats = await Promise.all(
+			servers.data.map((server) =>
+				limit(async () => {
+					const stats = await this.craftyApiClient.getServerStats(
+						server.server_id,
+					);
+					return { ...server, stats: stats };
+				}),
+			),
+		);
+
+		return serversWithStats
 			.filter((dto) => isSupportedCraftyServerType(dto.type))
 			.map((dto) =>
 				toGameServer(
 					dto,
 					this.serversHost,
-					undefined,
+					dto.stats.data,
 					rconPorts.get(dto.server_id),
 				),
 			);

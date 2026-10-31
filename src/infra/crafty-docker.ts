@@ -14,9 +14,9 @@ export async function ensureCraftyInfra(
 	).exitCode;
 	if (firstInfraCheckExitCode === 0) return;
 
-	await $`${{ raw: config.infraSetupCommand }}`;
+	await $`${{ raw: config.infraSetupCommand }}`.quiet();
 
 	await Bun.sleep(config.infraCheckDelay);
 
-	await $`${{ raw: config.infraCheckCommand }}`;
+	await $`${{ raw: config.infraCheckCommand }}`.quiet();
 }

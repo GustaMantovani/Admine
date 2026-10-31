@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import {
 	adjectives,
@@ -61,6 +62,7 @@ type FilesSubcommand =
 	| "upload";
 
 // Dependencies
+await mkdir("./data", { recursive: true });
 const db = getDatabase(".data/admine.sqlite");
 
 const craftyConfig = config.craftyConfig;

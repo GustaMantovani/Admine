@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS CraftyAuthToken (
 -- Crafty doesn't expose the RCON port, it only lives in server.properties
 CREATE TABLE IF NOT EXISTS CraftyRconPort (
 	serverId VARCHAR(36) PRIMARY KEY,
-	rconPort INTEGER NOT NULL UNIQUE CHECK (rconPort BETWEEN 1 AND 65535)
+	rconPort INTEGER NOT NULL CHECK (rconPort BETWEEN 1 AND 65535)
 );
