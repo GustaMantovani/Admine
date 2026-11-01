@@ -20,10 +20,10 @@ packages = [{include = "bot", from = "src"}]
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^9.1.1"
-pytest-asyncio = "^1.4.0"
-ruff = "^0.16.9"
-mypy = "^2.3.1"
+pytest = "^9.2.0"
+pytest-asyncio = "^1.4.1"
+ruff = "^0.17.3"
+mypy = "^2.4.1"
 pyinstaller = "^6.22.3"
 
 [build-system]
