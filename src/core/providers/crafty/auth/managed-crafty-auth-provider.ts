@@ -1,11 +1,12 @@
-import type { ManagedCraftyConfig } from "../crafty-config";
+import type { ManagedCraftyDeployment } from "../crafty-config";
 import type { CraftyLoginResponse } from "../dtos/crafty-login-response";
 import type { CraftyAuthTokenRepository } from "../persistence/crafty-auth-token-repository";
 import type { CraftyAuthProvider } from "./crafty-auth-provider";
 
 export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 	constructor(
-		private readonly config: ManagedCraftyConfig,
+		private readonly apiBaseUrl: string,
+		private readonly deployment: ManagedCraftyDeployment,
 		private readonly repository: CraftyAuthTokenRepository,
 	) {}
 
@@ -13,11 +14,11 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 		const storedToken = await this.repository.get();
 
 		if (!storedToken) {
-			const response = await fetch(`${this.config.apiBaseUrl}/auth/login`, {
+			const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
 				method: "POST",
 				body: JSON.stringify({
-					username: this.config.username,
-					password: this.config.password,
+					username: this.deployment.username,
+					password: this.deployment.password,
 				}),
 				headers: { "Content-Type": "application/json" },
 			});
@@ -33,11 +34,11 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 	}
 
 	async getNewToken(): Promise<string> {
-		const response = await fetch(`${this.config.apiBaseUrl}/auth/login`, {
+		const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
 			method: "POST",
 			body: JSON.stringify({
-				username: this.config.username,
-				password: this.config.password,
+				username: this.deployment.username,
+				password: this.deployment.password,
 			}),
 			headers: { "Content-Type": "application/json" },
 		});

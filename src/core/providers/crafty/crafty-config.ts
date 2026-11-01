@@ -5,21 +5,24 @@ export type CraftyWebhooksConfig = {
 	urls: GameServerWebhookUrls;
 };
 
-export type SelfHostedCraftyConfig = {
-	deployType: "self-hosted";
-	apiBaseUrl: string;
+export type SelfHostedCraftyDeployment = {
+	type: "self-hosted";
 	apiToken: string;
-	webhooks: CraftyWebhooksConfig;
 };
 
-export type ManagedCraftyConfig = {
-	deployType: "managed";
-	apiBaseUrl: string;
+export type ManagedCraftyDeployment = {
+	type: "managed";
 	username: string;
 	password: string;
-	webhooks: CraftyWebhooksConfig;
 };
 
-export const DEFAULT_CONCURRENCY_REQUESTS = 4;
+export type CraftyDeployment =
+	| SelfHostedCraftyDeployment
+	| ManagedCraftyDeployment;
 
-export type CraftyConfig = SelfHostedCraftyConfig | ManagedCraftyConfig;
+export type CraftyConfig = {
+	apiBaseUrl: string;
+	webhooks: CraftyWebhooksConfig;
+	maxConcurrentRequests: number;
+	deployment: CraftyDeployment;
+};

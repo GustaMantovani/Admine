@@ -67,14 +67,16 @@ const db = getDatabase(".data/admine.sqlite");
 
 const craftyConfig = config.craftyConfig;
 let authProvider: CraftyAuthProvider;
-switch (craftyConfig.deployType) {
+const deployment = craftyConfig.deployment;
+switch (deployment.type) {
 	case "self-hosted":
-		authProvider = new StaticCraftyAuthProvider(craftyConfig);
+		authProvider = new StaticCraftyAuthProvider(deployment);
 		break;
 	case "managed":
-		await ensureCraftyInfra(craftyConfig);
+		await ensureCraftyInfra(deployment);
 		authProvider = new ManagedCraftyAuthProvider(
-			await withCraftyCreds(craftyConfig),
+			craftyConfig.apiBaseUrl,
+			await withCraftyCreds(deployment),
 			new SqliteCraftyAuthTokenRepository(db),
 		);
 }
@@ -87,6 +89,7 @@ const craftyProvider = new CraftyGameServerProvider(
 	config.serversHost,
 	craftyConfig.webhooks,
 	new SqliteCraftyRconPortRepository(db),
+	craftyConfig.maxConcurrentRequests,
 );
 
 const gameServerService = new GameServerService(

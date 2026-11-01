@@ -27,6 +27,7 @@ export const DEFAULT_CRAFTY_DEPLOY_TYPE = "managed" as const;
 export const DEFAULT_CRAFTY_WEBHOOKS_ENABLED = true;
 export const DEFAULT_CRAFTY_WEBHOOK_URLS: GameServerWebhookUrls = {};
 export const DEFAULT_CRAFTY_API_BASE_URL = "https://localhost:8443/api/v2";
+export const DEFAULT_CRAFTY_MAX_CONCURRENT_REQUESTS = 4;
 export const DEFAULT_CRAFTY_INFRA_SETUP_COMMAND =
 	'docker start crafty_container 2>/dev/null || docker run --name crafty_container --detach --net=host -e TZ=Etc/UTC -v "/$(pwd)/.data/crafty/backups:/crafty/backups" -v "/$(pwd)/.data/crafty/logs:/crafty/logs" -v "/$(pwd)/.data/crafty/servers:/crafty/servers" -v "/$(pwd)/.data/crafty/config:/crafty/app/config" -v "/$(pwd)/.data/crafty/import:/crafty/import" arcadiatechnology/crafty-4:latest';
 // This command must return a success exit code when the server is running, or any other exit code otherwise
