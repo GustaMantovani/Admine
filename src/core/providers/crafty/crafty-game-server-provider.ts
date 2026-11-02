@@ -52,7 +52,10 @@ export class CraftyGameServerProvider implements GameServerProvider {
 
 		try {
 			if (createServerRequest.rconPort !== undefined)
-				await this.rconPortRepository.set(serverId, createServerRequest.rconPort);
+				await this.rconPortRepository.set(
+					serverId,
+					createServerRequest.rconPort,
+				);
 			if (this.webhooksConfig.enabled) await this.createWebhooks(serverId);
 		} catch {
 			await this.craftyApiClient.deleteServer(serverId, true);
