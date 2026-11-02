@@ -62,7 +62,7 @@ type FilesSubcommand =
 	| "upload";
 
 // Dependencies
-await mkdir("./data", { recursive: true });
+await mkdir(".data", { recursive: true });
 const db = getDatabase(".data/admine.sqlite");
 
 const craftyConfig = config.craftyConfig;
