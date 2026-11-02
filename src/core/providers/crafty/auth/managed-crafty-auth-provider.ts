@@ -1,3 +1,4 @@
+import { CraftyApiError } from "../crafty-api-error";
 import type { ManagedCraftyDeployment } from "../crafty-config";
 import type { CraftyLoginResponse } from "../dtos/crafty-login-response";
 import type { CraftyAuthTokenRepository } from "../persistence/crafty-auth-token-repository";
@@ -22,6 +23,10 @@ export class ManagedCraftyAuthProvider implements CraftyAuthProvider {
 				}),
 				headers: { "Content-Type": "application/json" },
 			});
+
+			if (!response.ok) {
+				throw new CraftyApiError(response.status, await response.text());
+			}
 
 			const body = (await response.json()) as CraftyLoginResponse;
 			const token = body.data.token;
