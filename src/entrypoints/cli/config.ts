@@ -4,12 +4,8 @@ import { get, has, set } from "lodash";
 import { z } from "zod";
 import { GameServerType } from "../../core/domain/game-server-type";
 import { GameServerWebhookTrigger } from "../../core/domain/game-server-webhook-trigger";
-import type {
-	CraftyConfig,
-	ManagedCraftyDeployment,
-} from "../../core/providers/crafty/crafty-config";
+import type { ManagedCraftyDeployment } from "../../core/providers/crafty/crafty-config";
 import type { CraftyCredsFile } from "../../core/providers/crafty/dtos/crafty-creds-file";
-import type { CraftyInfraConfig } from "../../infra/crafty-docker";
 import {
 	DEFAULT_CLI_CONFIG_FILE_PATH,
 	DEFAULT_CRAFTY_API_BASE_URL,
@@ -55,50 +51,24 @@ const SelfHostedCraftyDeploymentSchema = z.object({
 	apiToken: z.string(),
 });
 
+const CraftyDeploymentSchema = z
+	.discriminatedUnion("type", [
+		ManagedCraftyDeploymentSchema,
+		SelfHostedCraftyDeploymentSchema,
+	])
+	.prefault({ type: DEFAULT_CRAFTY_DEPLOY_TYPE });
+
 const CraftySchema = z
-	.preprocess(
-		(value) => {
-			const craftyConfig = (value ?? {}) as Record<string, unknown>;
-			const deployment = (craftyConfig.deployment ?? {}) as Record<
-				string,
-				unknown
-			>;
-			return {
-				...craftyConfig,
-				deployment: { type: DEFAULT_CRAFTY_DEPLOY_TYPE, ...deployment },
-			};
-		},
-		z.object({
-			// Required for self-hosted, defaults to the managed instance otherwise
-			apiBaseUrl: z.string().optional(),
-			webhooks: CraftyWebhooksSchema,
-			maxConcurrentRequests: z
-				.number()
-				.int()
-				.positive()
-				.default(DEFAULT_CRAFTY_MAX_CONCURRENT_REQUESTS),
-			deployment: z.discriminatedUnion("type", [
-				ManagedCraftyDeploymentSchema,
-				SelfHostedCraftyDeploymentSchema,
-			]),
-		}),
-	)
-	.superRefine((craftyConfig, ctx) => {
-		if (
-			craftyConfig.deployment.type === "self-hosted" &&
-			craftyConfig.apiBaseUrl === undefined
-		) {
-			ctx.addIssue({
-				code: "custom",
-				path: ["apiBaseUrl"],
-				message: 'Required when deployment.type is "self-hosted"',
-			});
-		}
+	.object({
+		apiBaseUrl: z.string().default(DEFAULT_CRAFTY_API_BASE_URL),
+		webhooks: CraftyWebhooksSchema,
+		maxConcurrentRequests: z
+			.number()
+			.positive()
+			.default(DEFAULT_CRAFTY_MAX_CONCURRENT_REQUESTS),
+		deployment: CraftyDeploymentSchema,
 	})
-	.transform((craftyConfig) => ({
-		...craftyConfig,
-		apiBaseUrl: craftyConfig.apiBaseUrl ?? DEFAULT_CRAFTY_API_BASE_URL,
-	}));
+	.prefault({});
 
 const RconSchema = z
 	.object({
@@ -127,24 +97,8 @@ const CliConfigSchema = z.object({
 	craftyConfig: CraftySchema,
 });
 
-// Credentials are only known after the Crafty infra is up, see withCraftyCreds
-export type CliManagedCraftyDeployment = Omit<
-	ManagedCraftyDeployment,
-	"username" | "password"
-> &
-	CraftyInfraConfig & { username?: string; password?: string };
-
-export type CliCraftyConfig = Omit<CraftyConfig, "deployment"> & {
-	deployment:
-		| Extract<CraftyConfig["deployment"], { type: "self-hosted" }>
-		| CliManagedCraftyDeployment;
-};
-
-export type CliConfig = {
-	serversHost: string;
-	minecraftServer: z.infer<typeof MinecraftServerDefaultsSchema>;
-	craftyConfig: CliCraftyConfig;
-};
+export type CliConfig = z.infer<typeof CliConfigSchema>;
+type CliManagedCraftyDeployment = z.infer<typeof ManagedCraftyDeploymentSchema>;
 
 export async function loadCliConfig(
 	configFilePath = DEFAULT_CLI_CONFIG_FILE_PATH,
