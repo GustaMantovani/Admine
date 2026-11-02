@@ -50,9 +50,15 @@ export class CraftyGameServerProvider implements GameServerProvider {
 		);
 		const serverId = result.data.new_server_id;
 
-		if (createServerRequest.rconPort !== undefined)
-			await this.rconPortRepository.set(serverId, createServerRequest.rconPort);
-		if (this.webhooksConfig.enabled) await this.createWebhooks(serverId);
+		try {
+			if (createServerRequest.rconPort !== undefined)
+				await this.rconPortRepository.set(serverId, createServerRequest.rconPort);
+			if (this.webhooksConfig.enabled) await this.createWebhooks(serverId);
+		} catch {
+			await this.craftyApiClient.deleteServer(serverId, true);
+			throw Error("Error creating server");
+		}
+
 		return serverId;
 	}
 
