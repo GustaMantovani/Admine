@@ -5,8 +5,9 @@ import {
 	animals,
 	uniqueNamesGenerator,
 } from "unique-names-generator";
+import z from "zod";
 import { type CreateGameServerRequest, GameServerService } from "../../core";
-import type { GameServerType } from "../../core/domain/game-server-type";
+import { GameServerType } from "../../core/domain/game-server-type";
 import type { CraftyAuthProvider } from "../../core/providers/crafty/auth/crafty-auth-provider";
 import { ManagedCraftyAuthProvider } from "../../core/providers/crafty/auth/managed-crafty-auth-provider";
 import { StaticCraftyAuthProvider } from "../../core/providers/crafty/auth/static-crafty-auth-provider";
@@ -143,8 +144,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	create: async () => {
 		const nameArg = getNextStdinArg();
 		const typeArg =
-			(getNextStdinArg()?.toLocaleLowerCase() as GameServerType) ||
-			config.minecraftServer.type;
+			z.enum(GameServerType).parse(getNextStdinArg()) ?? GameServerType.Java;
 		const versionArg = getNextStdinArg();
 		const portArg = getNextStdinArg();
 		const rconPortArg = getNextStdinArg();
