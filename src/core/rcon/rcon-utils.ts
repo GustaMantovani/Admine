@@ -11,7 +11,10 @@ export async function sendCommand(
 		port: port,
 		password: password,
 	});
-	const res = await conn.send(cmd);
-	await conn.end();
-	return res;
+	try {
+		const res = await conn.send(cmd);
+		return res;
+	} finally {
+		await conn.end();
+	}
 }
