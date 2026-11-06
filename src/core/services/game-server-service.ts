@@ -7,7 +7,7 @@ import type { GameServerFile } from "../domain/game-server-file";
 import type { GameServerFileDownload } from "../domain/game-server-file-download";
 import type { GameServerFileEntry } from "../domain/game-server-file-entry";
 import type { GameServerStats } from "../domain/game-server-stats";
-import type { GameServerType } from "../domain/game-server-type";
+import { GameServerType } from "../domain/game-server-type";
 import {
 	DEFAULT_GAME_PORTS,
 	DEFAULT_RCON_PORTS,
@@ -114,12 +114,14 @@ export class GameServerService {
 		const newServerId =
 			await this.gameServerProvider.create(createServerRequest);
 
-		await this.writeServerProperties(
-			newServerId,
-			this.buildServerProperties(createServerRequest),
-		);
+		if (createServerRequest.type === GameServerType.Java){
+			await this.writeServerProperties(
+				newServerId,
+				this.buildServerProperties(createServerRequest),
+			);
 
-		if (acceptEula) await this.acceptEula(newServerId);
+			if (acceptEula) await this.acceptEula(newServerId);
+		}
 
 		return newServerId;
 	}
