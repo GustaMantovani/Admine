@@ -95,7 +95,7 @@ const craftyProvider = new CraftyGameServerProvider(
 
 const gameServerService = new GameServerService(
 	craftyProvider,
-	config.minecraftServer.rcon,
+	config.gameServer.rcon,
 );
 
 function cliHelp() {
@@ -158,10 +158,10 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 					length: 2,
 				}),
 			type: typeArg,
-			version: versionArg || config.minecraftServer.version,
-			minimumMemory: config.minecraftServer.minimumMemory,
-			maximumMemory: config.minecraftServer.maximumMemory,
-			properties: config.minecraftServer.properties,
+			version: versionArg || config.gameServer.version,
+			minimumMemory: config.gameServer.minimumMemory,
+			maximumMemory: config.gameServer.maximumMemory,
+			properties: config.gameServer.properties,
 			port:
 				portArg !== undefined
 					? parseInt(portArg, 10)
@@ -174,7 +174,7 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 
 		const id = await gameServerService.create(
 			newGameServerData,
-			config.minecraftServer.acceptEulaOnCreate,
+			config.gameServer.acceptEulaOnCreate,
 		);
 		console.log("Server created:", { ...newGameServerData, id });
 	},

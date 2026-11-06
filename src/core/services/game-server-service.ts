@@ -114,7 +114,7 @@ export class GameServerService {
 		const newServerId =
 			await this.gameServerProvider.create(createServerRequest);
 
-		if (createServerRequest.type === GameServerType.Java){
+		if (createServerRequest.type === GameServerType.Java) {
 			await this.writeServerProperties(
 				newServerId,
 				this.buildServerProperties(createServerRequest),

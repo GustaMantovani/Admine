@@ -17,13 +17,13 @@ import {
 	DEFAULT_CRAFTY_MAX_CONCURRENT_REQUESTS,
 	DEFAULT_CRAFTY_WEBHOOK_URLS,
 	DEFAULT_CRAFTY_WEBHOOKS_ENABLED,
-	DEFAULT_MEINCRAFT_SERVER_PROPERTIES,
-	DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE,
-	DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY,
-	DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY,
-	DEFAULT_MINECRAFT_SERVER_RCON_ENABLED,
-	DEFAULT_MINECRAFT_SERVER_TYPE,
-	DEFAULT_MINECRAFT_SERVER_VERSION,
+	DEFAULT_GAME_SERVER_ACCEPT_EULA_ON_CREATE,
+	DEFAULT_GAME_SERVER_MAXIMUM_MEMORY,
+	DEFAULT_GAME_SERVER_MINIMUM_MEMORY,
+	DEFAULT_GAME_SERVER_PROPERTIES,
+	DEFAULT_GAME_SERVER_RCON_ENABLED,
+	DEFAULT_GAME_SERVER_TYPE,
+	DEFAULT_GAME_SERVER_VERSION,
 	DEFAULT_SERVERS_HOST_FOR_ADMINE,
 } from "./defaults";
 
@@ -72,28 +72,28 @@ const CraftySchema = z
 
 const RconSchema = z
 	.object({
-		enabled: z.boolean().default(DEFAULT_MINECRAFT_SERVER_RCON_ENABLED),
+		enabled: z.boolean().default(DEFAULT_GAME_SERVER_RCON_ENABLED),
 		password: z.string().default(randomBytes(32).toString("base64url")),
 	})
 	.prefault({});
 
-const MinecraftServerDefaultsSchema = z.object({
+const GameServerDefaultsSchema = z.object({
 	rcon: RconSchema,
-	type: z.enum(GameServerType).default(DEFAULT_MINECRAFT_SERVER_TYPE),
-	version: z.string().default(DEFAULT_MINECRAFT_SERVER_VERSION),
-	minimumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY),
-	maximumMemory: z.number().default(DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY),
+	type: z.enum(GameServerType).default(DEFAULT_GAME_SERVER_TYPE),
+	version: z.string().default(DEFAULT_GAME_SERVER_VERSION),
+	minimumMemory: z.number().default(DEFAULT_GAME_SERVER_MINIMUM_MEMORY),
+	maximumMemory: z.number().default(DEFAULT_GAME_SERVER_MAXIMUM_MEMORY),
 	properties: z
 		.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
-		.default(DEFAULT_MEINCRAFT_SERVER_PROPERTIES),
+		.default(DEFAULT_GAME_SERVER_PROPERTIES),
 	acceptEulaOnCreate: z
 		.boolean()
-		.default(DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE),
+		.default(DEFAULT_GAME_SERVER_ACCEPT_EULA_ON_CREATE),
 });
 
 const CliConfigSchema = z.object({
 	serversHost: z.string().default(DEFAULT_SERVERS_HOST_FOR_ADMINE),
-	minecraftServer: MinecraftServerDefaultsSchema.prefault({}),
+	gameServer: GameServerDefaultsSchema.prefault({}),
 	craftyConfig: CraftySchema,
 });
 
@@ -109,7 +109,7 @@ export async function loadCliConfig(
 	const parsedConfig = CliConfigSchema.parse(raw);
 
 	// The generated password must survive restarts, so persist it once
-	const rconPasswordPath = "minecraftServer.rcon.password";
+	const rconPasswordPath = "gameServer.rcon.password";
 	if (!has(raw, rconPasswordPath)) {
 		await writeSinglePropertyToTomlFile(
 			parsedConfig,

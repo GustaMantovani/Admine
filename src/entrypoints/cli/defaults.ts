@@ -7,16 +7,16 @@ export const DEFAULT_CLI_CONFIG_FILE_PATH = "./config/cli-config.toml";
 export const DEFAULT_CRAFTY_CREDS_FILE_PATH =
 	".data/crafty/config/default-creds.txt";
 
-// Minecraft servers
+// Game servers
 export const DEFAULT_SERVERS_HOST_FOR_ADMINE = "127.0.0.1";
-export const DEFAULT_MINECRAFT_SERVER_TYPE = GameServerType.Java;
-export const DEFAULT_MINECRAFT_SERVER_VERSION = "26.3";
-export const DEFAULT_MINECRAFT_SERVER_MINIMUM_MEMORY = 2;
-export const DEFAULT_MINECRAFT_SERVER_MAXIMUM_MEMORY = 4;
-export const DEFAULT_MINECRAFT_SERVER_RCON_ENABLED = true;
-export const DEFAULT_MINECRAFT_SERVER_WHITE_LIST_ENABLE = false;
-export const DEFAULT_MINECRAFT_SERVER_ACCEPT_EULA_ON_CREATE = true;
-export const DEFAULT_MEINCRAFT_SERVER_PROPERTIES: MinecraftServerUserDefinedProperties =
+export const DEFAULT_GAME_SERVER_TYPE = GameServerType.Java;
+export const DEFAULT_GAME_SERVER_VERSION = "26.3";
+export const DEFAULT_GAME_SERVER_MINIMUM_MEMORY = 2;
+export const DEFAULT_GAME_SERVER_MAXIMUM_MEMORY = 4;
+export const DEFAULT_GAME_SERVER_RCON_ENABLED = true;
+export const DEFAULT_GAME_SERVER_WHITE_LIST_ENABLE = false;
+export const DEFAULT_GAME_SERVER_ACCEPT_EULA_ON_CREATE = true;
+export const DEFAULT_GAME_SERVER_PROPERTIES: MinecraftServerUserDefinedProperties =
 	{
 		"white-list": false,
 		"online-mode": false,
