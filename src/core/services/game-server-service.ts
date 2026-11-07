@@ -37,7 +37,7 @@ export class GameServerService {
 				properties["rcon.port"] = String(request.rconPort);
 			properties["broadcast-rcon-to-ops"] = "false";
 		}
-
+		
 		// User configurable properties
 		for (const [key, value] of Object.entries(request.properties ?? {})) {
 			properties[key] = String(value);
@@ -114,12 +114,13 @@ export class GameServerService {
 		const newServerId =
 			await this.gameServerProvider.create(createServerRequest);
 
-		if (createServerRequest.type === GameServerType.Java) {
+		if (createServerRequest.type === GameServerType.Java || createServerRequest.type === GameServerType.Bedrock){
 			await this.writeServerProperties(
 				newServerId,
 				this.buildServerProperties(createServerRequest),
 			);
-
+			
+			if (createServerRequest.type !== GameServerType.Bedrock )
 			if (acceptEula) await this.acceptEula(newServerId);
 		}
 
