@@ -143,8 +143,10 @@ const commands: Record<CliCommand, () => Promise<void>> = {
 	// Servers
 	create: async () => {
 		const nameArg = getNextStdinArg();
-		const typeArg =
-			z.enum(GameServerType).parse(getNextStdinArg()) ?? GameServerType.Java;
+		const typeArg = z
+			.enum(GameServerType)
+			.default(config.gameServer.type)
+			.parse(getNextStdinArg());
 		const versionArg = getNextStdinArg();
 		const portArg = getNextStdinArg();
 		const rconPortArg = getNextStdinArg();
