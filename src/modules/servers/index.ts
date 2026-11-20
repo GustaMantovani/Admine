@@ -23,7 +23,6 @@ export {
 export { ensureCraftyInfra } from "./adapters/crafty/crafty-infra";
 export { CraftyRconRepository } from "./adapters/crafty/crafty-rcon-repository";
 export { CraftyServerOrchestrator } from "./adapters/crafty/crafty-server-orchestrator";
-export { NetPortProbe } from "./adapters/net/net-port-probe";
 export { SqlitePortReservationRepository } from "./adapters/sqlite/sqlite-port-reservation-repository";
 export { SqliteServerRepository } from "./adapters/sqlite/sqlite-server-repository";
 

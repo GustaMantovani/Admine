@@ -19,7 +19,6 @@ import {
 	HytaleGame,
 	JavaGame,
 	ManagedCraftyAuthProvider,
-	NetPortProbe,
 	PortAllocator,
 	resolveCraftyCredentials,
 	ServerRegistry,
@@ -82,10 +81,9 @@ export async function buildApp(configPath = DEFAULT_CONFIG_PATH): Promise<App> {
 	]);
 	const portAllocator = new PortAllocator(
 		new SqlitePortReservationRepository(db),
-		config.servers.ports.probe ? new NetPortProbe() : undefined,
 		gameTypes.sharedPorts(),
 	);
-	const { probe: _, ...rangeOverrides } = config.servers.ports;
+	const rangeOverrides = config.servers.ports;
 
 	const servers = new ServersService(
 		orchestrator,

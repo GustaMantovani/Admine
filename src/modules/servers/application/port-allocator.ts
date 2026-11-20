@@ -5,7 +5,6 @@ import type {
 	PortRange,
 	ServerPorts,
 } from "../domain/port-purpose";
-import type { PortProbe } from "../ports/port-probe";
 import type {
 	PortReservation,
 	PortReservationRepository,
@@ -28,7 +27,6 @@ export type PortRequest =
 export class PortAllocator {
 	constructor(
 		private readonly reservations: PortReservationRepository,
-		private readonly probe: PortProbe | undefined,
 		private readonly sharedPorts: ReadonlySet<number>,
 	) {}
 
@@ -70,8 +68,6 @@ export class PortAllocator {
 
 		for (let port = request.range.min; port <= request.range.max; port++) {
 			if (reserved.has(port) || this.sharedPorts.has(port)) continue;
-			if (this.probe && !(await this.probe.isFree(port, request.protocol)))
-				continue;
 			if (
 				await this.reservations.tryReserve({
 					port,

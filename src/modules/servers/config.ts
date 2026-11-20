@@ -54,7 +54,6 @@ const TypeRangesSchema = z.partialRecord(
 
 const PortsSchema = z
 	.object({
-		probe: z.boolean().default(true),
 		java: TypeRangesSchema.optional(),
 		bedrock: TypeRangesSchema.optional(),
 		hytale: TypeRangesSchema.optional(),
