@@ -34,7 +34,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["src/entrypoints/cli/**"],
+			"includes": ["src/entrypoints/cli.ts"],
 			"linter": {
 				"rules": {
 					"style": {

@@ -1,9 +1,0 @@
-export type CraftyAction =
-	| "clone_server"
-	| "start_server"
-	| "stop_server"
-	| "restart_server"
-	| "kill_server"
-	| "backup_server"
-	| "update_executable"
-	| "eula";

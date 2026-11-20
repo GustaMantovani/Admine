@@ -1,6 +1,6 @@
 {
 	"name": "admine",
-	"module": "src/entrypoints/cli/main.ts",
+	"module": "src/entrypoints/daemon.ts",
 	"type": "module",
 	"private": true,
 	"devDependencies": {
@@ -12,7 +12,7 @@
 		"typescript": "^7"
 	},
 	"scripts": {
-		"cli": "bun run src/entrypoints/cli/main.ts",
+		"cli": "bun run src/entrypoints/cli.ts",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write --unsafe .",
 		"format": "biome format --write ."
